@@ -1,0 +1,224 @@
+<template>
+  <n-layout has-sider class="h-screen w-screen bg-[var(--color-bg-body)]">
+    <n-layout-sider
+      v-if="!isFullscreen"
+      bordered
+      collapse-mode="width"
+      :collapsed-width="64"
+      :width="240"
+      :collapsed="collapsed"
+      show-trigger
+      @collapse="collapsed = true"
+      @expand="collapsed = false"
+      class="bg-[var(--color-bg-sidebar)] z-50"
+    >
+      <div
+        class="h-16 flex items-center justify-center border-b border-[var(--color-border)]"
+      >
+        <transition name="fade" mode="out-in">
+          <div
+            v-if="!collapsed"
+            class="text-xl font-bold text-[var(--color-brand-primary)] tracking-wide whitespace-nowrap"
+          >
+            STONKS ONLY
+          </div>
+          <div
+            v-else
+            class="text-xl font-bold text-[var(--color-brand-primary)]"
+          >
+            S
+          </div>
+        </transition>
+      </div>
+
+      <n-menu
+        :collapsed="collapsed"
+        :collapsed-width="64"
+        :collapsed-icon-size="22"
+        :options="menuOptions"
+        :value="activeKey"
+        @update:value="handleUpdateValue"
+      />
+
+      <div
+        class="absolute bottom-4 w-full px-4 transition-all duration-300"
+        :class="{ 'opacity-0 translate-y-4 pointer-events-none': collapsed }"
+      >
+        <div
+          class="flex items-center gap-3 p-3 rounded-xl bg-[var(--color-bg-card)] border border-[var(--color-border)] cursor-pointer hover:border-[var(--color-brand-primary)] transition-colors shadow-sm"
+        >
+          <n-avatar
+            round
+            size="small"
+            src="https://i.pravatar.cc/150?u=trader"
+            class="border border-[var(--color-border)] flex-shrink-0"
+          />
+          <div class="flex flex-col overflow-hidden">
+            <span
+              class="text-sm font-bold text-[var(--color-text-primary)] truncate"
+              >Trader Pro</span
+            >
+            <span
+              class="text-[10px] text-[var(--color-text-secondary)] truncate"
+              >VIP Member</span
+            >
+          </div>
+        </div>
+      </div>
+    </n-layout-sider>
+
+    <n-layout class="bg-[var(--color-bg-body)] h-full flex flex-col">
+      <n-layout-content
+        class="flex-1 min-h-0 bg-[var(--color-bg-body)] flex flex-col"
+        :content-style="{
+          flex: '1 1 0%',
+          display: 'flex',
+          flexDirection: 'column',
+        }"
+        :native-scrollbar="false"
+      >
+        <div
+          class="flex-1 w-full flex flex-col overflow-hidden transition-all duration-300"
+          :class="isFullscreen ? 'p-0' : 'p-6'"
+        >
+          <router-view v-slot="{ Component }">
+            <transition name="fade" mode="out-in">
+              <component :is="Component" />
+            </transition>
+          </router-view>
+        </div>
+      </n-layout-content>
+    </n-layout>
+  </n-layout>
+</template>
+
+<script setup lang="ts">
+import { h, ref, computed } from "vue";
+import { RouterLink, useRoute, useRouter } from "vue-router";
+import {
+  NIcon,
+  NLayout,
+  NLayoutSider,
+  NLayoutHeader,
+  NLayoutContent,
+  NMenu,
+  NButton,
+  NAvatar,
+  NCard,
+  NTooltip,
+} from "naive-ui";
+import type { MenuOption } from "naive-ui";
+import { useI18n } from "vue-i18n";
+import {
+  HomeOutline,
+  TrendingUpOutline,
+  WalletOutline,
+  RibbonOutline,
+  PersonOutline,
+  SettingsOutline,
+  LogOutOutline,
+  BarChartOutline,
+  NotificationsOutline,
+  InformationCircleOutline,
+  SchoolOutline,
+} from "@vicons/ionicons5";
+import { useLayoutControl } from "../composables/useLayoutControl";
+
+const route = useRoute();
+const router = useRouter();
+const { t } = useI18n();
+const { isFullscreen } = useLayoutControl();
+const collapsed = ref(false);
+
+const activeKey = computed(() => route.path);
+const currentRouteName = computed(
+  () => route.meta.title || t("common.dashboard"),
+);
+
+function renderIcon(icon: any) {
+  return () => h(NIcon, null, { default: () => h(icon) });
+}
+
+const menuOptions = computed<MenuOption[]>(() => [
+  {
+    label: () => h(RouterLink, { to: "/" }, { default: () => t("menu.home") }),
+    key: "/",
+    icon: renderIcon(HomeOutline),
+  },
+  {
+    label: () =>
+      h(RouterLink, { to: "/training" }, { default: () => t("menu.training") }),
+    key: "/training",
+    icon: renderIcon(TrendingUpOutline),
+  },
+  {
+    label: () =>
+      h(RouterLink, { to: "/review" }, { default: () => t("menu.review") }),
+    key: "/review",
+    icon: renderIcon(BarChartOutline),
+  },
+  {
+    label: () =>
+      h(
+        RouterLink,
+        { to: "/leaderboard" },
+        { default: () => t("menu.leaderboard") },
+      ),
+    key: "/leaderboard",
+    icon: renderIcon(RibbonOutline),
+  },
+  {
+    type: "divider",
+    key: "d1",
+  },
+  {
+    label: () =>
+      h(RouterLink, { to: "/wallet" }, { default: () => t("menu.wallet") }),
+    key: "/wallet",
+    icon: renderIcon(WalletOutline),
+  },
+  {
+    label: () =>
+      h(
+        RouterLink,
+        { to: "/membership" },
+        { default: () => t("menu.membership") },
+      ),
+    key: "/membership",
+    icon: renderIcon(SchoolOutline),
+  },
+  {
+    label: () =>
+      h(RouterLink, { to: "/profile" }, { default: () => t("menu.profile") }),
+    key: "/profile",
+    icon: renderIcon(PersonOutline),
+  },
+  {
+    label: () =>
+      h(RouterLink, { to: "/settings" }, { default: () => t("menu.settings") }),
+    key: "/settings",
+    icon: renderIcon(SettingsOutline),
+  },
+  {
+    label: () =>
+      h(RouterLink, { to: "/about" }, { default: () => t("menu.about") }),
+    key: "/about",
+    icon: renderIcon(InformationCircleOutline),
+  },
+  {
+    type: "divider",
+    key: "d2",
+  },
+  {
+    label: t("menu.logout"),
+    key: "logout",
+    icon: renderIcon(LogOutOutline),
+  },
+]);
+
+function handleUpdateValue(key: string) {
+  if (key === "logout") {
+    router.push("/login");
+  }
+}
+</script>
