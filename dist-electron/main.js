@@ -54,7 +54,7 @@ function W(e) {
 function G(e) {
   console.log(`[dotenv@${y}][WARN] ${e}`);
 }
-function E(e) {
+function v(e) {
   console.log(`[dotenv@${y}][DEBUG] ${e}`);
 }
 function T(e) {
@@ -117,7 +117,7 @@ function H(e) {
   const r = g.resolve(process.cwd(), ".env");
   let n = "utf8";
   const o = !!(e && e.debug), i = e && "quiet" in e ? e.quiet : !0;
-  e && e.encoding ? n = e.encoding : o && E("No encoding is specified. UTF-8 is used by default");
+  e && e.encoding ? n = e.encoding : o && v("No encoding is specified. UTF-8 is used by default");
   let t = [r];
   if (e && e.path)
     if (!Array.isArray(e.path))
@@ -134,7 +134,7 @@ function H(e) {
       const l = a.parse(m.readFileSync(p, { encoding: n }));
       a.populate(c, l, e);
     } catch (l) {
-      o && E(`Failed to load ${p} ${l.message}`), s = l;
+      o && v(`Failed to load ${p} ${l.message}`), s = l;
     }
   let u = process.env;
   if (e && e.processEnv != null && (u = e.processEnv), a.populate(u, c, e), o || !i) {
@@ -144,7 +144,7 @@ function H(e) {
         const _ = g.relative(process.cwd(), V);
         l.push(_);
       } catch (_) {
-        o && E(`Failed to load ${V} ${_.message}`), s = _;
+        o && v(`Failed to load ${V} ${_.message}`), s = _;
       }
     T(`injecting env (${p}) from ${l.join(",")}`);
   }
@@ -183,7 +183,7 @@ function Z(e, r, n = {}) {
     throw t.code = "OBJECT_REQUIRED", t;
   }
   for (const t of Object.keys(r))
-    Object.prototype.hasOwnProperty.call(e, t) ? (i === !0 && (e[t] = r[t]), o && E(i === !0 ? `"${t}" is already defined and WAS overwritten` : `"${t}" is already defined and was NOT overwritten`)) : e[t] = r[t];
+    Object.prototype.hasOwnProperty.call(e, t) ? (i === !0 && (e[t] = r[t]), o && v(i === !0 ? `"${t}" is already defined and WAS overwritten` : `"${t}" is already defined and was NOT overwritten`)) : e[t] = r[t];
 }
 const a = {
   configDotenv: H,
@@ -214,20 +214,20 @@ const te = /* @__PURE__ */ Y(ee), $ = f.dirname(P(import.meta.url)), R = f.join(
 process.env.APP_ROOT = R;
 const D = process.env.VITE_DEV_SERVER_URL, ue = f.join(process.env.APP_ROOT, "dist-electron"), A = f.join(process.env.APP_ROOT, "dist");
 process.env.VITE_PUBLIC = D ? f.join(process.env.APP_ROOT, "public") : A;
-let v;
+let E;
 function b() {
-  v = new O({
+  E = new O({
     title: process.env.APP_NAME || "Stocks Only Pro",
-    icon: f.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
+    icon: f.join(process.env.VITE_PUBLIC, "app-icon.png"),
     webPreferences: {
       preload: f.join($, "preload.mjs")
     }
-  }), v.webContents.on("did-finish-load", () => {
-    v == null || v.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
-  }), D ? v.loadURL(D) : v.loadFile(f.join(A, "index.html"));
+  }), E.webContents.on("did-finish-load", () => {
+    E == null || E.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
+  }), D ? E.loadURL(D) : E.loadFile(f.join(A, "index.html"));
 }
 h.on("window-all-closed", () => {
-  process.platform !== "darwin" && (h.quit(), v = null);
+  process.platform !== "darwin" && (h.quit(), E = null);
 });
 h.on("activate", () => {
   O.getAllWindows().length === 0 && b();

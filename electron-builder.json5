@@ -12,10 +12,12 @@
     mirror: "https://npmmirror.com/mirrors/electron/",
   },
   mac: {
+    icon: "public/app-icon.png",
     target: ["dmg"],
     artifactName: "${productName}-Mac-${version}-Installer.${ext}",
   },
   win: {
+    icon: "public/app-icon.png",
     target: [
       {
         target: "nsis",
@@ -31,6 +33,7 @@
     deleteAppDataOnUninstall: false,
   },
   linux: {
+    icon: "public/app-icon.png",
     target: ["AppImage"],
     artifactName: "${productName}-Linux-${version}.${ext}",
   },

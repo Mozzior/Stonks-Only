@@ -7,8 +7,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc && vite build && ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ electron-builder",
-    "build:github": "vue-tsc && vite build && electron-builder",
+    "build": "vue-tsc && vite build && electron-builder",
     "preview": "vite preview"
   },
   "dependencies": {
