@@ -122,7 +122,31 @@ pnpm build
 
 调整以上字段后执行 `pnpm build` 生成对应平台安装包。
 
-### 可选环境变量（规划）
+### 环境变量（.env）
+
+项目支持从根目录 `.env` 系列文件读取配置，优先级：
+
+`.env.[mode].local` > `.env.[mode]` > `.env.local` > `.env`
+
+渲染进程需以 `VITE_` 前缀暴露变量；主进程可直接读取 `process.env`。
+
+示例：
+
+```
+# 主进程
+APP_NAME=Stock Trainer Pro
+
+# 渲染进程
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
+```
+
+当前生效点：
+
+- 主进程窗口标题：读取 `APP_NAME`，默认为 `Stock Trainer Pro`
+- 渲染进程：可通过 `import.meta.env.VITE_*` 访问变量
+
+可选变量说明：
 
 - `VITE_SUPABASE_URL`：Supabase 项目 URL
 - `VITE_SUPABASE_ANON_KEY`：Supabase 匿名 Key
