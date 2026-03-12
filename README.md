@@ -1,4 +1,4 @@
-# Stock Trainer Pro
+# Stocks Only Pro
 
 专业级股票交易训练桌面应用
 
@@ -23,7 +23,7 @@
 
 ## 简介
 
-Stock Trainer Pro 面向 **零基础股民 / 交易员 / 技术分析爱好者**，提供历史行情训练、模拟交易、绩效评估与排名机制。目标是提供一个可复现、可量化、可评估的训练闭环。
+Stocks Only Pro 面向 **零基础股民 / 交易员 / 技术分析爱好者**，提供历史行情训练、模拟交易、绩效评估与排名机制。目标是提供一个可复现、可量化、可评估的训练闭环。
 
 ## 功能总览
 
@@ -134,7 +134,7 @@ pnpm build
 
 ```
 # 主进程
-APP_NAME=Stock Trainer Pro
+APP_NAME=Stocks Only Pro
 
 # 渲染进程
 VITE_SUPABASE_URL=
@@ -143,7 +143,7 @@ VITE_SUPABASE_ANON_KEY=
 
 当前生效点：
 
-- 主进程窗口标题：读取 `APP_NAME`，默认为 `Stock Trainer Pro`
+- 主进程窗口标题：读取 `APP_NAME`，默认为 `Stocks Only Pro`
 - 渲染进程：可通过 `import.meta.env.VITE_*` 访问变量
 
 可选变量说明：
