@@ -32,7 +32,7 @@ let win: BrowserWindow | null;
 
 function createWindow() {
   win = new BrowserWindow({
-    title: process.env.APP_NAME || "Stocks Only Pro",
+    title: process.env.APP_NAME || "Stocks Only",
     icon: path.join(process.env.VITE_PUBLIC, "app-icon.png"),
     webPreferences: {
       preload: path.join(__dirname, "preload.mjs"),
