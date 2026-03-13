@@ -3,7 +3,10 @@ const electron = require("electron");
 electron.contextBridge.exposeInMainWorld("ipcRenderer", {
   on(...args) {
     const [channel, listener] = args;
-    return electron.ipcRenderer.on(channel, (event, ...args2) => listener(event, ...args2));
+    return electron.ipcRenderer.on(
+      channel,
+      (event, ...args2) => listener(event, ...args2)
+    );
   },
   off(...args) {
     const [channel, ...omit] = args;
@@ -20,6 +23,8 @@ electron.contextBridge.exposeInMainWorld("ipcRenderer", {
   // You can expose other APTs you need here.
   // ...
 });
+const env = electron.ipcRenderer.sendSync("env:getSync");
+electron.contextBridge.exposeInMainWorld("env", env);
 electron.contextBridge.exposeInMainWorld("db", {
   run: (sql, params = []) => electron.ipcRenderer.invoke("db:run", sql, params),
   get: (sql, params = []) => electron.ipcRenderer.invoke("db:get", sql, params),

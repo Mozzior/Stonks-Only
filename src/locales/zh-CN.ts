@@ -133,6 +133,10 @@ export default {
         success: "密码更新成功",
       },
     },
+    updatePassword: {
+      title: "重置密码",
+      subtitle: "请在下方输入您的新密码。",
+    },
     privacyPolicy: {
       title: "隐私政策",
       lastUpdated: "最后更新：{date}",

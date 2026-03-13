@@ -137,10 +137,12 @@ import {
   LogoGoogle, 
   LogoApple
 } from '@vicons/ionicons5'
+import { useAuth } from '../composables/useAuth'
 
 const router = useRouter()
 const message = useMessage()
 const { t } = useI18n()
+const { signIn } = useAuth()
 const formRef = ref<FormInst | null>(null)
 const loading = ref(false)
 
@@ -165,15 +167,19 @@ const rules = computed(() => ({
 
 function handleLogin(e: MouseEvent) {
   e.preventDefault()
-  formRef.value?.validate((errors) => {
+  formRef.value?.validate(async (errors) => {
     if (!errors) {
       loading.value = true
-      // Simulate API call
-      setTimeout(() => {
+      const { error } = await signIn(model.value.email, model.value.password)
+      
+      if (error) {
+        console.error('Login Error:', error)
+        message.error(error.message || 'Login failed')
+      } else {
         message.success(t('auth.login.messages.welcomeBack'))
-        loading.value = false
         router.push('/')
-      }, 1000)
+      }
+      loading.value = false
     } else {
       message.error(t('auth.login.messages.invalidCredentials'))
     }

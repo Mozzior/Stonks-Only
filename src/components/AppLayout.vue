@@ -56,7 +56,7 @@
           <div class="flex flex-col overflow-hidden">
             <span
               class="text-sm font-bold text-[var(--color-text-primary)] truncate"
-              >Trader Pro</span
+              >{{ userDisplay }}</span
             >
             <span
               class="text-[10px] text-[var(--color-text-secondary)] truncate"
@@ -123,11 +123,13 @@ import {
   SchoolOutline,
 } from "@vicons/ionicons5";
 import { useLayoutControl } from "../composables/useLayoutControl";
+import { useAuth } from "../composables/useAuth";
 
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
 const { isFullscreen } = useLayoutControl();
+const { user, signOut } = useAuth();
 const collapsed = ref(false);
 
 const activeKey = computed(() => route.path);
@@ -216,8 +218,13 @@ const menuOptions = computed<MenuOption[]>(() => [
   },
 ]);
 
-function handleUpdateValue(key: string) {
+const userDisplay = computed(() => {
+  return user.value?.email || 'Trader Pro'
+});
+
+async function handleUpdateValue(key: string) {
   if (key === "logout") {
+    await signOut();
     router.push("/login");
   }
 }

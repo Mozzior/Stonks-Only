@@ -170,10 +170,12 @@ import {
   PeopleOutline,
   SchoolOutline
 } from '@vicons/ionicons5'
+import { useAuth } from '../composables/useAuth'
 
 const router = useRouter()
 const message = useMessage()
 const { t } = useI18n()
+const { signUp } = useAuth()
 const formRef = ref<FormInst | null>(null)
 const loading = ref(false)
 
@@ -224,14 +226,24 @@ const rules = computed(() => ({
 
 function handleRegister(e: MouseEvent) {
   e.preventDefault()
-  formRef.value?.validate((errors) => {
+  formRef.value?.validate(async (errors) => {
     if (!errors) {
       loading.value = true
-      setTimeout(() => {
+      const { data, error } = await signUp(model.value.email, model.value.password, {
+        full_name: model.value.name
+      })
+      
+      if (error) {
+        console.error('Registration Error:', error)
+        message.error(error.message || 'Registration failed')
+      } else if (data.session) {
         message.success(t('auth.register.messages.success'))
-        loading.value = false
         router.push('/')
-      }, 1000)
+      } else {
+        message.success('Registration successful! Please check your email for verification.')
+        router.push('/login')
+      }
+      loading.value = false
     }
   })
 }

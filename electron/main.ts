@@ -15,7 +15,7 @@ const appRoot = path.join(__dirname, "..");
   const files = [`.env.${mode}.local`, `.env.${mode}`, `.env.local`, `.env`];
   for (const f of files) {
     const p = path.join(appRoot, f);
-    if (fs.existsSync(p)) dotenv.config({ path: p });
+    if (fs.existsSync(p)) dotenv.config({ path: p, override: true });
   }
 }
 process.env.APP_ROOT = appRoot;
@@ -85,16 +85,25 @@ app.whenReady().then(() => {
     console.error("Failed to initialize database:", error);
   }
 
+  ipcMain.on("env:getSync", (event) => {
+    event.returnValue = {
+      VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL,
+      VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY,
+    };
+  });
+
   // Register IPC Handlers
-  ipcMain.handle('db:run', (_, sql, params) => DBManager.run(sql, params));
-  ipcMain.handle('db:get', (_, sql, params) => DBManager.get(sql, params));
-  ipcMain.handle('db:all', (_, sql, params) => DBManager.all(sql, params));
-  
+  ipcMain.handle("db:run", (_, sql, params) => DBManager.run(sql, params));
+  ipcMain.handle("db:get", (_, sql, params) => DBManager.get(sql, params));
+  ipcMain.handle("db:all", (_, sql, params) => DBManager.all(sql, params));
+
   // Storage helpers
-  ipcMain.handle('storage:set', (_, key, value) => DBManager.setItem(key, value));
-  ipcMain.handle('storage:get', (_, key) => DBManager.getItem(key));
-  ipcMain.handle('storage:delete', (_, key) => DBManager.deleteItem(key));
-  ipcMain.handle('storage:getAll', () => DBManager.getAllItems());
+  ipcMain.handle("storage:set", (_, key, value) =>
+    DBManager.setItem(key, value),
+  );
+  ipcMain.handle("storage:get", (_, key) => DBManager.getItem(key));
+  ipcMain.handle("storage:delete", (_, key) => DBManager.deleteItem(key));
+  ipcMain.handle("storage:getAll", () => DBManager.getAllItems());
 
   createWindow();
 });

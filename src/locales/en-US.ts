@@ -133,6 +133,10 @@ export default {
         success: "Password updated successfully",
       },
     },
+    updatePassword: {
+      title: "Reset Password",
+      subtitle: "Enter your new password below.",
+    },
     privacyPolicy: {
       title: "Privacy Policy",
       lastUpdated: "Last Updated: {date}",

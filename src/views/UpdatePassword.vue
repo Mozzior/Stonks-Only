@@ -7,20 +7,20 @@
       
       <div class="z-10 text-center px-12">
         <h1 class="text-4xl font-bold text-[var(--color-text-primary)] mb-6">
-          {{ t('auth.changePassword.title') }}
+          {{ t('auth.updatePassword.title') || 'Reset Password' }}
         </h1>
         <p class="text-xl text-[var(--color-text-secondary)] max-w-md mx-auto leading-relaxed">
-          {{ t('auth.changePassword.subtitle') }}
+          {{ t('auth.updatePassword.subtitle') || 'Enter your new password below.' }}
         </p>
       </div>
     </div>
 
-    <!-- Right: Change Password Form -->
+    <!-- Right: Update Password Form -->
     <div class="w-full lg:w-1/2 flex flex-col p-8 relative h-full overflow-y-auto">
       <div class="w-full max-w-md mx-auto my-auto">
         <div class="mb-8">
-          <h2 class="text-3xl font-bold text-[var(--color-text-primary)] mb-2">{{ t('auth.changePassword.title') }}</h2>
-          <p class="text-[var(--color-text-secondary)]">{{ t('auth.changePassword.subtitle') }}</p>
+          <h2 class="text-3xl font-bold text-[var(--color-text-primary)] mb-2">{{ t('auth.updatePassword.title') || 'Reset Password' }}</h2>
+          <p class="text-[var(--color-text-secondary)]">{{ t('auth.updatePassword.subtitle') || 'Create a strong password for your account.' }}</p>
         </div>
 
         <n-form
@@ -29,19 +29,6 @@
           :rules="rules"
           size="large"
         >
-          <n-form-item path="oldPassword" :label="t('auth.changePassword.oldPassword')">
-            <n-input
-              v-model:value="model.oldPassword"
-              type="password"
-              show-password-on="click"
-              placeholder="••••••••"
-            >
-              <template #prefix>
-                <n-icon :component="LockClosedOutline" />
-              </template>
-            </n-input>
-          </n-form-item>
-          
           <n-form-item path="newPassword" :label="t('auth.changePassword.newPassword')">
             <n-input
               v-model:value="model.newPassword"
@@ -84,17 +71,10 @@
 
           <div class="flex gap-4 mt-8">
             <n-button
-              secondary
-              size="large"
-              class="flex-1"
-              @click="router.back()"
-            >
-              {{ t('common.cancel') }}
-            </n-button>
-            <n-button
               type="primary"
               size="large"
-              class="flex-1 font-bold"
+              block
+              class="font-bold"
               :loading="loading"
               @click="handleSubmit"
               :disabled="strength < 1"
@@ -124,7 +104,6 @@ import {
   FormInst, FormItemRule
 } from 'naive-ui'
 import { 
-  LockClosedOutline, 
   KeyOutline,
   CheckmarkCircleOutline
 } from '@vicons/ionicons5'
@@ -133,23 +112,17 @@ import { useAuth } from '../composables/useAuth'
 const router = useRouter()
 const message = useMessage()
 const { t } = useI18n()
-const { user, signIn, updatePassword } = useAuth()
+const { updatePassword } = useAuth()
 const formRef = ref<FormInst | null>(null)
 const loading = ref(false)
 const strength = ref(0)
 
 const model = ref({
-  oldPassword: '',
   newPassword: '',
   confirmNewPassword: ''
 })
 
 const rules = computed(() => ({
-  oldPassword: {
-    required: true,
-    message: t('auth.changePassword.messages.oldRequired'),
-    trigger: ['input', 'blur']
-  },
   newPassword: {
     required: true,
     message: t('auth.changePassword.messages.newRequired'),
@@ -210,29 +183,18 @@ const strengthColorClassBg = computed(() => {
   return ''
 })
 
-function handleSubmit(e: MouseEvent) {
+async function handleSubmit(e: MouseEvent) {
   e.preventDefault()
   formRef.value?.validate(async (errors) => {
     if (!errors) {
       loading.value = true
-      
-      // Verify old password
-      if (user.value?.email) {
-         const { error: signInError } = await signIn(user.value.email, model.value.oldPassword)
-         if (signInError) {
-            message.error(t('auth.changePassword.messages.oldMismatch') || 'Incorrect old password')
-            loading.value = false
-            return
-         }
-      }
-
       const { error } = await updatePassword(model.value.newPassword)
       
       if (error) {
         message.error(error.message)
       } else {
         message.success(t('auth.changePassword.messages.success'))
-        router.back()
+        router.push('/')
       }
       loading.value = false
     }

@@ -24,6 +24,10 @@ declare namespace NodeJS {
 // Used in Renderer process, expose in `preload.ts`
 interface Window {
   ipcRenderer: import('electron').IpcRenderer
+  env: {
+    VITE_SUPABASE_URL?: string
+    VITE_SUPABASE_ANON_KEY?: string
+  }
   db: {
     run: (sql: string, params?: any[]) => Promise<any>;
     get: <T = any>(sql: string, params?: any[]) => Promise<T | undefined>;
