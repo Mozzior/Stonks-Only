@@ -24,4 +24,15 @@ declare namespace NodeJS {
 // Used in Renderer process, expose in `preload.ts`
 interface Window {
   ipcRenderer: import('electron').IpcRenderer
+  db: {
+    run: (sql: string, params?: any[]) => Promise<any>;
+    get: <T = any>(sql: string, params?: any[]) => Promise<T | undefined>;
+    all: <T = any>(sql: string, params?: any[]) => Promise<T[]>;
+    storage: {
+      set: (key: string, value: any) => Promise<any>;
+      get: <T = any>(key: string) => Promise<T | null>;
+      delete: (key: string) => Promise<any>;
+      getAll: () => Promise<Record<string, any>>;
+    }
+  }
 }

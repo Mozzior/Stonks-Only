@@ -1,4 +1,7 @@
-import { app, BrowserWindow } from "electron";
+var __defProp = Object.defineProperty;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
+import { app, BrowserWindow, ipcMain } from "electron";
 import { fileURLToPath } from "node:url";
 import path$1 from "node:path";
 import fs$1 from "node:fs";
@@ -6,6 +9,7 @@ import require$$0 from "fs";
 import require$$1 from "path";
 import require$$2 from "os";
 import require$$3 from "crypto";
+import Database from "better-sqlite3";
 function getDefaultExportFromCjs(x) {
   return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, "default") ? x["default"] : x;
 }
@@ -300,6 +304,119 @@ main.exports.populate = DotenvModule.populate;
 main.exports = DotenvModule;
 var mainExports = main.exports;
 const dotenv = /* @__PURE__ */ getDefaultExportFromCjs(mainExports);
+let db = null;
+function getDB() {
+  if (!db) {
+    throw new Error("Database not initialized. Call initDB() first.");
+  }
+  return db;
+}
+function initDB() {
+  if (db) return db;
+  const userDataPath = app.getPath("userData");
+  const dbPath = path$1.join(userDataPath, "database.sqlite");
+  const dbDir = path$1.dirname(dbPath);
+  if (!fs$1.existsSync(dbDir)) {
+    fs$1.mkdirSync(dbDir, { recursive: true });
+  }
+  console.log(`Initializing database at: ${dbPath}`);
+  try {
+    db = new Database(dbPath, { verbose: console.log });
+    db.pragma("journal_mode = WAL");
+    return db;
+  } catch (error) {
+    console.error("Failed to initialize database:", error);
+    throw error;
+  }
+}
+class DBManager {
+  /**
+   * Initialize the database and create tables if they don't exist.
+   */
+  static init() {
+    this.db = initDB();
+    this.createTables();
+  }
+  static createTables() {
+    if (!this.db) return;
+    const createKVTable = `
+      CREATE TABLE IF NOT EXISTS app_storage (
+        key TEXT PRIMARY KEY,
+        value TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
+    this.db.exec(createKVTable);
+  }
+  /**
+   * Execute a query that does not return data (INSERT, UPDATE, DELETE).
+   */
+  static run(sql, params = []) {
+    const db2 = getDB();
+    const stmt = db2.prepare(sql);
+    return stmt.run(...params);
+  }
+  /**
+   * Execute a query that returns a single row.
+   */
+  static get(sql, params = []) {
+    const db2 = getDB();
+    const stmt = db2.prepare(sql);
+    return stmt.get(...params);
+  }
+  /**
+   * Execute a query that returns multiple rows.
+   */
+  static all(sql, params = []) {
+    const db2 = getDB();
+    const stmt = db2.prepare(sql);
+    return stmt.all(...params);
+  }
+  // --- Convenience Methods for App Storage ---
+  static setItem(key, value) {
+    const stringValue = JSON.stringify(value);
+    const sql = `
+      INSERT INTO app_storage (key, value, updated_at)
+      VALUES (?, ?, CURRENT_TIMESTAMP)
+      ON CONFLICT(key) DO UPDATE SET
+        value = excluded.value,
+        updated_at = excluded.updated_at;
+    `;
+    return this.run(sql, [key, stringValue]);
+  }
+  static getItem(key) {
+    const sql = `SELECT value FROM app_storage WHERE key = ?`;
+    const result = this.get(sql, [key]);
+    if (result && result.value) {
+      try {
+        return JSON.parse(result.value);
+      } catch (e) {
+        console.error(`Error parsing value for key ${key}:`, e);
+        return null;
+      }
+    }
+    return null;
+  }
+  static deleteItem(key) {
+    const sql = `DELETE FROM app_storage WHERE key = ?`;
+    return this.run(sql, [key]);
+  }
+  static getAllItems() {
+    const sql = `SELECT key, value FROM app_storage`;
+    const rows = this.all(sql);
+    const result = {};
+    for (const row of rows) {
+      try {
+        result[row.key] = JSON.parse(row.value);
+      } catch (e) {
+        result[row.key] = row.value;
+      }
+    }
+    return result;
+  }
+}
+__publicField(DBManager, "db", null);
 const __dirname$1 = path$1.dirname(fileURLToPath(import.meta.url));
 const appRoot = path$1.join(__dirname$1, "..");
 {
@@ -349,7 +466,22 @@ app.on("activate", () => {
     createWindow();
   }
 });
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  try {
+    DBManager.init();
+    console.log("Database initialized successfully");
+  } catch (error) {
+    console.error("Failed to initialize database:", error);
+  }
+  ipcMain.handle("db:run", (_, sql, params) => DBManager.run(sql, params));
+  ipcMain.handle("db:get", (_, sql, params) => DBManager.get(sql, params));
+  ipcMain.handle("db:all", (_, sql, params) => DBManager.all(sql, params));
+  ipcMain.handle("storage:set", (_, key, value) => DBManager.setItem(key, value));
+  ipcMain.handle("storage:get", (_, key) => DBManager.getItem(key));
+  ipcMain.handle("storage:delete", (_, key) => DBManager.deleteItem(key));
+  ipcMain.handle("storage:getAll", () => DBManager.getAllItems());
+  createWindow();
+});
 export {
   MAIN_DIST,
   RENDERER_DIST,

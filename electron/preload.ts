@@ -22,3 +22,15 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
   // You can expose other APTs you need here.
   // ...
 })
+
+contextBridge.exposeInMainWorld('db', {
+  run: (sql: string, params: any[] = []) => ipcRenderer.invoke('db:run', sql, params),
+  get: (sql: string, params: any[] = []) => ipcRenderer.invoke('db:get', sql, params),
+  all: (sql: string, params: any[] = []) => ipcRenderer.invoke('db:all', sql, params),
+  storage: {
+    set: (key: string, value: any) => ipcRenderer.invoke('storage:set', key, value),
+    get: (key: string) => ipcRenderer.invoke('storage:get', key),
+    delete: (key: string) => ipcRenderer.invoke('storage:delete', key),
+    getAll: () => ipcRenderer.invoke('storage:getAll'),
+  }
+})

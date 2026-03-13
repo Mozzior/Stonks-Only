@@ -8,12 +8,14 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc && vite build && electron-builder",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "postinstall": "electron-builder install-app-deps"
   },
   "dependencies": {
     "@klinecharts/pro": "^0.1.1",
     "@supabase/supabase-js": "^2.99.1",
     "@vicons/ionicons5": "^0.13.0",
+    "better-sqlite3": "^12.6.2",
     "dotenv": "^16.4.5",
     "klinecharts": "10.0.0-beta1",
     "naive-ui": "^2.44.1",
@@ -23,6 +25,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.2.1",
+    "@types/better-sqlite3": "^7.6.13",
     "@vitejs/plugin-vue": "^5.0.4",
     "autoprefixer": "^10.4.27",
     "electron": "^30.0.1",

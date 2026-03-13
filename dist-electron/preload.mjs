@@ -20,3 +20,14 @@ electron.contextBridge.exposeInMainWorld("ipcRenderer", {
   // You can expose other APTs you need here.
   // ...
 });
+electron.contextBridge.exposeInMainWorld("db", {
+  run: (sql, params = []) => electron.ipcRenderer.invoke("db:run", sql, params),
+  get: (sql, params = []) => electron.ipcRenderer.invoke("db:get", sql, params),
+  all: (sql, params = []) => electron.ipcRenderer.invoke("db:all", sql, params),
+  storage: {
+    set: (key, value) => electron.ipcRenderer.invoke("storage:set", key, value),
+    get: (key) => electron.ipcRenderer.invoke("storage:get", key),
+    delete: (key) => electron.ipcRenderer.invoke("storage:delete", key),
+    getAll: () => electron.ipcRenderer.invoke("storage:getAll")
+  }
+});
