@@ -24,7 +24,7 @@
         <div class="flex flex-col">
           <span
             class="text-xs text-[var(--color-text-secondary)] uppercase font-bold tracking-wider"
-            >Trading Symbol</span
+            >{{ t("training.header.tradingSymbol") }}</span
           >
           <span class="text-lg font-bold text-[var(--color-text-primary)]"
             >NVDA (Simulation)</span
@@ -34,7 +34,7 @@
         <div class="flex flex-col">
           <span
             class="text-xs text-[var(--color-text-secondary)] uppercase font-bold tracking-wider"
-            >Timeframe</span
+            >{{ t("training.header.timeframe") }}</span
           >
           <n-popselect
             v-model:value="currentTimeframe"
@@ -52,7 +52,7 @@
         <div class="flex flex-col">
           <span
             class="text-xs text-[var(--color-text-secondary)] uppercase font-bold tracking-wider"
-            >Account Balance</span
+            >{{ t("training.header.accountBalance") }}</span
           >
           <span class="text-lg font-bold text-[var(--color-brand-primary)]"
             >$125,430.50</span
@@ -69,7 +69,7 @@
               /></template>
             </n-button>
           </template>
-          Training Guide
+          {{ t("training.header.trainingGuide") }}
         </n-tooltip>
       </div>
     </div>
@@ -97,7 +97,7 @@
               <template #icon><n-icon :component="ScanOutline" /></template>
             </n-button>
           </template>
-          <span>Crosshair</span>
+          <span>{{ t("training.toolbar.crosshair") }}</span>
         </n-popover>
 
         <n-divider style="margin: 0" />
@@ -155,7 +155,7 @@
               <template #icon><n-icon :component="CameraOutline" /></template>
             </n-button>
           </template>
-          Screenshot
+          {{ t("training.toolbar.screenshot") }}
         </n-tooltip>
 
         <n-tooltip placement="right" trigger="hover">
@@ -164,7 +164,7 @@
               <template #icon><n-icon :component="SaveOutline" /></template>
             </n-button>
           </template>
-          Save Layout
+          {{ t("training.toolbar.saveLayout") }}
         </n-tooltip>
 
         <n-divider style="margin: 0" />
@@ -182,7 +182,7 @@
               <template #icon><n-icon :component="MagnetOutline" /></template>
             </n-button>
           </template>
-          Magnet Mode
+          {{ t("training.toolbar.magnetMode") }}
         </n-tooltip>
 
         <n-tooltip placement="right" trigger="hover">
@@ -199,7 +199,7 @@
               /></template>
             </n-button>
           </template>
-          Lock Drawing Mode
+          {{ t("training.toolbar.lockDrawing") }}
         </n-tooltip>
 
         <n-tooltip placement="right" trigger="hover">
@@ -208,7 +208,7 @@
               <template #icon><n-icon :component="TrashOutline" /></template>
             </n-button>
           </template>
-          Clear All Drawings (Shift + D)
+          {{ t("training.toolbar.clearDrawings") }}
         </n-tooltip>
 
         <n-tooltip placement="right" trigger="hover">
@@ -217,7 +217,7 @@
               <template #icon><n-icon :component="SettingsOutline" /></template>
             </n-button>
           </template>
-          Chart Settings
+          {{ t("training.toolbar.settings") }}
         </n-tooltip>
       </div>
 
@@ -282,7 +282,7 @@
                   <template #icon
                     ><n-icon :component="LayersOutline"
                   /></template>
-                  Indicators
+                  {{ t("training.toolbar.indicators") }}
                 </n-button>
               </template>
               <div class="grid grid-cols-3 gap-2 w-64">
@@ -322,7 +322,11 @@
                     /></template>
                   </n-button>
                 </template>
-                {{ isPlaying ? "Pause (Space)" : "Play (Space)" }}
+                {{
+                  isPlaying
+                    ? t("training.toolbar.pause")
+                    : t("training.toolbar.play")
+                }}
               </n-tooltip>
               <n-tooltip trigger="hover">
                 <template #trigger>
@@ -332,7 +336,7 @@
                     /></template>
                   </n-button>
                 </template>
-                Step Forward (→)
+                {{ t("training.toolbar.stepForward") }}
               </n-tooltip>
             </n-button-group>
 
@@ -380,9 +384,9 @@
               <div
                 class="w-2 h-2 rounded-full bg-[var(--color-success)] animate-pulse"
               ></div>
-              <span class="text-xs font-bold text-[var(--color-success)]"
-                >LIVE SESSION</span
-              >
+              <span class="text-xs font-bold text-[var(--color-success)]">{{
+                t("training.toolbar.liveSession")
+              }}</span>
             </div>
 
             <n-tooltip trigger="hover" v-if="isTrainingStarted">
@@ -402,7 +406,7 @@
               <div class="w-32 p-2">
                 <span
                   class="text-xs text-[var(--color-text-secondary)] mb-1 block"
-                  >Playback Speed</span
+                  >{{ t("training.toolbar.playbackSpeed") }}</span
                 >
                 <n-slider
                   v-model:value="playSpeed"
@@ -429,7 +433,7 @@
                   /></template>
                 </n-button>
               </template>
-              Quick Trade (T)
+              {{ t("training.toolbar.quickTrade") }}
             </n-tooltip>
 
             <n-divider vertical v-if="isTrainingStarted" />
@@ -441,7 +445,7 @@
               @click="startTraining"
               class="animate-pulse font-bold"
             >
-              START SESSION
+              {{ t("training.toolbar.startSession") }}
             </n-button>
             <n-button
               v-else
@@ -450,7 +454,7 @@
               size="small"
               @click="exitTraining"
             >
-              END SESSION
+              {{ t("training.toolbar.endSession") }}
             </n-button>
           </div>
         </div>
@@ -461,8 +465,9 @@
           class="absolute bottom-6 right-6 z-30 flex flex-col gap-2 bg-[var(--color-bg-card)] p-4 rounded-xl border border-[var(--color-border)] shadow-xl w-64"
         >
           <div class="flex justify-between items-center mb-2">
-            <span class="text-xs font-bold text-[var(--color-text-secondary)]"
-              >QUICK TRADE</span
+            <span
+              class="text-xs font-bold text-[var(--color-text-secondary)]"
+              >{{ t("training.trade.quickTradeTitle") }}</span
             >
             <span class="text-xs font-mono"
               >${{ currentPrice.toFixed(2) }}</span
@@ -470,11 +475,17 @@
           </div>
 
           <div class="flex gap-2">
-            <n-button type="primary" class="flex-1" @click="handleTrade('BUY')"
-              >LONG (B)</n-button
+            <n-button
+              type="primary"
+              class="flex-1"
+              @click="handleTrade('BUY')"
+              >{{ t("training.trade.buyLong") }}</n-button
             >
-            <n-button type="error" class="flex-1" @click="handleTrade('SELL')"
-              >SHORT (S)</n-button
+            <n-button
+              type="error"
+              class="flex-1"
+              @click="handleTrade('SELL')"
+              >{{ t("training.trade.sellShort") }}</n-button
             >
           </div>
 
@@ -482,7 +493,7 @@
             class="flex items-center justify-between mt-2 pt-2 border-t border-[var(--color-border)]"
           >
             <span class="text-xs text-[var(--color-text-secondary)]"
-              >Position:</span
+              >{{ t("training.trade.position") }}:</span
             >
             <span
               v-if="position"
@@ -507,7 +518,7 @@
             ghost
             class="mt-1"
             @click="closePosition"
-            >CLOSE ALL (C)</n-button
+            >{{ t("training.trade.closeAll") }}</n-button
           >
         </div>
 
@@ -530,17 +541,17 @@
       <div class="w-80 flex flex-col gap-4" v-show="!isTrainingStarted">
         <!-- Order Panel -->
         <n-card
-          title="Execute Trade"
+          :title="t('training.trade.executeTrade')"
           :bordered="false"
           class="bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)]"
         >
           <n-tabs type="segment" animated>
-            <n-tab-pane name="buy" tab="BUY">
+            <n-tab-pane name="buy" :tab="t('training.trade.buy')">
               <div class="space-y-4 pt-4">
                 <div class="flex flex-col gap-1">
-                  <span class="text-xs text-[var(--color-text-secondary)]"
-                    >Order Type</span
-                  >
+                  <span class="text-xs text-[var(--color-text-secondary)]">{{
+                    t("training.trade.orderType")
+                  }}</span>
                   <n-select
                     v-model:value="orderType"
                     :options="orderTypeOptions"
@@ -548,9 +559,9 @@
                   />
                 </div>
                 <div class="flex flex-col gap-1">
-                  <span class="text-xs text-[var(--color-text-secondary)]"
-                    >Amount (Shares)</span
-                  >
+                  <span class="text-xs text-[var(--color-text-secondary)]">{{
+                    t("training.trade.amountShares")
+                  }}</span>
                   <n-input-number
                     v-model:value="tradeAmount"
                     :min="100"
@@ -575,16 +586,16 @@
                   class="font-bold mt-4"
                   @click="handleTrade('BUY')"
                 >
-                  BUY LONG
+                  {{ t("training.trade.buyLong") }}
                 </n-button>
               </div>
             </n-tab-pane>
-            <n-tab-pane name="sell" tab="SELL">
+            <n-tab-pane name="sell" :tab="t('training.trade.sell')">
               <div class="space-y-4 pt-4">
                 <div class="flex flex-col gap-1">
-                  <span class="text-xs text-[var(--color-text-secondary)]"
-                    >Order Type</span
-                  >
+                  <span class="text-xs text-[var(--color-text-secondary)]">{{
+                    t("training.trade.orderType")
+                  }}</span>
                   <n-select
                     v-model:value="orderType"
                     :options="orderTypeOptions"
@@ -592,9 +603,9 @@
                   />
                 </div>
                 <div class="flex flex-col gap-1">
-                  <span class="text-xs text-[var(--color-text-secondary)]"
-                    >Amount (Shares)</span
-                  >
+                  <span class="text-xs text-[var(--color-text-secondary)]">{{
+                    t("training.trade.amountShares")
+                  }}</span>
                   <n-input-number
                     v-model:value="tradeAmount"
                     :min="100"
@@ -619,7 +630,7 @@
                   class="font-bold mt-4"
                   @click="handleTrade('SELL')"
                 >
-                  SELL SHORT
+                  {{ t("training.trade.sellShort") }}
                 </n-button>
               </div>
             </n-tab-pane>
@@ -628,7 +639,7 @@
 
         <!-- Current Position -->
         <n-card
-          title="Current Position"
+          :title="t('training.trade.openPosition')"
           :bordered="false"
           class="flex-1 bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)] overflow-hidden"
         >
@@ -648,18 +659,18 @@
 
             <div class="grid grid-cols-2 gap-4">
               <div class="flex flex-col">
-                <span class="text-xs text-[var(--color-text-secondary)]"
-                  >Entry Price</span
-                >
+                <span class="text-xs text-[var(--color-text-secondary)]">{{
+                  t("training.trade.avgEntry")
+                }}</span>
                 <span
                   class="text-sm font-medium text-[var(--color-text-primary)]"
                   >${{ position.entryPrice }}</span
                 >
               </div>
               <div class="flex flex-col items-end">
-                <span class="text-xs text-[var(--color-text-secondary)]"
-                  >Current Price</span
-                >
+                <span class="text-xs text-[var(--color-text-secondary)]">{{
+                  t("training.trade.marketPrice")
+                }}</span>
                 <span
                   class="text-sm font-medium text-[var(--color-text-primary)]"
                   >${{ currentPrice }}</span
@@ -671,9 +682,9 @@
               class="p-3 rounded-lg bg-[var(--color-bg-sidebar)] border border-[var(--color-border)]"
             >
               <div class="flex justify-between items-center mb-1">
-                <span class="text-xs text-[var(--color-text-secondary)]"
-                  >Unrealized P/L</span
-                >
+                <span class="text-xs text-[var(--color-text-secondary)]">{{
+                  t("training.trade.unrealizedPL")
+                }}</span>
                 <span
                   :class="
                     position.pl >= 0
@@ -689,11 +700,15 @@
                 class="flex justify-between text-[10px] text-[var(--color-text-secondary)]"
               >
                 <span
-                  >Value: ${{
+                  >{{ t("training.trade.value") }}: ${{
                     (position.amount * currentPrice).toFixed(2)
                   }}</span
                 >
-                <span>P/L: ${{ position.plAmount.toFixed(2) }}</span>
+                <span
+                  >{{ t("training.trade.pl") }}: ${{
+                    position.plAmount.toFixed(2)
+                  }}</span
+                >
               </div>
             </div>
 
@@ -703,7 +718,7 @@
               ghost
               size="small"
               @click="closePosition"
-              >CLOSE POSITION</n-button
+              >{{ t("training.trade.closePosition") }}</n-button
             >
           </div>
           <div
@@ -715,7 +730,7 @@
               :component="AnalyticsOutline"
               class="mb-2 opacity-20"
             />
-            <p class="text-xs">No active position</p>
+            <p class="text-xs">{{ t("training.trade.noActivePosition") }}</p>
           </div>
         </n-card>
       </div>
@@ -731,9 +746,11 @@
       >
         <span
           class="text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-widest"
-          >Trade History (Current Session)</span
+          >{{ t("training.history.title") }}</span
         >
-        <n-button text size="tiny" type="primary">View Full Journal</n-button>
+        <n-button text size="tiny" type="primary">{{
+          t("training.history.viewFullJournal")
+        }}</n-button>
       </div>
       <div class="flex-1 overflow-auto">
         <n-data-table
@@ -742,7 +759,13 @@
           size="small"
           :bordered="false"
           :pagination="false"
-        />
+        >
+          <template #empty>
+            <div class="p-4 text-center text-[var(--color-text-secondary)]">
+              {{ t("training.history.noTrades") }}
+            </div>
+          </template>
+        </n-data-table>
       </div>
     </div>
 
@@ -750,7 +773,7 @@
     <n-modal v-model:show="showHelp">
       <n-card
         style="width: 500px"
-        title="Training Mode Guide"
+        :title="t('training.guide.title')"
         :bordered="false"
         size="huge"
         role="dialog"
@@ -763,23 +786,35 @@
         </template>
         <div class="space-y-4 text-[var(--color-text-secondary)]">
           <p>
-            Welcome to the <strong>Stock Training Simulator</strong>. This mode
-            is designed to help you practice technical analysis without real
-            financial risk.
+            {{ t("training.guide.welcome") }}
           </p>
           <ul class="list-disc pl-5 space-y-2">
             <li>
-              <strong>Stepping:</strong> Use "Forward" to reveal the next
-              candle. This forces you to make decisions based only on visible
-              data.
+              <strong>{{ t("training.guide.stepping") }}:</strong>
+              {{
+                t(
+                  "training.guide.steppingDesc",
+                  "Use 'Forward' to reveal the next candle. This forces you to make decisions based only on visible data.",
+                )
+              }}
             </li>
             <li>
-              <strong>Simulation:</strong> All trades are executed against
-              historical data at the prices shown on the chart.
+              <strong>{{ t("training.guide.simulation") }}:</strong>
+              {{
+                t(
+                  "training.guide.simulationDesc",
+                  "All trades are executed against historical data at the prices shown on the chart.",
+                )
+              }}
             </li>
             <li>
-              <strong>Strategy:</strong> Use this environment to test your entry
-              and exit criteria.
+              <strong>{{ t("training.guide.strategy") }}:</strong>
+              {{
+                t(
+                  "training.guide.strategyDesc",
+                  "Use this environment to test your entry and exit criteria.",
+                )
+              }}
             </li>
           </ul>
         </div>
@@ -789,7 +824,7 @@
     <n-modal v-model:show="showSettings">
       <n-card
         style="width: 400px"
-        title="Chart Settings"
+        :title="t('training.toolbar.settings')"
         :bordered="false"
         size="huge"
         role="dialog"
@@ -803,25 +838,60 @@
 
         <div class="space-y-4">
           <div class="flex items-center justify-between">
-            <span>Show Grid</span>
+            <span>{{ t("training.settings.showGrid") }}</span>
             <n-switch
               v-model:value="chartSettings.grid"
               @update:value="updateChartSettings"
             />
           </div>
           <div class="flex items-center justify-between">
-            <span>Show Crosshair</span>
+            <span>{{ t("training.settings.showCrosshair") }}</span>
             <n-switch
               v-model:value="chartSettings.crosshair"
               @update:value="updateChartSettings"
             />
           </div>
           <div class="flex items-center justify-between">
-            <span>Show Tooltip</span>
+            <span>{{ t("training.settings.showTooltip") }}</span>
             <n-switch
               v-model:value="chartSettings.tooltip"
               @update:value="updateChartSettings"
             />
+          </div>
+        </div>
+      </n-card>
+    </n-modal>
+
+    <!-- Text Input Modal -->
+    <n-modal v-model:show="showTextModal">
+      <n-card
+        style="width: 400px"
+        :title="t('training.drawing.enterText')"
+        :bordered="false"
+        size="huge"
+        role="dialog"
+        aria-modal="true"
+      >
+        <template #header-extra>
+          <n-button quaternary circle @click="cancelText">
+            <template #icon><n-icon :component="CloseOutline" /></template>
+          </n-button>
+        </template>
+        <div class="space-y-4">
+          <n-input
+            v-model:value="editingText"
+            type="text"
+            :placeholder="t('training.drawing.textPlaceholder')"
+            autofocus
+            @keydown.enter="saveText"
+          />
+          <div class="flex justify-end">
+            <n-button type="primary" @click="saveText">{{
+              t("common.save")
+            }}</n-button>
+            <n-button class="ml-2" @click="cancelText">{{
+              t("common.cancel")
+            }}</n-button>
           </div>
         </div>
       </n-card>
@@ -838,7 +908,9 @@ import {
   shallowRef,
   watch,
   nextTick,
+  computed,
 } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import {
   NDivider,
@@ -910,6 +982,7 @@ const router = useRouter();
 const message = useMessage();
 const { isDark, candleColorMode } = useTheme();
 const { setFullscreen } = useLayoutControl();
+const { t } = useI18n();
 
 // State
 const isChartLoaded = ref(false);
@@ -930,12 +1003,16 @@ const chartInstance = shallowRef<Chart | null>(null);
 const isMounted = ref(true);
 const isMagnetMode = ref(false);
 const isDrawingLocked = ref(false);
+const showTextModal = ref(false);
+const editingText = ref("");
+const pendingTextOverlay = ref<any>(null);
 let playInterval: any = null;
 let updateDataCallback: ((data: KLineData) => void) | null = null;
 let resizeHandler: (() => void) | null = null;
 
 // Data
-const timeframeOptions = [
+const timeframeOptions = computed(() => [
+  { label: t("training.header.timeframe"), value: "Daily" }, // Placeholder for current
   { label: "1 Minute", value: "1m" },
   { label: "5 Minutes", value: "5m" },
   { label: "15 Minutes", value: "15m" },
@@ -944,16 +1021,16 @@ const timeframeOptions = [
   { label: "4 Hours", value: "4h" },
   { label: "Daily", value: "1d" },
   { label: "Weekly", value: "1w" },
-];
+]);
 
-const chartTypeOptions = [
-  { label: "Candle Solid", value: "candle_solid" },
-  { label: "Candle Stroke", value: "candle_stroke" },
-  { label: "Candle Up Stroke", value: "candle_up_stroke" },
-  { label: "Candle Down Stroke", value: "candle_down_stroke" },
-  { label: "OHLC", value: "ohlc" },
-  { label: "Area", value: "area" },
-];
+const chartTypeOptions = computed(() => [
+  { label: t("training.settings.candleSolid"), value: "candle_solid" },
+  { label: t("training.settings.candleStroke"), value: "candle_stroke" },
+  { label: t("training.settings.candleUpStroke"), value: "candle_up_stroke" },
+  { label: t("training.settings.candleDownStroke"), value: "candle_down_stroke" },
+  { label: t("training.settings.ohlc"), value: "ohlc" },
+  { label: t("training.settings.area"), value: "area" },
+]);
 
 const indicatorOptions = [
   { label: "MA", key: "MA" },
@@ -978,15 +1055,27 @@ const indicatorOptions = [
   { label: "MTM", key: "MTM" },
 ];
 
-const drawingTools = [
+const drawingTools = computed(() => [
   {
     group: "Lines",
     items: [
-      { label: "Trend Line (L)", key: "trendLine", icon: AnalyticsOutline },
-      { label: "Ray Line", key: "rayLine", icon: ArrowForwardOutline },
-      { label: "Horizontal Line (H)", key: "priceLine", icon: CreateOutline },
       {
-        label: "Vertical Line (V)",
+        label: t("training.drawing.trendLine"),
+        key: "trendLine",
+        icon: AnalyticsOutline,
+      },
+      {
+        label: t("training.drawing.rayLine"),
+        key: "rayLine",
+        icon: ArrowForwardOutline,
+      },
+      {
+        label: t("training.drawing.horizontalLine"),
+        key: "priceLine",
+        icon: CreateOutline,
+      },
+      {
+        label: t("training.drawing.verticalLine"),
         key: "verticalRayLine",
         icon: ResizeOutline,
       },
@@ -995,27 +1084,45 @@ const drawingTools = [
   {
     group: "Shapes",
     items: [
-      { label: "Brush (P)", key: "brush", icon: BrushOutline },
-      { label: "Rectangle (R)", key: "rectangle", icon: ResizeOutline },
-      { label: "Circle (O)", key: "circle", icon: RadioButtonOffOutline },
+      {
+        label: t("training.drawing.brush"),
+        key: "brush",
+        icon: BrushOutline,
+      },
+      {
+        label: t("training.drawing.rectangle"),
+        key: "rectangle",
+        icon: ResizeOutline,
+      },
+      {
+        label: t("training.drawing.circle"),
+        key: "circle",
+        icon: RadioButtonOffOutline,
+      },
     ],
   },
   {
     group: "Fibs",
     items: [
-      { label: "Fibonacci (F)", key: "fibonacciLine", icon: ScanOutline },
+      {
+        label: t("training.drawing.fibonacci"),
+        key: "fibonacciLine",
+        icon: ScanOutline,
+      },
     ],
   },
   {
     group: "Text",
-    items: [{ label: "Text", key: "simpleAnnotation", icon: TextOutline }],
+    items: [
+      { label: t("training.drawing.text"), key: "text", icon: TextOutline },
+    ],
   },
-];
+]);
 
-const orderTypeOptions = [
-  { label: "Market Order", value: "MARKET" },
-  { label: "Limit Order", value: "LIMIT" },
-];
+const orderTypeOptions = computed(() => [
+  { label: t("training.trade.marketOrder"), value: "MARKET" },
+  { label: t("training.trade.limitOrder"), value: "LIMIT" },
+]);
 
 const position = ref<any>(null);
 
@@ -1031,10 +1138,10 @@ const tradeHistory = ref([
   },
 ]);
 
-const historyColumns = [
-  { title: "Time", key: "time" },
+const historyColumns = computed(() => [
+  { title: t("training.history.time"), key: "time" },
   {
-    title: "Type",
+    title: t("training.history.type"),
     key: "type",
     render(row: any) {
       return h(
@@ -1048,20 +1155,24 @@ const historyColumns = [
       );
     },
   },
-  { title: "Price", key: "price", render: (row: any) => `$${row.price}` },
-  { title: "Amount", key: "amount" },
   {
-    title: "Total",
+    title: t("training.history.price"),
+    key: "price",
+    render: (row: any) => `$${row.price}`,
+  },
+  { title: t("training.history.amount"), key: "amount" },
+  {
+    title: t("training.history.total"),
     key: "total",
     render: (row: any) => `$${row.total.toLocaleString()}`,
   },
   {
-    title: "Status",
+    title: t("training.history.status"),
     key: "status",
     render: (row: any) =>
       h(NTag, { size: "tiny", ghost: true }, { default: () => row.status }),
   },
-];
+]);
 
 // Mock Data Generator
 // Moved to src/utils/mockData.ts
@@ -1346,6 +1457,107 @@ onMounted(() => {
     },
   });
 
+  registerOverlay({
+    name: "tradeMarker",
+    totalStep: 1,
+    needDefaultPointFigure: false,
+    needDefaultXAxisFigure: false,
+    needDefaultYAxisFigure: false,
+    createPointFigures: ({ coordinates, overlay }) => {
+      const extendData = overlay.extendData as any;
+      const type = extendData?.type ?? "BUY";
+      const price = extendData?.price ?? 0;
+      if (coordinates.length > 0) {
+        const x = coordinates[0].x;
+        const y = coordinates[0].y;
+
+        // Up arrow for BUY, Down arrow for SELL
+        const isBuy = type === "BUY";
+        const color = isBuy ? "#10B981" : "#EF4444";
+        const text = isBuy ? "B" : "S";
+
+        // Triangle points
+        // BUY: Arrow Up
+        // SELL: Arrow Down
+        const size = 8;
+        const arrowPoints = isBuy
+          ? [
+              { x: x, y: y + 20 },
+              { x: x - size, y: y + 20 + size * 1.5 },
+              { x: x + size, y: y + 20 + size * 1.5 },
+            ]
+          : [
+              { x: x, y: y - 20 },
+              { x: x - size, y: y - 20 - size * 1.5 },
+              { x: x + size, y: y - 20 - size * 1.5 },
+            ];
+
+        return [
+          {
+            type: "polygon",
+            attrs: {
+              coordinates: arrowPoints,
+            },
+            styles: { style: "fill", color: color },
+            ignoreEvent: true,
+          },
+          {
+            type: "text",
+            attrs: {
+              x: x,
+              y: isBuy ? y + 40 : y - 40,
+              text: text,
+              baseline: isBuy ? "top" : "bottom",
+              align: "center",
+            },
+            styles: {
+              color: "#FFFFFF",
+              backgroundColor: color,
+              paddingLeft: 4,
+              paddingRight: 4,
+              paddingTop: 2,
+              paddingBottom: 2,
+              borderRadius: 2,
+              size: 10,
+            },
+            ignoreEvent: true,
+          },
+          // Line connecting to price? Optional.
+          // Let's keep it simple first.
+        ];
+      }
+      return [];
+    },
+  });
+
+  registerOverlay({
+    name: "text",
+    totalStep: 1,
+    needDefaultPointFigure: false,
+    needDefaultXAxisFigure: false,
+    needDefaultYAxisFigure: false,
+    createPointFigures: ({ coordinates, overlay }) => {
+      const text = (overlay.extendData as any)?.text || "";
+      if (coordinates.length > 0 && text) {
+        return [
+          {
+            type: "text",
+            attrs: {
+              x: coordinates[0].x,
+              y: coordinates[0].y,
+              text: text,
+            },
+            styles: {
+              color: isDark.value ? "#FFFFFF" : "#000000",
+              size: 14,
+            },
+          },
+        ];
+      }
+      return [];
+    },
+  });
+
   isMounted.value = true;
   if (!chartRef.value) {
     console.error("Chart container not found");
@@ -1601,11 +1813,15 @@ function updateChart() {
 
 // Actions
 function handleTimeframeChange(value: string) {
-  const option = timeframeOptions.find((o) => o.value === value);
+  const option = timeframeOptions.value.find((o) => o.value === value);
   if (!option) return;
 
   currentTimeframe.value = option.label;
-  message.info(`Switched to ${currentTimeframe.value} timeframe`);
+  message.info(
+    t("training.messages.switchedTimeframe", {
+      timeframe: currentTimeframe.value,
+    }),
+  );
 
   if (!chartInstance.value) return;
 
@@ -1666,10 +1882,10 @@ function stopPlay() {
 function togglePlay() {
   if (isPlaying.value) {
     stopPlay();
-    message.info("Playback paused");
+    message.info(t("training.messages.playbackPaused"));
   } else {
     startPlay();
-    message.success("Playback started");
+    message.success(t("training.messages.playbackStarted"));
   }
 }
 
@@ -1681,7 +1897,7 @@ function stepForward() {
 }
 
 function stepBackward() {
-  message.warning("Cannot step backward in simulation mode");
+  message.warning(t("training.messages.cannotStepBackward"));
 }
 
 function toggleIndicator(name: string) {
@@ -1785,7 +2001,7 @@ function setDrawingTool(name: string) {
         },
       },
     });
-    message.info("Cursor mode: Crosshair");
+    message.info(t("training.messages.cursorCrosshair"));
     return;
   }
 
@@ -1814,7 +2030,16 @@ function setDrawingTool(name: string) {
     lock: false,
     mode: "normal",
     styles: {},
-    onDrawEnd: () => {
+    onDrawEnd: (event: any) => {
+      if (name === "text") {
+        const overlay = event.overlay;
+        if (overlay) {
+          pendingTextOverlay.value = overlay;
+          editingText.value = "";
+          showTextModal.value = true;
+        }
+      }
+
       if (isDrawingLocked.value) {
         setTimeout(() => {
           if (currentDrawingTool.value === name && chartInstance.value) {
@@ -1858,7 +2083,7 @@ function takeScreenshot() {
   a.href = url;
   a.download = `chart_screenshot_${Date.now()}.png`;
   a.click();
-  message.success("Screenshot saved");
+  message.success(t("training.messages.screenshotSaved"));
 }
 
 function saveLayout() {
@@ -1871,7 +2096,7 @@ function saveLayout() {
     "stonks_training_indicators",
     JSON.stringify(indicators.value),
   );
-  message.success("Layout configuration saved");
+  message.success(t("training.messages.layoutSaved"));
 }
 
 const showSettings = ref(false);
@@ -1924,7 +2149,9 @@ function setAmountByPercent(p: number) {
 
 function handleTrade(side: string) {
   if (position.value) {
-    message.error("You already have an open position. Close it first.");
+    message.error(
+      t("training.messages.alreadyHavePosition", { side: position.value.side }),
+    );
     return;
   }
 
@@ -1933,6 +2160,7 @@ function handleTrade(side: string) {
     side: side === "BUY" ? "LONG" : "SHORT",
     amount: tradeAmount.value,
     entryPrice: currentPrice.value,
+    entryTime: fullData.value[currentIndex.value].timestamp, // Record entry time for T+1 check
     pl: 0,
     plAmount: 0,
   };
@@ -1947,11 +2175,50 @@ function handleTrade(side: string) {
     status: "FILLED",
   });
 
-  message.success(`${side} order filled at $${currentPrice.value.toFixed(2)}`);
+  // Add marker to chart
+  if (chartInstance.value) {
+    const timestamp = fullData.value[currentIndex.value].timestamp;
+    chartInstance.value.createOverlay({
+      name: "tradeMarker",
+      extendData: { type: side, price: currentPrice.value },
+      points: [{ timestamp: timestamp, value: currentPrice.value }],
+    });
+  }
+
+  message.success(
+    t("training.messages.orderFilled", {
+      side,
+      price: currentPrice.value.toFixed(2),
+    }),
+  );
 }
 
 function closePosition() {
   if (!position.value) return;
+
+  // T+1 Rule Check
+  // In simulation, we check if the current candle timestamp is greater than entry timestamp
+  // Assuming daily candles, next index is next day.
+  // For intraday, we might need to check the date part of timestamp.
+  // Let's implement a simple check: must be at least next candle for now,
+  // or check date difference if timestamps are available.
+
+  const currentTimestamp = fullData.value[currentIndex.value].timestamp;
+  const entryTimestamp = position.value.entryTime;
+
+  // Convert timestamps to dates to check if it's the same day
+  const currentDate = new Date(currentTimestamp);
+  const entryDate = new Date(entryTimestamp);
+
+  const isSameDay =
+    currentDate.getFullYear() === entryDate.getFullYear() &&
+    currentDate.getMonth() === entryDate.getMonth() &&
+    currentDate.getDate() === entryDate.getDate();
+
+  if (isSameDay) {
+    message.warning(t("training.messages.tPlusOneWarning"));
+    return;
+  }
 
   const side = position.value.side === "LONG" ? "SELL" : "BUY";
   const total = currentPrice.value * position.value.amount;
@@ -1966,8 +2233,19 @@ function closePosition() {
     status: "FILLED",
   });
 
+  // Add marker to chart
+  if (chartInstance.value) {
+    const timestamp = fullData.value[currentIndex.value].timestamp;
+    const type = side === "BUY" ? "BUY" : "SELL"; // Closing SHORT is BUY, Closing LONG is SELL
+    chartInstance.value.createOverlay({
+      name: "tradeMarker",
+      extendData: { type: type, price: currentPrice.value },
+      points: [{ timestamp: timestamp, value: currentPrice.value }],
+    });
+  }
+
   const pl = position.value.plAmount;
-  message.success(`Position closed. P/L: $${pl.toFixed(2)}`);
+  message.success(t("training.messages.positionClosed", { pl: pl.toFixed(2) }));
   position.value = null;
 }
 
@@ -1979,7 +2257,7 @@ function exitTraining() {
     if (document.fullscreenElement) {
       document.exitFullscreen().catch((err) => console.error(err));
     }
-    message.info("Session Ended");
+    message.info(t("training.messages.sessionEnded"));
   } else {
     router.push("/");
   }
@@ -1991,7 +2269,35 @@ function startTraining() {
   document.documentElement.requestFullscreen().catch((err) => {
     console.error("Error attempting to enable fullscreen:", err);
   });
-  message.success("Training Session Started");
+  message.success(t("training.messages.sessionStarted"));
+}
+
+function saveText() {
+  if (!pendingTextOverlay.value || !chartInstance.value) return;
+
+  const text = editingText.value;
+  if (text) {
+    chartInstance.value.overrideOverlay({
+      id: pendingTextOverlay.value.id,
+      extendData: { text: text },
+    });
+    message.success(t("training.messages.textAdded"));
+  } else {
+    chartInstance.value.removeOverlay({ id: pendingTextOverlay.value.id });
+  }
+
+  showTextModal.value = false;
+  pendingTextOverlay.value = null;
+  editingText.value = "";
+}
+
+function cancelText() {
+  if (pendingTextOverlay.value && chartInstance.value) {
+    chartInstance.value.removeOverlay({ id: pendingTextOverlay.value.id });
+  }
+  showTextModal.value = false;
+  pendingTextOverlay.value = null;
+  editingText.value = "";
 }
 </script>
 

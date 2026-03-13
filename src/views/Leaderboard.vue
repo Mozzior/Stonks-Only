@@ -9,7 +9,7 @@
           <n-avatar round size="large" src="https://i.pravatar.cc/150?u=wolf" class="mx-auto mb-4 border-4 border-[var(--color-border)] shadow-xl" />
           <div class="text-lg font-bold text-[var(--color-text-primary)]">wolf</div>
           <div class="text-[var(--color-brand-primary)] font-black text-xl">+95.4%</div>
-          <div class="text-xs text-[var(--color-text-secondary)] uppercase mt-2">Rank 2</div>
+          <div class="text-xs text-[var(--color-text-secondary)] uppercase mt-2">{{ t('leaderboard.top3.rank2') }}</div>
         </n-card>
       </div>
 
@@ -23,7 +23,7 @@
           <n-avatar round :size="80" src="https://i.pravatar.cc/150?u=trader01" class="mx-auto mb-4 border-4 border-yellow-500 shadow-xl" />
           <div class="text-xl font-black text-[var(--color-text-primary)]">trader01</div>
           <div class="text-yellow-500 font-black text-3xl">+120.2%</div>
-          <div class="text-xs text-yellow-500/70 uppercase font-bold mt-2">Champion</div>
+          <div class="text-xs text-yellow-500/70 uppercase font-bold mt-2">{{ t('leaderboard.top3.champion') }}</div>
         </n-card>
       </div>
 
@@ -34,7 +34,7 @@
           <n-avatar round size="medium" src="https://i.pravatar.cc/150?u=eagle" class="mx-auto mb-4 border-4 border-[var(--color-border)] shadow-xl" />
           <div class="text-lg font-bold text-[var(--color-text-primary)]">eagle</div>
           <div class="text-[var(--color-brand-primary)] font-black text-xl">+88.7%</div>
-          <div class="text-xs text-[var(--color-text-secondary)] uppercase mt-2">Rank 3</div>
+          <div class="text-xs text-[var(--color-text-secondary)] uppercase mt-2">{{ t('leaderboard.top3.rank3') }}</div>
         </n-card>
       </div>
     </div>
@@ -42,14 +42,14 @@
     <!-- Filter & Search -->
     <div class="flex items-center justify-between bg-[var(--color-bg-card)] p-4 rounded-xl border border-[var(--color-border)] mt-8">
       <n-radio-group v-model:value="timeframe" size="medium">
-        <n-radio-button value="daily">Daily</n-radio-button>
-        <n-radio-button value="weekly">Weekly</n-radio-button>
-        <n-radio-button value="monthly">Monthly</n-radio-button>
-        <n-radio-button value="all">All Time</n-radio-button>
+        <n-radio-button value="daily">{{ t('leaderboard.filters.daily') }}</n-radio-button>
+        <n-radio-button value="weekly">{{ t('leaderboard.filters.weekly') }}</n-radio-button>
+        <n-radio-button value="monthly">{{ t('leaderboard.filters.monthly') }}</n-radio-button>
+        <n-radio-button value="all">{{ t('leaderboard.filters.allTime') }}</n-radio-button>
       </n-radio-group>
       
       <div class="flex gap-4">
-        <n-input v-model:value="searchQuery" placeholder="Search trader..." size="medium" class="w-64">
+        <n-input v-model:value="searchQuery" :placeholder="t('leaderboard.searchPlaceholder')" size="medium" class="w-64">
           <template #prefix><n-icon :component="SearchOutline" /></template>
         </n-input>
       </div>
@@ -57,7 +57,7 @@
 
     <!-- Leaderboard Table -->
     <n-card :bordered="false" class="bg-[var(--color-bg-card)] rounded-2xl border border-[var(--color-border)] overflow-hidden">
-      <n-empty v-if="filteredLeaderboard.length === 0" description="No traders found" class="py-12" />
+      <n-empty v-if="filteredLeaderboard.length === 0" :description="t('leaderboard.noTradersFound')" class="py-12" />
       <n-data-table
         v-else
         :columns="columns"
@@ -71,17 +71,20 @@
 
 <script setup lang="ts">
 import { ref, h, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { 
   NCard, NAvatar, NIcon, NRadioGroup, NRadioButton, NInput, NDataTable, NTag, NEmpty
 } from 'naive-ui'
 import { SearchOutline, RibbonOutline, TrendingUpOutline, TrophyOutline, MedalOutline } from '@vicons/ionicons5'
 
+const { t } = useI18n()
+
 const timeframe = ref('weekly')
 const searchQuery = ref('')
 
-const columns = [
+const columns = computed(() => [
   { 
-    title: 'Rank', 
+    title: t('leaderboard.rank'), 
     key: 'rank',
     width: 80,
     render(row: any) {
@@ -92,40 +95,40 @@ const columns = [
     }
   },
   {
-    title: 'Trader',
+    title: t('leaderboard.trader'),
     key: 'user',
     render(row: any) {
       return h('div', { class: 'flex items-center gap-3' }, [
         h(NAvatar, { round: true, size: 'small', src: row.avatar }),
         h('div', { class: 'flex flex-col' }, [
           h('span', { class: 'font-bold text-[var(--color-text-primary)]' }, row.user),
-          h('span', { class: 'text-[10px] text-[var(--color-text-secondary)]' }, `Level ${row.level}`)
+          h('span', { class: 'text-[10px] text-[var(--color-text-secondary)]' }, `${t('leaderboard.level')} ${row.level}`)
         ])
       ])
     }
   },
   {
-    title: 'Win Rate',
+    title: t('leaderboard.winRate'),
     key: 'winRate',
     render(row: any) {
       return h('span', { class: 'text-[var(--color-text-secondary)]' }, `${row.winRate}%`)
     }
   },
   {
-    title: 'Profit',
+    title: t('leaderboard.profit'),
     key: 'pl',
     render(row: any) {
       return h('span', { class: 'text-[var(--color-success)] font-bold' }, `+${row.pl}%`)
     }
   },
   {
-    title: 'Trades',
+    title: t('leaderboard.trades'),
     key: 'trades',
     render(row: any) {
       return h('span', { class: 'text-[var(--color-text-secondary)]' }, row.trades)
     }
   }
-]
+])
 
 const leaderboardData = [
   { rank: 4, user: 'BullRunner', level: 42, winRate: 72, trades: 450, pl: 75.2 },

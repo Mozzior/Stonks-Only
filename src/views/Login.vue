@@ -8,24 +8,24 @@
       
       <div class="z-10 text-center px-12">
         <h1 class="text-5xl font-bold text-[var(--color-text-primary)] mb-6 tracking-tight">
-          Master the <span class="text-[var(--color-brand-primary)]">Market</span>
+          {{ t('auth.login.title') }}
         </h1>
         <p class="text-xl text-[var(--color-text-secondary)] max-w-md mx-auto leading-relaxed">
-          Professional-grade stock training platform. Practice with historical data, simulate trades, and refine your strategy risk-free.
+          {{ t('auth.login.subtitle') }}
         </p>
         
         <div class="mt-12 flex justify-center gap-4">
           <div class="p-4 bg-[var(--color-bg-card)] backdrop-blur-sm rounded-2xl border border-[var(--color-border)]">
             <div class="text-2xl font-bold text-[var(--color-brand-primary)]">100%</div>
-            <div class="text-sm text-[var(--color-text-secondary)]">Risk Free</div>
+            <div class="text-sm text-[var(--color-text-secondary)]">{{ t('auth.login.features.riskFree') }}</div>
           </div>
           <div class="p-4 bg-[var(--color-bg-card)] backdrop-blur-sm rounded-2xl border border-[var(--color-border)]">
             <div class="text-2xl font-bold text-blue-400">Real</div>
-            <div class="text-sm text-[var(--color-text-secondary)]">Market Data</div>
+            <div class="text-sm text-[var(--color-text-secondary)]">{{ t('auth.login.features.marketData') }}</div>
           </div>
           <div class="p-4 bg-[var(--color-bg-card)] backdrop-blur-sm rounded-2xl border border-[var(--color-border)]">
             <div class="text-2xl font-bold text-purple-400">Pro</div>
-            <div class="text-sm text-[var(--color-text-secondary)]">Analytics</div>
+            <div class="text-sm text-[var(--color-text-secondary)]">{{ t('auth.login.features.analytics') }}</div>
           </div>
         </div>
       </div>
@@ -35,8 +35,8 @@
     <div class="w-full lg:w-1/2 flex items-center justify-center p-8 relative">
       <div class="w-full max-w-md">
         <div class="mb-10">
-          <h2 class="text-3xl font-bold text-[var(--color-text-primary)] mb-2">Welcome back</h2>
-          <p class="text-[var(--color-text-secondary)]">Please enter your details to sign in.</p>
+          <h2 class="text-3xl font-bold text-[var(--color-text-primary)] mb-2">{{ t('auth.login.welcome') }}</h2>
+          <p class="text-[var(--color-text-secondary)]">{{ t('auth.login.prompt') }}</p>
         </div>
 
         <n-form
@@ -45,7 +45,7 @@
           :rules="rules"
           size="large"
         >
-          <n-form-item path="email" label="Email Address">
+          <n-form-item path="email" :label="t('auth.login.email')">
             <n-input 
               v-model:value="model.email" 
               placeholder="name@example.com"
@@ -57,7 +57,7 @@
             </n-input>
           </n-form-item>
           
-          <n-form-item path="password" label="Password">
+          <n-form-item path="password" :label="t('auth.login.password')">
             <n-input
               v-model:value="model.password"
               type="password"
@@ -73,11 +73,11 @@
 
           <div class="flex items-center justify-between mb-6">
             <n-checkbox v-model:checked="model.rememberMe">
-              Remember me
+              {{ t('auth.login.rememberMe') }}
             </n-checkbox>
-            <a href="#" class="text-[var(--color-brand-primary)] hover:text-[var(--color-brand-primary)] hover:underline text-sm">
-              Forgot password?
-            </a>
+            <router-link to="/forgot-password" class="text-[var(--color-brand-primary)] hover:text-[var(--color-brand-primary)] hover:underline text-sm">
+              {{ t('auth.login.forgotPassword') }}
+            </router-link>
           </div>
 
           <n-button
@@ -88,10 +88,10 @@
             @click="handleLogin"
             class="mb-6 font-bold"
           >
-            Sign In
+            {{ t('auth.login.signIn') }}
           </n-button>
           
-          <n-divider class="text-[var(--color-text-secondary)] text-xs">OR CONTINUE WITH</n-divider>
+          <n-divider class="text-[var(--color-text-secondary)] text-xs">{{ t('auth.login.continueWith') }}</n-divider>
           
           <div class="grid grid-cols-2 gap-4 mb-8">
             <n-button ghost class="w-full">
@@ -105,9 +105,9 @@
           </div>
 
           <div class="mt-8 text-center text-[var(--color-text-secondary)] text-sm">
-            Don't have an account? 
+            {{ t('auth.login.noAccount') }} 
             <router-link to="/register" class="text-[var(--color-brand-primary)] font-bold hover:underline">
-              Sign up now
+              {{ t('auth.login.signUp') }}
             </router-link>
           </div>
         </n-form>
@@ -116,7 +116,7 @@
       <!-- Mobile Only Brand Header (visible on small screens) -->
       <div class="absolute top-8 left-8 lg:hidden">
         <div class="text-xl font-bold text-[var(--color-brand-primary)] tracking-wide">
-          STONKS ONLY
+          {{ t('auth.login.mobileHeader') }}
         </div>
       </div>
     </div>
@@ -124,8 +124,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { 
   NForm, NFormItem, NInput, NButton, NCheckbox, NIcon, NDivider, useMessage,
   FormInst
@@ -134,11 +135,12 @@ import {
   MailOutline, 
   LockClosedOutline, 
   LogoGoogle, 
-  LogoGithub 
+  LogoApple
 } from '@vicons/ionicons5'
 
 const router = useRouter()
 const message = useMessage()
+const { t } = useI18n()
 const formRef = ref<FormInst | null>(null)
 const loading = ref(false)
 
@@ -148,18 +150,18 @@ const model = ref({
   rememberMe: false
 })
 
-const rules = {
+const rules = computed(() => ({
   email: {
     required: true,
-    message: 'Please input your email',
+    message: t('auth.login.messages.inputEmail'),
     trigger: ['input', 'blur']
   },
   password: {
     required: true,
-    message: 'Please input your password',
+    message: t('auth.login.messages.inputPassword'),
     trigger: ['input', 'blur']
   }
-}
+}))
 
 function handleLogin(e: MouseEvent) {
   e.preventDefault()
@@ -168,12 +170,12 @@ function handleLogin(e: MouseEvent) {
       loading.value = true
       // Simulate API call
       setTimeout(() => {
-        message.success('Welcome back!')
+        message.success(t('auth.login.messages.welcomeBack'))
         loading.value = false
         router.push('/')
       }, 1000)
     } else {
-      message.error('Invalid email or password')
+      message.error(t('auth.login.messages.invalidCredentials'))
     }
   })
 }

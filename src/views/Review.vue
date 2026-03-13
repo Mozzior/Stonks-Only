@@ -3,14 +3,14 @@
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-[var(--color-text-primary)] mb-1">Performance Review</h1>
-        <p class="text-[var(--color-text-secondary)] text-sm">Analyze your past trades and improve your strategy.</p>
+        <h1 class="text-2xl font-bold text-[var(--color-text-primary)] mb-1">{{ t('review.title') }}</h1>
+        <p class="text-[var(--color-text-secondary)] text-sm">{{ t('review.subtitle') }}</p>
       </div>
       <n-space>
         <n-select v-model:value="timeRange" :options="timeRangeOptions" size="medium" class="w-40" />
         <n-button type="primary" ghost>
           <template #icon><n-icon :component="DownloadOutline" /></template>
-          Export CSV
+          {{ t('review.exportCsv') }}
         </n-button>
       </n-space>
     </div>
@@ -18,35 +18,35 @@
     <!-- KPI Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <n-card :bordered="false" class="bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)]">
-        <n-statistic label="Win Rate" :value="68.4">
+        <n-statistic :label="t('review.kpi.winRate')" :value="68.4">
           <template #suffix>%</template>
         </n-statistic>
         <n-progress type="line" :percentage="68.4" :height="4" :color="'var(--color-brand-primary)'" class="mt-2" :show-indicator="false" />
       </n-card>
       
       <n-card :bordered="false" class="bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)]">
-        <n-statistic label="Profit Factor" :value="2.15" :precision="2">
+        <n-statistic :label="t('review.kpi.profitFactor')" :value="2.15" :precision="2">
           <template #prefix>x</template>
         </n-statistic>
-        <div class="text-xs text-[var(--color-text-secondary)] mt-2">Gross Profit / Gross Loss</div>
+        <div class="text-xs text-[var(--color-text-secondary)] mt-2">{{ t('review.kpi.grossProfitLoss') }}</div>
       </n-card>
 
       <n-card :bordered="false" class="bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)]">
-        <n-statistic label="Avg. Win" :value="450.20" :precision="2">
+        <n-statistic :label="t('review.kpi.avgWin')" :value="450.20" :precision="2">
           <template #prefix>$</template>
         </n-statistic>
-        <div class="text-xs text-[var(--color-success)] mt-2">vs Avg. Loss: $210.50</div>
+        <div class="text-xs text-[var(--color-success)] mt-2">{{ t('review.kpi.avgLoss', { amount: '$210.50' }) }}</div>
       </n-card>
 
       <n-card :bordered="false" class="bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)]">
-        <n-statistic label="Total Trades" :value="142" />
-        <div class="text-xs text-[var(--color-text-secondary)] mt-2">97 Wins / 45 Losses</div>
+        <n-statistic :label="t('review.kpi.totalTrades')" :value="142" />
+        <div class="text-xs text-[var(--color-text-secondary)] mt-2">{{ t('review.kpi.winsLosses', { wins: 97, losses: 45 }) }}</div>
       </n-card>
     </div>
 
     <!-- Charts Section -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <n-card title="Equity Curve" :bordered="false" class="lg:col-span-2 bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)] h-96">
+      <n-card :title="t('review.charts.equityCurve')" :bordered="false" class="lg:col-span-2 bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)] h-96">
         <div class="w-full h-full bg-gradient-to-t from-[var(--color-brand-primary)]/5 to-transparent rounded-lg flex items-end relative overflow-hidden">
           <!-- Mock Chart Line -->
           <svg class="absolute bottom-0 left-0 w-full h-full" preserveAspectRatio="none">
@@ -62,25 +62,25 @@
         </div>
       </n-card>
 
-      <n-card title="Trade Distribution" :bordered="false" class="bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)]">
+      <n-card :title="t('review.charts.tradeDistribution')" :bordered="false" class="bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)]">
         <div class="space-y-6">
           <div>
             <div class="flex justify-between text-xs mb-1">
-              <span class="text-[var(--color-text-secondary)]">Long Trades</span>
+              <span class="text-[var(--color-text-secondary)]">{{ t('review.charts.longTrades') }}</span>
               <span class="text-[var(--color-text-primary)]">85 (60%)</span>
             </div>
             <n-progress type="line" :percentage="60" :height="8" color="#10B981" :show-indicator="false" />
           </div>
           <div>
             <div class="flex justify-between text-xs mb-1">
-              <span class="text-[var(--color-text-secondary)]">Short Trades</span>
+              <span class="text-[var(--color-text-secondary)]">{{ t('review.charts.shortTrades') }}</span>
               <span class="text-[var(--color-text-primary)]">57 (40%)</span>
             </div>
             <n-progress type="line" :percentage="40" :height="8" color="#EF4444" :show-indicator="false" />
           </div>
           <n-divider />
           <div>
-            <div class="text-xs text-[var(--color-text-secondary)] mb-2">Best Trading Hours</div>
+            <div class="text-xs text-[var(--color-text-secondary)] mb-2">{{ t('review.charts.bestTradingHours') }}</div>
             <div class="flex gap-1 h-24 items-end">
               <div class="flex-1 bg-[var(--color-border)] rounded-t-sm h-[40%] hover:bg-[var(--color-brand-primary)] transition-colors"></div>
               <div class="flex-1 bg-[var(--color-border)] rounded-t-sm h-[80%] hover:bg-[var(--color-brand-primary)] transition-colors"></div>
@@ -100,7 +100,7 @@
     </div>
 
     <!-- Trade Journal -->
-    <n-card title="Trade Journal" :bordered="false" class="bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)]">
+    <n-card :title="t('review.journal.title')" :bordered="false" class="bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)]">
       <n-data-table
         :columns="columns"
         :data="trades"
@@ -112,31 +112,34 @@
 </template>
 
 <script setup lang="ts">
-import { ref, h } from 'vue'
+import { ref, h, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { 
   NCard, NStatistic, NProgress, NButton, NIcon, NSpace, NSelect, NDivider, NDataTable, NTag 
 } from 'naive-ui'
 import { DownloadOutline } from '@vicons/ionicons5'
 
-const timeRange = ref('30d')
-const timeRangeOptions = [
-  { label: 'Last 7 Days', value: '7d' },
-  { label: 'Last 30 Days', value: '30d' },
-  { label: 'This Year', value: 'ytd' },
-  { label: 'All Time', value: 'all' }
-]
+const { t } = useI18n()
 
-const columns = [
-  { title: 'Date', key: 'date', width: 120 },
+const timeRange = ref('30d')
+const timeRangeOptions = computed(() => [
+  { label: t('review.journal.filter.last7Days'), value: '7d' },
+  { label: t('review.journal.filter.last30Days'), value: '30d' },
+  { label: t('review.journal.filter.thisYear'), value: 'ytd' },
+  { label: t('review.journal.filter.allTime'), value: 'all' }
+])
+
+const columns = computed(() => [
+  { title: t('review.journal.date'), key: 'date', width: 120 },
   { 
-    title: 'Symbol', 
+    title: t('review.journal.symbol'), 
     key: 'symbol',
     render(row: any) {
       return h('span', { class: 'font-bold text-[var(--color-text-primary)]' }, row.symbol)
     }
   },
   { 
-    title: 'Side', 
+    title: t('review.journal.side'), 
     key: 'side',
     render(row: any) {
       return h(NTag, { 
@@ -146,11 +149,11 @@ const columns = [
       }, { default: () => row.side })
     }
   },
-  { title: 'Entry', key: 'entry', render: (row: any) => `$${row.entry}` },
-  { title: 'Exit', key: 'exit', render: (row: any) => `$${row.exit}` },
-  { title: 'Size', key: 'size' },
+  { title: t('review.journal.entry'), key: 'entry', render: (row: any) => `$${row.entry}` },
+  { title: t('review.journal.exit'), key: 'exit', render: (row: any) => `$${row.exit}` },
+  { title: t('review.journal.size'), key: 'size' },
   { 
-    title: 'P/L', 
+    title: t('review.journal.pl'), 
     key: 'pl',
     render(row: any) {
       const isWin = row.pl > 0
@@ -160,13 +163,13 @@ const columns = [
     }
   },
   { 
-    title: 'Status', 
+    title: t('review.journal.status'), 
     key: 'status',
     render(row: any) {
       return h(NTag, { size: 'tiny', ghost: true }, { default: () => row.status })
     }
   }
-]
+])
 
 const trades = [
   { date: '2023-10-24', symbol: 'NVDA', side: 'LONG', entry: 850.40, exit: 865.20, size: 200, pl: 2960.00, status: 'CLOSED' },

@@ -5,6 +5,11 @@ import AppLayout from '../components/AppLayout.vue'
 const Home = () => import('../views/Home.vue')
 const Login = () => import('../views/Login.vue')
 const Register = () => import('../views/Register.vue')
+const ForgotPassword = () => import('../views/ForgotPassword.vue')
+const ChangePassword = () => import('../views/ChangePassword.vue')
+const PrivacyPolicy = () => import('../views/PrivacyPolicy.vue')
+const TermsOfService = () => import('../views/TermsOfService.vue')
+const DataDisclaimer = () => import('../views/DataDisclaimer.vue')
 const Profile = () => import('../views/Profile.vue')
 const Wallet = () => import('../views/Wallet.vue')
 const Membership = () => import('../views/Membership.vue')
@@ -17,6 +22,11 @@ const Review = () => import('../views/Review.vue')
 const routes: RouteRecordRaw[] = [
   { path: '/login', name: 'login', component: Login, meta: { public: true } },
   { path: '/register', name: 'register', component: Register, meta: { public: true } },
+  { path: '/forgot-password', name: 'forgot-password', component: ForgotPassword, meta: { public: true } },
+  { path: '/change-password', name: 'change-password', component: ChangePassword, meta: { public: true } }, // Marked public for demo access
+  { path: '/privacy-policy', name: 'privacy-policy', component: PrivacyPolicy, meta: { public: true } },
+  { path: '/terms-of-service', name: 'terms-of-service', component: TermsOfService, meta: { public: true } },
+  { path: '/data-disclaimer', name: 'data-disclaimer', component: DataDisclaimer, meta: { public: true } },
   {
     path: '/',
     component: AppLayout,

@@ -34,6 +34,11 @@ function createWindow() {
   win = new BrowserWindow({
     title: process.env.APP_NAME || "Stocks Only",
     icon: path.join(process.env.VITE_PUBLIC, "app-icon.png"),
+    width: 1100,
+    height: 750,
+    minWidth: 1100,
+    minHeight: 750,
+    center: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.mjs"),
     },

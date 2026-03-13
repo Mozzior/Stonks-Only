@@ -2,40 +2,72 @@
   <div class="space-y-8">
     <!-- Header -->
     <div class="text-center space-y-4">
-      <h1 class="text-3xl font-bold text-[var(--color-text-primary)]">Unlock Your Trading Potential</h1>
+      <h1 class="text-3xl font-bold text-[var(--color-text-primary)]">
+        {{ t("membership.header.title") }}
+      </h1>
       <p class="text-[var(--color-text-secondary)] max-w-2xl mx-auto">
-        Level up your trading skills with our premium membership plans. Get access to advanced analytics, unlimited historical data, and exclusive training scenarios.
+        {{ t("membership.header.subtitle") }}
       </p>
     </div>
 
     <!-- Plans -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div v-for="plan in plans" :key="plan.name" 
-        class="relative group"
-      >
-        <div class="absolute inset-0 bg-gradient-to-b from-[var(--color-brand-primary)] to-transparent opacity-0 group-hover:opacity-10 rounded-2xl transition-opacity duration-300"></div>
-        <n-card :bordered="false" class="h-full bg-[var(--color-bg-card)] rounded-2xl border border-[var(--color-border)] hover:border-[var(--color-brand-primary)] transition-colors relative z-10">
+      <div v-for="plan in plans" :key="plan.name" class="relative group">
+        <div
+          class="absolute inset-0 bg-gradient-to-b from-[var(--color-brand-primary)] to-transparent opacity-0 group-hover:opacity-10 rounded-2xl transition-opacity duration-300"
+        ></div>
+        <n-card
+          :bordered="false"
+          class="h-full bg-[var(--color-bg-card)] rounded-2xl border border-[var(--color-border)] hover:border-[var(--color-brand-primary)] transition-colors relative z-10"
+        >
           <div class="flex flex-col h-full">
             <div class="flex justify-between items-start mb-4">
               <div>
-                <h3 class="text-lg font-bold text-[var(--color-text-primary)]">{{ plan.name }}</h3>
-                <p class="text-xs text-[var(--color-text-secondary)] mt-1 min-h-[32px]">{{ plan.description }}</p>
+                <h3 class="text-lg font-bold text-[var(--color-text-primary)]">
+                  {{ plan.name }}
+                </h3>
+                <p
+                  class="text-xs text-[var(--color-text-secondary)] mt-1 min-h-[32px]"
+                >
+                  {{ plan.description }}
+                </p>
               </div>
-              <n-tag v-if="plan.popular" type="primary" size="small" round>POPULAR</n-tag>
-            </div>
-            
-            <div class="flex items-baseline gap-1 mb-6">
-              <span class="text-3xl font-black text-[var(--color-text-primary)]">${{ plan.price }}</span>
-              <span class="text-xs text-[var(--color-text-secondary)]">/month</span>
+              <n-tag v-if="plan.popular" type="primary" size="small" round>{{
+                t("membership.plans.popular")
+              }}</n-tag>
             </div>
 
-            <n-button :type="plan.popular ? 'primary' : 'default'" block class="mb-6 font-bold">
-              {{ plan.current ? 'Current Plan' : 'Upgrade Now' }}
+            <div class="flex items-baseline gap-1 mb-6">
+              <span class="text-3xl font-black text-[var(--color-text-primary)]"
+                >${{ plan.price }}</span
+              >
+              <span class="text-xs text-[var(--color-text-secondary)]">{{
+                t("membership.plans.perMonth")
+              }}</span>
+            </div>
+
+            <n-button
+              :type="plan.popular ? 'primary' : 'default'"
+              block
+              class="mb-6 font-bold"
+            >
+              {{
+                plan.current
+                  ? t("membership.plans.currentPlan")
+                  : t("membership.plans.upgradeNow")
+              }}
             </n-button>
 
             <ul class="space-y-3 flex-1">
-              <li v-for="feature in plan.features" :key="feature" class="flex items-start gap-2 text-sm text-[var(--color-text-secondary)]">
-                <n-icon :component="CheckmarkCircleOutline" class="text-[var(--color-brand-primary)] mt-0.5 flex-shrink-0" />
+              <li
+                v-for="feature in plan.features"
+                :key="feature"
+                class="flex items-start gap-2 text-sm text-[var(--color-text-secondary)]"
+              >
+                <n-icon
+                  :component="CheckmarkCircleOutline"
+                  class="text-[var(--color-brand-primary)] mt-0.5 flex-shrink-0"
+                />
                 <span>{{ feature }}</span>
               </li>
             </ul>
@@ -47,28 +79,67 @@
     <!-- Achievements Section -->
     <div class="mt-12">
       <div class="flex items-center justify-between mb-6">
-        <h2 class="text-xl font-bold text-[var(--color-text-primary)]">Your Achievements</h2>
-        <n-progress type="line" :percentage="45" :indicator-placement="'inside'" :height="20" class="max-w-xs" processing>
-          <span class="text-xs font-bold text-[var(--color-text-primary)]">Level 12: Advanced Trader</span>
+        <h2 class="text-xl font-bold text-[var(--color-text-primary)]">
+          {{ t("membership.achievements.title") }}
+        </h2>
+        <n-progress
+          type="line"
+          :percentage="45"
+          :indicator-placement="'inside'"
+          :height="20"
+          class="max-w-xs"
+          processing
+        >
+          <span class="text-xs font-bold text-[var(--color-text-primary)]">{{
+            t("membership.achievements.level", {
+              level: 12,
+              title: "Advanced Trader",
+            })
+          }}</span>
         </n-progress>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <n-card v-for="achievement in achievements" :key="achievement.title" 
-          :bordered="false" 
+        <n-card
+          v-for="achievement in achievements"
+          :key="achievement.title"
+          :bordered="false"
           class="bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)]"
           :class="{ 'opacity-50 grayscale': !achievement.unlocked }"
         >
           <div class="flex flex-col items-center text-center gap-3">
-            <div class="w-12 h-12 rounded-full flex items-center justify-center bg-[var(--color-bg-sidebar)] border border-[var(--color-border)]">
-              <n-icon size="24" :component="achievement.icon" :color="achievement.unlocked ? '#F59E0B' : '#64748B'" />
+            <div
+              class="w-12 h-12 rounded-full flex items-center justify-center bg-[var(--color-bg-sidebar)] border border-[var(--color-border)]"
+            >
+              <n-icon
+                size="24"
+                :component="achievement.icon"
+                :color="achievement.unlocked ? '#F59E0B' : '#64748B'"
+              />
             </div>
             <div>
-              <div class="font-bold text-[var(--color-text-primary)] text-sm">{{ achievement.title }}</div>
-              <div class="text-[10px] text-[var(--color-text-secondary)]">{{ achievement.desc }}</div>
+              <div class="font-bold text-[var(--color-text-primary)] text-sm">
+                {{ achievement.title }}
+              </div>
+              <div class="text-[10px] text-[var(--color-text-secondary)]">
+                {{ achievement.desc }}
+              </div>
             </div>
-            <n-tag v-if="achievement.unlocked" type="warning" size="tiny" round bordered>UNLOCKED</n-tag>
-            <n-progress v-else type="line" :percentage="achievement.progress" :height="4" :show-indicator="false" />
+            <n-tag
+              v-if="achievement.unlocked"
+              type="warning"
+              size="tiny"
+              round
+              bordered
+              >{{ t("membership.achievements.unlocked") }}</n-tag
+            >
+            <n-progress
+              v-else
+              type="line"
+              :percentage="achievement.progress"
+              :height="4"
+              :show-indicator="false"
+            />
           </div>
         </n-card>
       </div>
@@ -77,86 +148,91 @@
 </template>
 
 <script setup lang="ts">
-import { 
-  NCard, NButton, NIcon, NTag, NProgress 
-} from 'naive-ui'
-import { 
-  CheckmarkCircleOutline, TrophyOutline, RocketOutline, 
-  WalletOutline, TrendingUpOutline 
-} from '@vicons/ionicons5'
+import { computed } from "vue";
+import { useI18n } from "vue-i18n";
+import { NCard, NButton, NIcon, NTag, NProgress } from "naive-ui";
+import {
+  CheckmarkCircleOutline,
+  TrophyOutline,
+  RocketOutline,
+  WalletOutline,
+  TrendingUpOutline,
+} from "@vicons/ionicons5";
 
-const plans = [
+const { t } = useI18n();
+
+const plans = computed(() => [
   {
-    name: 'Rookie',
-    price: '0',
-    description: 'Perfect for beginners starting their journey.',
+    name: t("membership.plans.rookie.name"),
+    price: "0",
+    description: t("membership.plans.rookie.desc"),
     current: true,
     popular: false,
     features: [
-      'Basic market data (Daily/Weekly)',
-      '100 simulated trades per day',
-      'Standard charts',
-      'Community leaderboard access'
-    ]
+      t("membership.plans.rookie.features.marketData"),
+      t("membership.plans.rookie.features.trades"),
+      t("membership.plans.rookie.features.charts"),
+      t("membership.plans.rookie.features.leaderboard"),
+    ],
   },
   {
-    name: 'Pro Trader',
-    price: '29',
-    description: 'For serious traders who want to master the craft.',
+    name: t("membership.plans.pro.name"),
+    price: "29",
+    description: t("membership.plans.pro.desc"),
     current: false,
     popular: true,
     features: [
-      'Intraday data (1m, 5m, 15m)',
-      'Unlimited simulated trades',
-      'Advanced technical indicators',
-      'Detailed performance analytics',
-      'Priority support'
-    ]
+      t("membership.plans.pro.features.marketData"),
+      t("membership.plans.pro.features.trades"),
+      t("membership.plans.pro.features.indicators"),
+      t("membership.plans.pro.features.analytics"),
+      t("membership.plans.pro.features.support"),
+    ],
   },
   {
-    name: 'Elite',
-    price: '99',
-    description: 'Professional grade tools for the ultimate edge.',
+    name: t("membership.plans.elite.name"),
+    price: "99",
+    description: t("membership.plans.elite.desc"),
     current: false,
     popular: false,
     features: [
-      'Tick-level historical data',
-      'AI-powered trade analysis',
-      'Custom strategy backtesting',
-      '1-on-1 mentorship sessions',
-      'Early access to new features'
-    ]
-  }
-]
+      t("membership.plans.elite.features.marketData"),
+      t("membership.plans.elite.features.ai"),
+      t("membership.plans.elite.features.backtest"),
+      t("membership.plans.elite.features.mentorship"),
+      t("membership.plans.elite.features.earlyAccess"),
+    ],
+  },
+]);
 
-const achievements = [
-  { 
-    title: 'First Steps', 
-    desc: 'Complete your first simulated trade', 
-    icon: RocketOutline, 
+const achievements = computed(() => [
+  {
+    title: t("membership.achievements.list.firstSteps.title"),
+    desc: t("membership.achievements.list.firstSteps.desc"),
+    icon: RocketOutline,
     unlocked: true,
-    progress: 100 
+    progress: 100,
   },
-  { 
-    title: 'Profitable Week', 
-    desc: 'End a week with positive P/L', 
-    icon: TrendingUpOutline, 
+  {
+    title: t("membership.achievements.list.profitableWeek.title"),
+    desc: t("membership.achievements.list.profitableWeek.desc"),
+    icon: TrendingUpOutline,
     unlocked: true,
-    progress: 100 
+    progress: 100,
   },
-  { 
-    title: 'Big Spender', 
-    desc: 'Execute a trade worth over $10k', 
-    icon: WalletOutline, 
+  {
+    title: t("membership.achievements.list.bigSpender.title"),
+    desc: t("membership.achievements.list.bigSpender.desc"),
+    icon: WalletOutline,
     unlocked: false,
-    progress: 65 
+    progress: 65,
   },
-  { 
-    title: 'Master Analyst', 
-    desc: 'Maintain 60% win rate for 30 days', 
-    icon: TrophyOutline, 
+  {
+    title: t("membership.achievements.list.masterAnalyst.title"),
+    desc: t("membership.achievements.list.masterAnalyst.desc"),
+    icon: TrophyOutline,
     unlocked: false,
-    progress: 20 
-  }
-]
+    progress: 20,
+  },
+]);
 </script>

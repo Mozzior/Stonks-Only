@@ -25,18 +25,18 @@
           <p class="text-[var(--color-text-secondary)] mt-1 flex items-center gap-2">
             <n-icon :component="MailOutline" /> trader@stonks-only.com
             <span class="text-[var(--color-border)]">|</span>
-            <n-icon :component="CalendarOutline" /> Joined Oct 2023
+            <n-icon :component="CalendarOutline" /> {{ t('profile.info.joined', { date: 'Oct 2023' }) }}
           </p>
         </div>
         
         <div class="flex gap-3 mb-2">
           <n-button type="primary" secondary>
             <template #icon><n-icon :component="CreateOutline" /></template>
-            Edit Profile
+            {{ t('profile.info.editProfile') }}
           </n-button>
           <n-button secondary>
             <template #icon><n-icon :component="ShareSocialOutline" /></template>
-            Share Stats
+            {{ t('profile.info.shareStats') }}
           </n-button>
         </div>
       </div>
@@ -48,7 +48,7 @@
       <!-- Left Column: Stats & Radar -->
       <div class="space-y-6 lg:col-span-1">
         <!-- Trading Radar -->
-        <n-card title="Trading Style" :bordered="false" class="bg-[var(--color-bg-card)] rounded-2xl border border-[var(--color-border)] h-80 overflow-hidden">
+        <n-card :title="t('profile.radar.title')" :bordered="false" class="bg-[var(--color-bg-card)] rounded-2xl border border-[var(--color-border)] h-80 overflow-hidden">
           <div class="h-full flex items-center justify-center relative p-4">
              <!-- Radar Chart Placeholder (SVG) -->
              <svg viewBox="0 0 200 200" class="w-full h-full max-w-[200px] max-h-[200px]">
@@ -69,29 +69,29 @@
         </n-card>
 
         <!-- Detailed Stats List -->
-        <n-card title="Key Statistics" :bordered="false" class="bg-[var(--color-bg-card)] rounded-2xl border border-[var(--color-border)]">
+        <n-card :title="t('profile.stats.title')" :bordered="false" class="bg-[var(--color-bg-card)] rounded-2xl border border-[var(--color-border)]">
           <n-list hoverable clickable>
             <n-list-item>
               <div class="flex justify-between items-center">
-                <span class="text-[var(--color-text-secondary)] text-sm">Best Win Streak</span>
+                <span class="text-[var(--color-text-secondary)] text-sm">{{ t('profile.stats.bestWinStreak') }}</span>
                 <span class="text-[var(--color-text-primary)] font-bold">12 Trades</span>
               </div>
             </n-list-item>
             <n-list-item>
               <div class="flex justify-between items-center">
-                <span class="text-[var(--color-text-secondary)] text-sm">Avg Hold Time</span>
+                <span class="text-[var(--color-text-secondary)] text-sm">{{ t('profile.stats.avgHoldTime') }}</span>
                 <span class="text-[var(--color-text-primary)] font-bold">4h 25m</span>
               </div>
             </n-list-item>
             <n-list-item>
               <div class="flex justify-between items-center">
-                <span class="text-[var(--color-text-secondary)] text-sm">Largest Win</span>
+                <span class="text-[var(--color-text-secondary)] text-sm">{{ t('profile.stats.largestWin') }}</span>
                 <span class="text-[var(--color-success)] font-bold">+$4,250.00</span>
               </div>
             </n-list-item>
             <n-list-item>
               <div class="flex justify-between items-center">
-                <span class="text-[var(--color-text-secondary)] text-sm">Largest Loss</span>
+                <span class="text-[var(--color-text-secondary)] text-sm">{{ t('profile.stats.largestLoss') }}</span>
                 <span class="text-[var(--color-error)] font-bold">-$1,120.00</span>
               </div>
             </n-list-item>
@@ -102,9 +102,9 @@
       <!-- Right Column: Recent Activity & Badges -->
       <div class="space-y-6 lg:col-span-2">
         <!-- Badges Collection -->
-        <n-card title="Earned Badges" :bordered="false" class="bg-[var(--color-bg-card)] rounded-2xl border border-[var(--color-border)]">
+        <n-card :title="t('profile.badges.title')" :bordered="false" class="bg-[var(--color-bg-card)] rounded-2xl border border-[var(--color-border)]">
           <template #header-extra>
-            <n-button text size="small" type="primary">View All</n-button>
+            <n-button text size="small" type="primary">{{ t('profile.badges.viewAll') }}</n-button>
           </template>
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div class="flex flex-col items-center p-4 bg-[var(--color-bg-sidebar)] rounded-xl border border-[var(--color-border)] hover:border-[var(--color-brand-primary)] transition-colors group cursor-pointer">
@@ -133,24 +133,24 @@
                 <n-icon size="24" :component="LockClosedOutline" class="text-[var(--color-text-secondary)]" />
               </div>
               <span class="text-xs font-bold text-[var(--color-text-secondary)] text-center">Millionaire</span>
-              <span class="text-[10px] text-[var(--color-text-secondary)]">Locked</span>
+              <span class="text-[10px] text-[var(--color-text-secondary)]">{{ t('profile.badges.locked') }}</span>
             </div>
           </div>
         </n-card>
 
         <!-- Account Security / Settings Preview -->
-        <n-card title="Account Security" :bordered="false" class="bg-[var(--color-bg-card)] rounded-2xl border border-[var(--color-border)]">
+        <n-card :title="t('profile.security.title')" :bordered="false" class="bg-[var(--color-bg-card)] rounded-2xl border border-[var(--color-border)]">
           <n-list>
             <n-list-item>
               <div class="flex justify-between items-center">
                 <div class="flex items-center gap-3">
                   <n-icon size="20" :component="ShieldCheckmarkOutline" class="text-[var(--color-success)]" />
                   <div>
-                    <div class="text-[var(--color-text-primary)] font-medium">Two-Factor Authentication</div>
-                    <div class="text-xs text-[var(--color-text-secondary)]">Enabled via Authenticator App</div>
+                    <div class="text-[var(--color-text-primary)] font-medium">{{ t('profile.security.twoFactor') }}</div>
+                    <div class="text-xs text-[var(--color-text-secondary)]">{{ t('profile.security.twoFactorDesc') }}</div>
                   </div>
                 </div>
-                <n-button size="small" secondary>Manage</n-button>
+                <n-button size="small" secondary>{{ t('profile.security.manage') }}</n-button>
               </div>
             </n-list-item>
             <n-list-item>
@@ -158,11 +158,13 @@
                 <div class="flex items-center gap-3">
                   <n-icon size="20" :component="KeyOutline" class="text-blue-400" />
                   <div>
-                    <div class="text-[var(--color-text-primary)] font-medium">Password</div>
-                    <div class="text-xs text-[var(--color-text-secondary)]">Last changed 3 months ago</div>
+                    <div class="text-[var(--color-text-primary)] font-medium">{{ t('profile.security.password') }}</div>
+                    <div class="text-xs text-[var(--color-text-secondary)]">{{ t('profile.security.passwordDesc') }}</div>
                   </div>
                 </div>
-                <n-button size="small" secondary>Update</n-button>
+                <router-link to="/change-password">
+                  <n-button size="small" secondary>{{ t('profile.security.update') }}</n-button>
+                </router-link>
               </div>
             </n-list-item>
           </n-list>
@@ -173,6 +175,7 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { 
   NCard, NAvatar, NButton, NIcon, NTag, NList, NListItem, NDivider 
 } from 'naive-ui'
@@ -181,4 +184,6 @@ import {
   RibbonOutline, TrophyOutline, TrendingUpOutline, SchoolOutline, LockClosedOutline,
   ShieldCheckmarkOutline, KeyOutline
 } from '@vicons/ionicons5'
+
+const { t } = useI18n()
 </script>

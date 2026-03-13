@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { NConfigProvider, NGlobalStyle, NMessageProvider } from 'naive-ui'
-import { useTheme } from './composables/useTheme'
+import { NConfigProvider, NGlobalStyle, NMessageProvider } from "naive-ui";
+import { useTheme } from "./composables/useTheme";
 
-const { currentTheme, themeOverrides } = useTheme()
+const { currentTheme, themeOverrides } = useTheme();
 </script>
 
 <template>
@@ -22,5 +22,10 @@ body,
   margin: 0;
   padding: 0;
   overflow: hidden;
+}
+/* Global Tabs Fix */
+.n-tabs .n-tabs-rail {
+  /* Use variable for background to support both light and dark modes */
+  background-color: var(--color-bg-segment) !important;
 }
 </style>
