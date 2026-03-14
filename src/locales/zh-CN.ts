@@ -373,7 +373,6 @@ export default {
       area: "面积图",
     },
     messages: {
-      switchedTimeframe: "已切换至 {timeframe}",
       playbackPaused: "回放已暂停",
       playbackStarted: "回放已开始",
       cannotStepBackward: "无法继续后退",

@@ -378,7 +378,6 @@ export default {
       area: "Area",
     },
     messages: {
-      switchedTimeframe: "Switched to {timeframe}",
       playbackPaused: "Playback paused",
       playbackStarted: "Playback started",
       cannotStepBackward: "Cannot step backward any further",

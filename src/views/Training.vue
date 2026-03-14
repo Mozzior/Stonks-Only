@@ -27,7 +27,7 @@
             >{{ t("training.header.tradingSymbol") }}</span
           >
           <span class="text-lg font-bold text-[var(--color-text-primary)]"
-            >NVDA (Simulation)</span
+            >{{ currentStockName }} ({{ currentStockSymbol }})</span
           >
         </div>
         <n-divider vertical />
@@ -43,7 +43,10 @@
             @update:value="handleTimeframeChange"
           >
             <n-button quaternary size="small" class="font-bold">
-              {{ currentTimeframe }}
+              {{
+                timeframeOptions.find((o) => o.value === currentTimeframe)
+                  ?.label || currentTimeframe
+              }}
               <n-icon :component="ChevronDownOutline" class="ml-1" />
             </n-button>
           </n-popselect>
@@ -244,7 +247,10 @@
               @update:value="handleTimeframeChange"
             >
               <n-button text class="font-bold">
-                {{ currentTimeframe }}
+                {{
+                  timeframeOptions.find((o) => o.value === currentTimeframe)
+                    ?.label || currentTimeframe
+                }}
                 <n-icon :component="ChevronDownOutline" class="ml-1" />
               </n-button>
             </n-popselect>
@@ -300,7 +306,11 @@
             </n-popover>
 
             <n-button-group size="small" v-if="isTrainingStarted">
-              <n-button ghost @click="stepBackward">
+              <n-button
+                ghost
+                :disabled="!isDailyTrainingMode"
+                @click="stepBackward"
+              >
                 <template #icon
                   ><n-icon :component="PlayBackOutline"
                 /></template>
@@ -310,13 +320,19 @@
                   <n-button
                     type="primary"
                     v-if="!isPlaying"
+                    :disabled="!isDailyTrainingMode"
                     @click="togglePlay"
                   >
                     <template #icon
                       ><n-icon :component="PlayOutline"
                     /></template>
                   </n-button>
-                  <n-button type="warning" v-else @click="togglePlay">
+                  <n-button
+                    type="warning"
+                    v-else
+                    :disabled="!isDailyTrainingMode"
+                    @click="togglePlay"
+                  >
                     <template #icon
                       ><n-icon :component="PauseOutline"
                     /></template>
@@ -330,7 +346,11 @@
               </n-tooltip>
               <n-tooltip trigger="hover">
                 <template #trigger>
-                  <n-button ghost @click="stepForward">
+                  <n-button
+                    ghost
+                    :disabled="!isDailyTrainingMode"
+                    @click="stepForward"
+                  >
                     <template #icon
                       ><n-icon :component="PlayForwardOutline"
                     /></template>
@@ -382,11 +402,50 @@
               class="flex items-center gap-2 px-3 py-1 bg-[var(--color-bg-sidebar)] rounded border border-[var(--color-border)]"
             >
               <div
-                class="w-2 h-2 rounded-full bg-[var(--color-success)] animate-pulse"
+                class="w-2 h-2 rounded-full"
+                :class="
+                  isTrainingWindowEnded
+                    ? 'bg-[var(--color-warning)]'
+                    : 'bg-[var(--color-success)] animate-pulse'
+                "
               ></div>
-              <span class="text-xs font-bold text-[var(--color-success)]">{{
-                t("training.toolbar.liveSession")
-              }}</span>
+              <span
+                class="text-xs font-bold"
+                :class="
+                  isTrainingWindowEnded
+                    ? 'text-[var(--color-warning)]'
+                    : 'text-[var(--color-success)]'
+                "
+              >
+                {{
+                  isTrainingWindowEnded
+                    ? "训练已结束"
+                    : t("training.toolbar.liveSession")
+                }}
+              </span>
+            </div>
+            <div
+              v-if="isTrainingStarted"
+              class="flex items-center gap-2 px-3 py-1 bg-[var(--color-bg-sidebar)] rounded border border-[var(--color-border)]"
+            >
+              <span class="text-xs text-[var(--color-text-secondary)]"
+                >剩余K线</span
+              >
+              <span
+                class="text-xs font-bold text-[var(--color-brand-primary)]"
+                >{{ remainingTrainingBars }}</span
+              >
+            </div>
+            <div
+              v-if="isTrainingStarted"
+              class="flex items-center gap-2 px-3 py-1 bg-[var(--color-bg-sidebar)] rounded border border-[var(--color-border)]"
+            >
+              <span class="text-xs text-[var(--color-text-secondary)]"
+                >训练区间</span
+              >
+              <span class="text-xs font-bold text-[var(--color-text-primary)]"
+                >{{ trainingStartDateText }} ~ {{ trainingEndDateText }}</span
+              >
             </div>
 
             <n-tooltip trigger="hover" v-if="isTrainingStarted">
@@ -478,12 +537,14 @@
             <n-button
               type="primary"
               class="flex-1"
+              :disabled="isTrainingWindowEnded"
               @click="handleTrade('BUY')"
               >{{ t("training.trade.buyLong") }}</n-button
             >
             <n-button
               type="error"
               class="flex-1"
+              :disabled="isTrainingWindowEnded"
               @click="handleTrade('SELL')"
               >{{ t("training.trade.sellShort") }}</n-button
             >
@@ -517,6 +578,7 @@
             type="warning"
             ghost
             class="mt-1"
+            :disabled="isTrainingWindowEnded"
             @click="closePosition"
             >{{ t("training.trade.closeAll") }}</n-button
           >
@@ -584,6 +646,7 @@
                   block
                   size="large"
                   class="font-bold mt-4"
+                  :disabled="isTrainingWindowEnded"
                   @click="handleTrade('BUY')"
                 >
                   {{ t("training.trade.buyLong") }}
@@ -628,6 +691,7 @@
                   block
                   size="large"
                   class="font-bold mt-4"
+                  :disabled="isTrainingWindowEnded"
                   @click="handleTrade('SELL')"
                 >
                   {{ t("training.trade.sellShort") }}
@@ -717,6 +781,7 @@
               type="warning"
               ghost
               size="small"
+              :disabled="isTrainingWindowEnded"
               @click="closePosition"
               >{{ t("training.trade.closePosition") }}</n-button
             >
@@ -916,7 +981,6 @@ import {
   NDivider,
   NButton,
   NIcon,
-  NDropdown,
   NTooltip,
   NButtonGroup,
   NSlider,
@@ -946,7 +1010,6 @@ import {
   CloseOutline,
   SpeedometerOutline,
   CreateOutline,
-  RadioButtonOnOutline,
   RadioButtonOffOutline,
   ArrowForwardOutline,
   ResizeOutline,
@@ -957,26 +1020,16 @@ import {
   ScanOutline,
   MagnetOutline,
   LockClosedOutline,
-  EyeOutline,
-  EyeOffOutline,
   CameraOutline,
-  RefreshOutline,
   SaveOutline,
-  DownloadOutline,
   BrushOutline,
   FlashOutline,
 } from "@vicons/ionicons5";
 import { init, Chart, dispose, registerOverlay } from "klinecharts";
-import type {
-  KLineData,
-  Period,
-  SymbolInfo,
-  OverlayCreate,
-  CandleType,
-} from "klinecharts";
+import type { KLineData, Period, OverlayCreate, CandleType } from "klinecharts";
 import { useTheme } from "../composables/useTheme";
-import { generateMockData } from "../utils/mockData";
 import { useLayoutControl } from "../composables/useLayoutControl";
+import { supabase } from "../utils/supabase";
 
 const router = useRouter();
 const message = useMessage();
@@ -991,7 +1044,7 @@ const isPlaying = ref(false);
 const isTrainingStarted = ref(false);
 const showQuickTrade = ref(false);
 const playSpeed = ref(2);
-const currentTimeframe = ref("Daily");
+const currentTimeframe = ref("daily");
 const currentChartType = ref<CandleType>("candle_solid");
 const orderType = ref("MARKET");
 const tradeAmount = ref(100);
@@ -1010,24 +1063,29 @@ let playInterval: any = null;
 let updateDataCallback: ((data: KLineData) => void) | null = null;
 let resizeHandler: (() => void) | null = null;
 
+const currentStock = ref<any>(null);
+const currentStockName = computed(() =>
+  currentStock.value ? currentStock.value.name : "Loading...",
+);
+const currentStockSymbol = computed(() =>
+  currentStock.value ? currentStock.value.symbol : "---",
+);
+
 // Data
 const timeframeOptions = computed(() => [
-  { label: t("training.header.timeframe"), value: "Daily" }, // Placeholder for current
-  { label: "1 Minute", value: "1m" },
-  { label: "5 Minutes", value: "5m" },
-  { label: "15 Minutes", value: "15m" },
-  { label: "30 Minutes", value: "30m" },
-  { label: "1 Hour", value: "1h" },
-  { label: "4 Hours", value: "4h" },
-  { label: "Daily", value: "1d" },
-  { label: "Weekly", value: "1w" },
+  { label: "日线", value: "daily" },
+  { label: "周线", value: "weekly" },
+  { label: "月线", value: "monthly" },
 ]);
 
 const chartTypeOptions = computed(() => [
   { label: t("training.settings.candleSolid"), value: "candle_solid" },
   { label: t("training.settings.candleStroke"), value: "candle_stroke" },
   { label: t("training.settings.candleUpStroke"), value: "candle_up_stroke" },
-  { label: t("training.settings.candleDownStroke"), value: "candle_down_stroke" },
+  {
+    label: t("training.settings.candleDownStroke"),
+    value: "candle_down_stroke",
+  },
   { label: t("training.settings.ohlc"), value: "ohlc" },
   { label: t("training.settings.area"), value: "area" },
 ]);
@@ -1178,8 +1236,301 @@ const historyColumns = computed(() => [
 // Moved to src/utils/mockData.ts
 
 const fullData = ref<KLineData[]>([]);
+const dailyData = ref<KLineData[]>([]);
+const weeklyData = ref<KLineData[]>([]);
+const monthlyData = ref<KLineData[]>([]);
+
 const currentIndex = ref(0);
 const initialDataRef = ref<KLineData[]>([]);
+
+const currentDate = ref<number | null>(null);
+const trainingStartIndex = ref(0);
+const trainingEndIndex = ref(0);
+const trainingStartOverlayId = ref<string | null>(null);
+const trainingEndOverlayId = ref<string | null>(null);
+const trainingStartTextOverlayId = ref<string | null>(null);
+const trainingEndTextOverlayId = ref<string | null>(null);
+
+const remainingTrainingBars = computed(() =>
+  Math.max(0, trainingEndIndex.value - currentIndex.value + 1),
+);
+const isTrainingWindowEnded = computed(
+  () => currentIndex.value > trainingEndIndex.value,
+);
+const isDailyTrainingMode = computed(() => currentTimeframe.value === "daily");
+const trainingStartDateText = computed(() => {
+  const data = dailyData.value[trainingStartIndex.value];
+  return data ? formatDate(data.timestamp) : "--";
+});
+const trainingEndDateText = computed(() => {
+  const data = dailyData.value[trainingEndIndex.value];
+  return data ? formatDate(data.timestamp) : "--";
+});
+
+function formatDate(timestamp: number) {
+  return new Date(timestamp).toISOString().slice(0, 10);
+}
+
+function removeTrainingBoundaryOverlays() {
+  if (!chartInstance.value) return;
+  if (trainingStartOverlayId.value) {
+    chartInstance.value.removeOverlay({ id: trainingStartOverlayId.value });
+  }
+  if (trainingEndOverlayId.value) {
+    chartInstance.value.removeOverlay({ id: trainingEndOverlayId.value });
+  }
+  if (trainingStartTextOverlayId.value) {
+    chartInstance.value.removeOverlay({ id: trainingStartTextOverlayId.value });
+  }
+  if (trainingEndTextOverlayId.value) {
+    chartInstance.value.removeOverlay({ id: trainingEndTextOverlayId.value });
+  }
+  trainingStartOverlayId.value = null;
+  trainingEndOverlayId.value = null;
+  trainingStartTextOverlayId.value = null;
+  trainingEndTextOverlayId.value = null;
+}
+
+function syncTrainingBoundaryOverlays() {
+  if (!chartInstance.value || dailyData.value.length === 0) return;
+  const startData = dailyData.value[trainingStartIndex.value];
+  const endData = dailyData.value[trainingEndIndex.value];
+  if (!startData || !endData) return;
+
+  removeTrainingBoundaryOverlays();
+
+  const startLineId = chartInstance.value.createOverlay({
+    name: "verticalRayLine",
+    points: [{ timestamp: startData.timestamp, value: startData.close }],
+  }) as string;
+  const endLineId = chartInstance.value.createOverlay({
+    name: "verticalRayLine",
+    points: [{ timestamp: endData.timestamp, value: endData.close }],
+  }) as string;
+
+  const startTextId = chartInstance.value.createOverlay({
+    name: "text",
+    extendData: { text: "训练开始" },
+    points: [{ timestamp: startData.timestamp, value: startData.high }],
+  }) as string;
+  const endTextId = chartInstance.value.createOverlay({
+    name: "text",
+    extendData: { text: "训练结束" },
+    points: [{ timestamp: endData.timestamp, value: endData.high }],
+  }) as string;
+
+  trainingStartOverlayId.value = startLineId;
+  trainingEndOverlayId.value = endLineId;
+  trainingStartTextOverlayId.value = startTextId;
+  trainingEndTextOverlayId.value = endTextId;
+}
+
+// Clears indicators before adding new ones
+function clearIndicators() {
+  if (!chartInstance.value) return;
+  // klinecharts v9/v10 removeIndicator with no args might not clear all?
+  // But based on our setup, we track active indicators in `indicators` ref.
+  // We can just iterate and remove.
+  // Actually, let's remove ALL indicators by clearing the pane or using API if available.
+  // Safe way: remove what we added.
+  const allIndicators = [
+    "MA",
+    "EMA",
+    "BOLL",
+    "SAR",
+    "VOL",
+    "MACD",
+    "KDJ",
+    "RSI",
+    "BIAS",
+    "BRAR",
+    "CCI",
+    "DMI",
+    "CR",
+    "PSY",
+    "DMA",
+    "TRIX",
+    "OBV",
+    "VR",
+    "WR",
+    "MTM",
+  ];
+  allIndicators.forEach((name) => {
+    chartInstance.value?.removeIndicator({ name });
+    chartInstance.value?.removeIndicator({ name, paneId: "candle_pane" });
+  });
+}
+
+async function loadDataForCurrentStock(period: string): Promise<boolean> {
+  if (!currentStock.value) return false;
+
+  if (period === "daily" && dailyData.value.length > 0 && currentDate.value) {
+    updateChartForDate(currentDate.value);
+    return true;
+  }
+  if (period === "weekly" && weeklyData.value.length > 0 && currentDate.value) {
+    updateChartForDate(currentDate.value);
+    return true;
+  }
+  if (
+    period === "monthly" &&
+    monthlyData.value.length > 0 &&
+    currentDate.value
+  ) {
+    updateChartForDate(currentDate.value);
+    return true;
+  }
+
+  return false;
+}
+
+function updateChartForDate(timestamp: number) {
+  if (!chartInstance.value) return;
+
+  let sourceData: KLineData[] = [];
+  if (currentTimeframe.value === "daily") sourceData = dailyData.value;
+  else if (currentTimeframe.value === "weekly") sourceData = weeklyData.value;
+  else if (currentTimeframe.value === "monthly") sourceData = monthlyData.value;
+
+  const endIndex = sourceData.findIndex((d) => d.timestamp > timestamp);
+  const sliceEnd = endIndex === -1 ? sourceData.length : endIndex;
+
+  const dataToShow = sourceData.slice(0, sliceEnd);
+
+  if (dataToShow.length === 0) return;
+
+  initialDataRef.value = dataToShow;
+  chartInstance.value.resetData();
+  setupDataLoader();
+  syncTrainingBoundaryOverlays();
+
+  if (currentTimeframe.value === "daily") {
+    currentIndex.value = sliceEnd - 1;
+  }
+
+  currentPrice.value = dataToShow[dataToShow.length - 1].close;
+}
+
+async function startNewRandomTraining(retries = 20) {
+  if (retries <= 0) {
+    message.error("Failed to find stock data after multiple attempts");
+    isChartLoaded.value = true;
+    return;
+  }
+
+  isChartLoaded.value = false;
+
+  // Random offset to pick a stock from ~5000 total stocks
+  const randomOffset = Math.floor(Math.random() * 5000);
+
+  const { data: stocks, error: stockErr } = await supabase
+    .from("stock_info")
+    .select("ts_code, name, symbol")
+    .range(randomOffset, randomOffset)
+    .limit(1);
+
+  if (stockErr || !stocks || stocks.length === 0) {
+    await startNewRandomTraining(retries - 1);
+    return;
+  }
+
+  const randomStock = stocks[0];
+  currentStock.value = randomStock;
+
+  const [dailyRes, weeklyRes, monthlyRes] = await Promise.all([
+    supabase
+      .from("stock_kline")
+      .select("*")
+      .eq("ts_code", randomStock.symbol)
+      .eq("period", "daily")
+      .order("trade_date", { ascending: true }),
+    supabase
+      .from("stock_kline")
+      .select("*")
+      .eq("ts_code", randomStock.symbol)
+      .eq("period", "weekly")
+      .order("trade_date", { ascending: true }),
+    supabase
+      .from("stock_kline")
+      .select("*")
+      .eq("ts_code", randomStock.symbol)
+      .eq("period", "monthly")
+      .order("trade_date", { ascending: true }),
+  ]);
+
+  if (
+    dailyRes.error ||
+    weeklyRes.error ||
+    monthlyRes.error ||
+    !dailyRes.data?.length
+  ) {
+    await startNewRandomTraining(retries - 1);
+    return;
+  }
+
+  // Format Data
+  const format = (data: any[]) =>
+    data.map((k) => ({
+      timestamp: new Date(k.trade_date).getTime(),
+      open: Number(k.open),
+      high: Number(k.high),
+      low: Number(k.low),
+      close: Number(k.close),
+      volume: Number(k.volume),
+      turnover: Number(k.amount),
+    }));
+
+  dailyData.value = format(dailyRes.data);
+  weeklyData.value = format(weeklyRes.data);
+  monthlyData.value = format(monthlyRes.data);
+  const minSegmentLength = 50;
+  const maxSegmentLength = 150;
+  if (dailyData.value.length < minSegmentLength + 1) {
+    await startNewRandomTraining(retries - 1);
+    return;
+  }
+
+  const segmentLength =
+    Math.floor(Math.random() * (maxSegmentLength - minSegmentLength + 1)) +
+    minSegmentLength;
+  const safeSegmentLength = Math.min(segmentLength, dailyData.value.length - 1);
+  const maxStartIndex = dailyData.value.length - safeSegmentLength - 1;
+  const startIndex = Math.floor(Math.random() * (maxStartIndex + 1));
+  const endIndex = startIndex + safeSegmentLength;
+
+  trainingStartIndex.value = startIndex;
+  trainingEndIndex.value = endIndex;
+  fullData.value = dailyData.value;
+  initialDataRef.value = dailyData.value.slice(0, trainingStartIndex.value + 1);
+  currentIndex.value = trainingStartIndex.value;
+  currentDate.value = dailyData.value[trainingStartIndex.value].timestamp;
+  currentPrice.value = dailyData.value[trainingStartIndex.value].close;
+
+  // Reset Chart
+  if (chartInstance.value) {
+    clearIndicators(); // Fix duplicate indicators!
+    chartInstance.value.resetData(); // Use resetData instead of clearData
+    setupDataLoader();
+    setupIndicatorsFromState();
+    chartInstance.value.setSymbol({
+      ticker: currentStock.value.symbol,
+      pricePrecision: 2,
+      volumePrecision: 0,
+    });
+
+    // Set initial timeframe
+    currentTimeframe.value = "daily";
+    let klinePeriod: Period = { type: "day", span: 1 };
+    chartInstance.value.setPeriod(klinePeriod);
+
+    // Apply data up to current date
+    updateChartForDate(currentDate.value!);
+    syncTrainingBoundaryOverlays();
+
+    await ensureChartSized();
+  }
+  isChartLoaded.value = true;
+}
 
 watch(
   () => isTrainingStarted.value,
@@ -1252,16 +1603,6 @@ function setupDataLoader() {
       updateDataCallback = params.callback;
     },
   });
-
-  chartInstance.value.setSymbol({
-    ticker: "NVDA",
-    pricePrecision: 2,
-    volumePrecision: 0,
-  });
-  chartInstance.value.setPeriod({
-    type: "day",
-    span: 1,
-  });
 }
 
 function setupIndicatorsFromState() {
@@ -1301,6 +1642,7 @@ async function ensureChartSized() {
   if (initialDataRef.value.length > 0) {
     setupDataLoader();
     setupIndicatorsFromState();
+    syncTrainingBoundaryOverlays();
   }
 }
 
@@ -1466,7 +1808,6 @@ onMounted(() => {
     createPointFigures: ({ coordinates, overlay }) => {
       const extendData = overlay.extendData as any;
       const type = extendData?.type ?? "BUY";
-      const price = extendData?.price ?? 0;
       if (coordinates.length > 0) {
         const x = coordinates[0].x;
         const y = coordinates[0].y;
@@ -1617,50 +1958,10 @@ onMounted(() => {
     // Initial resize to ensure correct rendering
     chartInstance.value.resize();
 
-    // Generate data asynchronously to prevent UI freeze
+    // Start training mode with random stock
     setTimeout(() => {
       if (!isMounted.value) return;
-
-      try {
-        console.log("Generating mock data...");
-        const data = generateMockData(1000);
-        console.log("Data generated, length:", data.length);
-
-        if (!isMounted.value) return;
-
-        if (data && data.length > 0) {
-          fullData.value = data;
-          // Start with partial data
-          currentIndex.value = 800;
-          const initialData = fullData.value.slice(0, currentIndex.value);
-          initialDataRef.value = initialData;
-
-          console.log("Applying initial data to chart...");
-
-          if (chartInstance.value) {
-            setupDataLoader();
-            setupIndicatorsFromState();
-
-            currentPrice.value = initialData[initialData.length - 1].close;
-            isChartLoaded.value = true;
-            console.log("Chart loaded successfully");
-            ensureChartSized();
-          } else {
-            console.error("Chart instance is null");
-            message.error("Error: Chart not initialized");
-          }
-        } else {
-          console.error(
-            "Failed to generate mock data: data is empty or undefined",
-          );
-          message.error("Failed to load chart data: empty data");
-        }
-      } catch (error) {
-        console.error("Error loading chart data:", error);
-        message.error(
-          `Error loading chart data: ${error instanceof Error ? error.message : "Unknown error"}`,
-        );
-      }
+      startNewRandomTraining();
     }, 500);
 
     // Handle resize
@@ -1710,14 +2011,14 @@ function handleKeydown(e: KeyboardEvent) {
   }
 
   // Playback Control: Space
-  if (key === " ") {
+  if (key === " " && isDailyTrainingMode.value) {
     e.preventDefault(); // Prevent page scroll
     togglePlay();
     return;
   }
 
   // Step Forward: ArrowRight
-  if (e.key === "ArrowRight") {
+  if (e.key === "ArrowRight" && isDailyTrainingMode.value) {
     e.preventDefault();
     stepForward();
     return;
@@ -1796,6 +2097,7 @@ function updateChart() {
   if (updateDataCallback) {
     updateDataCallback(newData);
   }
+  currentDate.value = newData.timestamp;
   currentPrice.value = newData.close;
 
   // Update position P/L if active
@@ -1812,53 +2114,31 @@ function updateChart() {
 }
 
 // Actions
-function handleTimeframeChange(value: string) {
+async function handleTimeframeChange(value: string) {
   const option = timeframeOptions.value.find((o) => o.value === value);
   if (!option) return;
 
-  currentTimeframe.value = option.label;
-  message.info(
-    t("training.messages.switchedTimeframe", {
-      timeframe: currentTimeframe.value,
-    }),
-  );
+  currentTimeframe.value = option.value;
+  if (!isDailyTrainingMode.value) {
+    stopPlay();
+  }
+
 
   if (!chartInstance.value) return;
 
-  // Map UI keys to KLineCharts Period object
   let period: Period = { type: "day", span: 1 };
-
-  switch (value) {
-    case "1m":
-      period = { type: "minute", span: 1 };
-      break;
-    case "5m":
-      period = { type: "minute", span: 5 };
-      break;
-    case "15m":
-      period = { type: "minute", span: 15 };
-      break;
-    case "30m":
-      period = { type: "minute", span: 30 };
-      break;
-    case "1h":
-      period = { type: "hour", span: 1 };
-      break;
-    case "4h":
-      period = { type: "hour", span: 4 };
-      break;
-    case "1d":
-      period = { type: "day", span: 1 };
-      break;
-    case "1w":
-      period = { type: "week", span: 1 };
-      break;
-  }
-
+  if (value === "weekly") period = { type: "week", span: 1 };
+  if (value === "monthly") period = { type: "month", span: 1 };
   chartInstance.value.setPeriod(period);
+  await loadDataForCurrentStock(value);
+  syncTrainingBoundaryOverlays();
 }
 
 function startPlay() {
+  if (!isDailyTrainingMode.value) {
+    message.warning("仅日线模式支持播放与步进");
+    return;
+  }
   if (currentIndex.value >= fullData.value.length) return;
   isPlaying.value = true;
   const interval = 1000 / playSpeed.value;
@@ -1880,6 +2160,10 @@ function stopPlay() {
 }
 
 function togglePlay() {
+  if (!isDailyTrainingMode.value) {
+    message.warning("仅日线模式支持播放与步进");
+    return;
+  }
   if (isPlaying.value) {
     stopPlay();
     message.info(t("training.messages.playbackPaused"));
@@ -1890,6 +2174,10 @@ function togglePlay() {
 }
 
 function stepForward() {
+  if (!isDailyTrainingMode.value) {
+    message.warning("仅日线模式支持播放与步进");
+    return;
+  }
   if (currentIndex.value < fullData.value.length - 1) {
     currentIndex.value++;
     updateChart();
@@ -2148,6 +2436,11 @@ function setAmountByPercent(p: number) {
 }
 
 function handleTrade(side: string) {
+  if (isTrainingWindowEnded.value) {
+    message.warning("训练结束后仅可查看后续K线，不能交易");
+    return;
+  }
+
   if (position.value) {
     message.error(
       t("training.messages.alreadyHavePosition", { side: position.value.side }),
@@ -2195,6 +2488,10 @@ function handleTrade(side: string) {
 
 function closePosition() {
   if (!position.value) return;
+  if (isTrainingWindowEnded.value) {
+    message.warning("训练结束后仅可查看后续K线，不能交易");
+    return;
+  }
 
   // T+1 Rule Check
   // In simulation, we check if the current candle timestamp is greater than entry timestamp
@@ -2258,6 +2555,9 @@ function exitTraining() {
       document.exitFullscreen().catch((err) => console.error(err));
     }
     message.info(t("training.messages.sessionEnded"));
+
+    // Load a new random stock for the next session
+    startNewRandomTraining();
   } else {
     router.push("/");
   }
