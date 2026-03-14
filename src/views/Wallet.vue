@@ -13,9 +13,9 @@
             <div>
               <div class="text-[var(--color-text-secondary)] text-sm mb-1 uppercase tracking-widest font-bold opacity-80">{{ t('wallet.balance.totalAssets') }}</div>
               <div class="flex items-baseline gap-3">
-                <span class="text-4xl md:text-5xl font-black text-[var(--color-text-primary)] tracking-tight">$125,430.50</span>
+                <span class="text-4xl md:text-5xl font-black text-[var(--color-text-primary)] tracking-tight">${{ formatCurrency(totalAssets) }}</span>
                 <span class="bg-[var(--color-brand-primary)]/20 text-[var(--color-brand-primary)] px-2 py-1 rounded-md font-bold text-xs flex items-center">
-                  <n-icon :component="ArrowUpOutline" class="mr-1"/> +12.5%
+                  <n-icon :component="ArrowUpOutline" class="mr-1"/> {{ pnlRateText }}
                 </span>
               </div>
             </div>
@@ -27,19 +27,19 @@
           <div class="grid grid-cols-2 md:grid-cols-4 gap-6 pt-6 border-t border-[var(--color-border)]/30">
             <div>
               <div class="text-xs text-[var(--color-text-secondary)] mb-1 opacity-80">{{ t('wallet.balance.availableCash') }}</div>
-              <div class="text-lg font-bold text-[var(--color-text-primary)]">$45,200.00</div>
+              <div class="text-lg font-bold text-[var(--color-text-primary)]">${{ formatCurrency(availableCash) }}</div>
             </div>
             <div>
               <div class="text-xs text-[var(--color-text-secondary)] mb-1 opacity-80">{{ t('wallet.balance.inPositions') }}</div>
-              <div class="text-lg font-bold text-[var(--color-text-primary)]">$80,230.50</div>
+              <div class="text-lg font-bold text-[var(--color-text-primary)]">${{ formatCurrency(inPositions) }}</div>
             </div>
             <div>
               <div class="text-xs text-[var(--color-text-secondary)] mb-1 opacity-80">{{ t('wallet.balance.todayPL') }}</div>
-              <div class="text-lg font-bold text-[var(--color-success)]">+$1,240.50</div>
+              <div class="text-lg font-bold text-[var(--color-success)]">{{ todayPnlText }}</div>
             </div>
             <div>
               <div class="text-xs text-[var(--color-text-secondary)] mb-1 opacity-80">{{ t('wallet.balance.totalTrades') }}</div>
-              <div class="text-lg font-bold text-[var(--color-text-primary)]">142</div>
+              <div class="text-lg font-bold text-[var(--color-text-primary)]">{{ tradeCount }}</div>
             </div>
           </div>
         </div>
@@ -97,14 +97,14 @@
             <template #prefix><div class="w-2 h-2 rounded-full bg-[var(--color-brand-primary)]"></div></template>
             <div class="flex justify-between w-full text-xs">
               <span class="text-[var(--color-text-secondary)]">{{ t('wallet.distribution.equityPositions') }}</span>
-              <span class="text-[var(--color-text-primary)] font-bold">$80,230.50</span>
+              <span class="text-[var(--color-text-primary)] font-bold">${{ formatCurrency(inPositions) }}</span>
             </div>
           </n-list-item>
           <n-list-item>
             <template #prefix><div class="w-2 h-2 rounded-full bg-[var(--color-border)]"></div></template>
             <div class="flex justify-between w-full text-xs">
               <span class="text-[var(--color-text-secondary)]">{{ t('wallet.distribution.cashBalance') }}</span>
-              <span class="text-[var(--color-text-primary)] font-bold">$45,200.00</span>
+              <span class="text-[var(--color-text-primary)] font-bold">${{ formatCurrency(availableCash) }}</span>
             </div>
           </n-list-item>
         </n-list>
@@ -134,7 +134,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, h } from 'vue'
+import { ref, computed, h, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { 
   NCard, NIcon, NButton, NInputGroup, NInputNumber, NTooltip, NList, NListItem, 
@@ -143,19 +143,34 @@ import {
 import { 
   WalletOutline, InformationCircleOutline, ArrowUpOutline, EyeOutline
 } from '@vicons/ionicons5'
+import { useAuth } from "../composables/useAuth";
+import { listBalanceLedger } from "../services/userProfileRepo";
 
 const { t } = useI18n()
 const message = useMessage()
+const { user, profile } = useAuth();
 const rechargeAmount = ref(100)
 const historyFilter = ref('all')
 
-const historyData = [
-  { id: 1, type: 'RECHARGE', amount: 50000.00, time: '2023-10-24 14:20', status: 'COMPLETED', detail: 'Credit Card (Simulated)' },
-  { id: 2, type: 'TRADE_BUY', amount: -12450.00, time: '2023-10-24 10:30', status: 'COMPLETED', detail: 'NVDA x15' },
-  { id: 3, type: 'TRADE_SELL', amount: 8420.00, time: '2023-10-23 16:15', status: 'COMPLETED', detail: 'AAPL x50' },
-  { id: 4, type: 'RECHARGE', amount: 10000.00, time: '2023-10-22 09:00', status: 'COMPLETED', detail: 'Daily Reward' },
-  { id: 5, type: 'TRADE_BUY', amount: -32000.00, time: '2023-10-21 11:45', status: 'COMPLETED', detail: 'TSLA x200' },
-]
+const historyData = ref<any[]>([]);
+
+const totalAssets = computed(() => Number(profile.value?.training_balance ?? 100000));
+const availableCash = computed(() => Number((totalAssets.value * 0.36).toFixed(2)));
+const inPositions = computed(() => Number((totalAssets.value - availableCash.value).toFixed(2)));
+const todayPnl = computed(() =>
+  historyData.value
+    .filter((h) => h.type === "TRADE_PNL")
+    .reduce((sum, item) => sum + Number(item.amount || 0), 0),
+);
+const todayPnlText = computed(() => `${todayPnl.value >= 0 ? "+" : ""}${formatCurrency(todayPnl.value)}`);
+const tradeCount = computed(() =>
+  historyData.value.filter((h) => h.type.startsWith("TRADE")).length,
+);
+const pnlRateText = computed(() => {
+  const base = totalAssets.value - todayPnl.value;
+  const rate = base === 0 ? 0 : (todayPnl.value / base) * 100;
+  return `${rate >= 0 ? "+" : ""}${rate.toFixed(2)}%`;
+});
 
 const historyColumns = computed(() => [
   { title: t('wallet.activity.columns.time'), key: 'time' },
@@ -189,12 +204,37 @@ const historyColumns = computed(() => [
 ])
 
 const filteredHistory = computed(() => {
-  if (historyFilter.value === 'all') return historyData
-  if (historyFilter.value === 'trade') return historyData.filter(h => h.type.startsWith('TRADE'))
-  return historyData.filter(h => h.type === 'RECHARGE')
+  if (historyFilter.value === 'all') return historyData.value
+  if (historyFilter.value === 'trade') return historyData.value.filter(h => h.type.startsWith('TRADE'))
+  return historyData.value.filter(h => h.type === 'RECHARGE')
 })
 
 function handleRecharge() {
   message.success(t('wallet.recharge.success', { amount: rechargeAmount.value }))
 }
+
+function formatCurrency(value: number) {
+  return Number(value).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+onMounted(async () => {
+  if (!user.value) return;
+  const { data } = await listBalanceLedger(user.value.id, 100);
+  historyData.value =
+    data?.map((item: any) => {
+      const trade = item.change_type === "trade_pnl";
+      const recharge = item.change_type === "manual_adjust" || item.change_type === "membership_bonus";
+      return {
+        id: item.id,
+        type: trade ? "TRADE_PNL" : recharge ? "RECHARGE" : "OTHER",
+        amount: Number(item.amount),
+        time: new Date(item.created_at).toLocaleString(),
+        status: "COMPLETED",
+        detail: item.note || item.change_type,
+      };
+    }) ?? [];
+});
 </script>

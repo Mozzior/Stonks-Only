@@ -129,6 +129,7 @@ export default {
         oldRequired: "请输入旧密码",
         newRequired: "请输入新密码",
         confirmRequired: "请确认新密码",
+        oldMismatch: "旧密码不正确",
         mismatch: "两次输入的新密码不一致",
         success: "密码更新成功",
       },
@@ -398,6 +399,9 @@ export default {
       trainingEndedViewOnly: "训练结束后仅可查看后续K线，不能交易",
       trainingBoundaryStart: "开始",
       trainingBoundaryEnd: "结束",
+      sessionNotInitialized: "训练会话未初始化",
+      sessionSaveFailed: "训练结果保存失败",
+      sessionCreateFailed: "云端训练会话创建失败",
     },
   },
   review: {
@@ -538,6 +542,16 @@ export default {
           earlyAccess: "新功能抢先体验",
         },
       },
+    },
+    tier: {
+      free: "免费会员",
+      pro: "专业会员",
+      vip: "VIP会员",
+    },
+    status: {
+      inactive: "未激活",
+      active: "生效中",
+      expired: "已过期",
     },
     achievements: {
       title: "您的成就",

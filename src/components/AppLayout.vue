@@ -50,7 +50,7 @@
           <n-avatar
             round
             size="small"
-            src="https://i.pravatar.cc/150?u=trader"
+            :src="avatarUrl"
             class="border border-[var(--color-border)] flex-shrink-0"
           />
           <div class="flex flex-col overflow-hidden">
@@ -60,7 +60,7 @@
             >
             <span
               class="text-[10px] text-[var(--color-text-secondary)] truncate"
-              >VIP Member</span
+              >{{ membershipText }}</span
             >
           </div>
         </div>
@@ -99,13 +99,9 @@ import {
   NIcon,
   NLayout,
   NLayoutSider,
-  NLayoutHeader,
   NLayoutContent,
   NMenu,
-  NButton,
   NAvatar,
-  NCard,
-  NTooltip,
 } from "naive-ui";
 import type { MenuOption } from "naive-ui";
 import { useI18n } from "vue-i18n";
@@ -118,25 +114,27 @@ import {
   SettingsOutline,
   LogOutOutline,
   BarChartOutline,
-  NotificationsOutline,
   InformationCircleOutline,
   SchoolOutline,
 } from "@vicons/ionicons5";
 import { useLayoutControl } from "../composables/useLayoutControl";
 import { useAuth } from "../composables/useAuth";
+import {
+  getAvatarUrl,
+  getDisplayName,
+  getMembershipTagType,
+  mapLegacyTier,
+  normalizeStatus,
+} from "../utils/userProfile";
 
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
 const { isFullscreen } = useLayoutControl();
-const { user, signOut } = useAuth();
+const { user, profile, signOut } = useAuth();
 const collapsed = ref(false);
 
 const activeKey = computed(() => route.path);
-const currentRouteName = computed(
-  () => route.meta.title || t("common.dashboard"),
-);
-
 function renderIcon(icon: any) {
   return () => h(NIcon, null, { default: () => h(icon) });
 }
@@ -219,7 +217,19 @@ const menuOptions = computed<MenuOption[]>(() => [
 ]);
 
 const userDisplay = computed(() => {
-  return user.value?.email || 'Trader Pro'
+  return getDisplayName(profile.value, user.value?.email)
+});
+
+const avatarUrl = computed(() => getAvatarUrl(profile.value));
+
+const membershipText = computed(() => {
+  const tier = mapLegacyTier(profile.value?.membership_tier);
+  const status = normalizeStatus(profile.value?.membership_status);
+  const tierLabel = t(`membership.tier.${tier}`);
+  const statusLabel = t(`membership.status.${status}`);
+  const tagType = getMembershipTagType(tier);
+  const typeLabel = tagType === "warning" ? "★" : "";
+  return `${typeLabel}${tierLabel} · ${statusLabel}`;
 });
 
 async function handleUpdateValue(key: string) {

@@ -129,6 +129,7 @@ export default {
         oldRequired: "Please input old password",
         newRequired: "Please input new password",
         confirmRequired: "Please confirm new password",
+        oldMismatch: "Old password is incorrect",
         mismatch: "New passwords do not match",
         success: "Password updated successfully",
       },
@@ -406,6 +407,9 @@ export default {
         "Training is over. You can continue viewing bars, but trading is disabled.",
       trainingBoundaryStart: "Start",
       trainingBoundaryEnd: "End",
+      sessionNotInitialized: "Training session has not been initialized.",
+      sessionSaveFailed: "Failed to save training results.",
+      sessionCreateFailed: "Failed to create cloud training session.",
     },
   },
   review: {
@@ -547,6 +551,16 @@ export default {
           earlyAccess: "Early access to new features",
         },
       },
+    },
+    tier: {
+      free: "Free",
+      pro: "Pro",
+      vip: "VIP",
+    },
+    status: {
+      inactive: "Inactive",
+      active: "Active",
+      expired: "Expired",
     },
     achievements: {
       title: "Your Achievements",

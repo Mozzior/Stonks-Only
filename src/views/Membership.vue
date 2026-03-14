@@ -47,7 +47,8 @@
             </div>
 
             <n-button
-              :type="plan.popular ? 'primary' : 'default'"
+              :type="plan.current ? 'default' : 'primary'"
+              :disabled="plan.current"
               block
               class="mb-6 font-bold"
             >
@@ -158,15 +159,21 @@ import {
   WalletOutline,
   TrendingUpOutline,
 } from "@vicons/ionicons5";
+import { useAuth } from "../composables/useAuth";
+import { mapLegacyTier } from "../utils/userProfile";
 
 const { t } = useI18n();
+const { profile } = useAuth();
+const currentTier = computed(() =>
+  mapLegacyTier(profile.value?.membership_tier),
+);
 
 const plans = computed(() => [
   {
     name: t("membership.plans.rookie.name"),
     price: "0",
     description: t("membership.plans.rookie.desc"),
-    current: true,
+    current: currentTier.value === "free",
     popular: false,
     features: [
       t("membership.plans.rookie.features.marketData"),
@@ -179,7 +186,7 @@ const plans = computed(() => [
     name: t("membership.plans.pro.name"),
     price: "29",
     description: t("membership.plans.pro.desc"),
-    current: false,
+    current: currentTier.value === "pro",
     popular: true,
     features: [
       t("membership.plans.pro.features.marketData"),
@@ -193,7 +200,7 @@ const plans = computed(() => [
     name: t("membership.plans.elite.name"),
     price: "99",
     description: t("membership.plans.elite.desc"),
-    current: false,
+    current: currentTier.value === "vip",
     popular: false,
     features: [
       t("membership.plans.elite.features.marketData"),

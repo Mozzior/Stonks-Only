@@ -58,7 +58,7 @@
             >{{ t("training.header.accountBalance") }}</span
           >
           <span class="text-lg font-bold text-[var(--color-brand-primary)]"
-            >$125,430.50</span
+            >${{ accountBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span
           >
         </div>
       </div>
@@ -1035,13 +1035,17 @@ import {
 import type { KLineData, Period, OverlayCreate, CandleType } from "klinecharts";
 import { useTheme } from "../composables/useTheme";
 import { useLayoutControl } from "../composables/useLayoutControl";
+import { useAuth } from "../composables/useAuth";
 import { supabase } from "../utils/supabase";
+import { createSession, finishSession, appendTradeLog } from "../services/trainingRepo";
+import { updateTrainingBalance, appendBalanceLedger } from "../services/userProfileRepo";
 
 const router = useRouter();
 const message = useMessage();
 const { isDark, candleColorMode } = useTheme();
 const { setFullscreen } = useLayoutControl();
 const { t, locale } = useI18n();
+const { user, profile } = useAuth();
 
 // State
 const isChartLoaded = ref(false);
@@ -1068,6 +1072,14 @@ const pendingTextOverlay = ref<any>(null);
 let playInterval: any = null;
 let updateDataCallback: ((data: KLineData) => void) | null = null;
 let resizeHandler: (() => void) | null = null;
+const activeSessionId = ref<number | null>(null);
+const sessionTradeSeq = ref(0);
+const sessionInitialBalance = ref(100000);
+const sessionRealizedPnl = ref(0);
+const sessionPeakBalance = ref(100000);
+const accountBalance = computed(() =>
+  Number(profile.value?.training_balance ?? 100000),
+);
 
 const currentStock = ref<any>(null);
 const currentStockName = computed(() =>
@@ -1463,6 +1475,8 @@ function updateChartForDate(timestamp: number) {
 }
 
 async function startNewRandomTraining(retries = 20) {
+  activeSessionId.value = null;
+  sessionTradeSeq.value = 0;
   if (retries <= 0) {
     message.error("Failed to find stock data after multiple attempts");
     isChartLoaded.value = true;
@@ -2490,11 +2504,95 @@ function updateChartSettings() {
 }
 
 function setAmountByPercent(p: number) {
+  const baseBalance = isTrainingStarted.value
+    ? sessionInitialBalance.value + sessionRealizedPnl.value
+    : accountBalance.value;
   tradeAmount.value =
-    Math.floor((125430 * (p / 100)) / currentPrice.value / 100) * 100;
+    Math.floor((baseBalance * (p / 100)) / currentPrice.value / 100) * 100;
 }
 
-function handleTrade(side: string) {
+async function persistTradeLog(
+  action: "BUY" | "SELL" | "CLOSE",
+  side: "LONG" | "SHORT",
+  amount: number,
+  price: number,
+) {
+  if (!activeSessionId.value || !user.value) return;
+  sessionTradeSeq.value += 1;
+  await appendTradeLog({
+    session_id: activeSessionId.value,
+    user_id: user.value.id,
+    seq_no: sessionTradeSeq.value,
+    action,
+    side,
+    amount,
+    price,
+    trade_time: new Date().toISOString(),
+    kline_timestamp: fullData.value[currentIndex.value]?.timestamp ?? null,
+    position_after: position.value
+      ? {
+          side: position.value.side,
+          amount: position.value.amount,
+          entryPrice: position.value.entryPrice,
+          plAmount: position.value.plAmount,
+        }
+      : { side: null, amount: 0 },
+  });
+}
+
+async function finalizeSession(status: "completed" | "aborted") {
+  if (!activeSessionId.value) return;
+  const previousBalance = accountBalance.value;
+  const floating = position.value?.plAmount ?? 0;
+  const endingBalance = Number(
+    (sessionInitialBalance.value + sessionRealizedPnl.value + floating).toFixed(2),
+  );
+  const realizedPnl = Number(sessionRealizedPnl.value.toFixed(2));
+  const returnPct =
+    sessionInitialBalance.value === 0
+      ? 0
+      : Number(((realizedPnl / sessionInitialBalance.value) * 100).toFixed(4));
+  const drawdown =
+    sessionPeakBalance.value === 0
+      ? 0
+      : Number(
+          (
+            ((sessionPeakBalance.value - endingBalance) / sessionPeakBalance.value) *
+            100
+          ).toFixed(4),
+        );
+
+  await finishSession(activeSessionId.value, {
+    ended_at: new Date().toISOString(),
+    status,
+    ending_balance: endingBalance,
+    realized_pnl: realizedPnl,
+    return_pct: returnPct,
+    max_drawdown: drawdown,
+  });
+
+  if (user.value) {
+    await updateTrainingBalance(user.value.id, endingBalance);
+    const delta = Number((endingBalance - previousBalance).toFixed(2));
+    if (delta !== 0) {
+      await appendBalanceLedger({
+        user_id: user.value.id,
+        session_id: activeSessionId.value,
+        change_type: "trade_pnl",
+        amount: delta,
+        balance_after: endingBalance,
+        note: "training session settlement",
+      });
+    }
+    if (profile.value) {
+      profile.value = { ...profile.value, training_balance: endingBalance };
+    }
+  }
+
+  activeSessionId.value = null;
+}
+
+async function handleTrade(side: string) {
   if (isTrainingWindowEnded.value) {
     message.warning(t("training.messages.trainingEndedViewOnly"));
     return;
@@ -2504,6 +2602,11 @@ function handleTrade(side: string) {
     message.error(
       t("training.messages.alreadyHavePosition", { side: position.value.side }),
     );
+    return;
+  }
+
+  if (!activeSessionId.value) {
+    message.warning(t("training.messages.sessionNotInitialized"));
     return;
   }
 
@@ -2543,9 +2646,16 @@ function handleTrade(side: string) {
       price: currentPrice.value.toFixed(2),
     }),
   );
+
+  await persistTradeLog(
+    side === "BUY" ? "BUY" : "SELL",
+    side === "BUY" ? "LONG" : "SHORT",
+    tradeAmount.value,
+    currentPrice.value,
+  );
 }
 
-function closePosition() {
+async function closePosition() {
   if (!position.value) return;
   if (isTrainingWindowEnded.value) {
     message.warning(t("training.messages.trainingEndedViewOnly"));
@@ -2601,12 +2711,27 @@ function closePosition() {
   }
 
   const pl = position.value.plAmount;
+  sessionRealizedPnl.value = Number((sessionRealizedPnl.value + pl).toFixed(2));
+  const liveBalance = sessionInitialBalance.value + sessionRealizedPnl.value;
+  sessionPeakBalance.value = Math.max(sessionPeakBalance.value, liveBalance);
   message.success(t("training.messages.positionClosed", { pl: pl.toFixed(2) }));
+  await persistTradeLog(
+    "CLOSE",
+    side === "BUY" ? "SHORT" : "LONG",
+    position.value.amount,
+    currentPrice.value,
+  );
   position.value = null;
 }
 
-function exitTraining() {
+async function exitTraining() {
   if (isTrainingStarted.value) {
+    try {
+      await finalizeSession("completed");
+    } catch (e) {
+      console.error(e);
+      message.error(t("training.messages.sessionSaveFailed"));
+    }
     stopPlay();
     isTrainingStarted.value = false;
     setFullscreen(false);
@@ -2622,8 +2747,42 @@ function exitTraining() {
   }
 }
 
-function startTraining() {
+async function startTraining() {
   isTrainingStarted.value = true;
+  sessionTradeSeq.value = 0;
+  sessionInitialBalance.value = accountBalance.value;
+  sessionRealizedPnl.value = 0;
+  sessionPeakBalance.value = sessionInitialBalance.value;
+  if (user.value && currentStock.value) {
+    try {
+      const trainStartDate = dailyData.value[trainingStartIndex.value]
+        ? formatDate(dailyData.value[trainingStartIndex.value].timestamp)
+        : null;
+      const trainEndDate = dailyData.value[trainingEndIndex.value]
+        ? formatDate(dailyData.value[trainingEndIndex.value].timestamp)
+        : null;
+      const { data, error } = await createSession({
+        user_id: user.value.id,
+        ts_code: currentStock.value.ts_code ?? currentStock.value.symbol ?? "",
+        symbol: currentStock.value.symbol ?? null,
+        period: "daily",
+        train_start_idx: trainingStartIndex.value,
+        train_end_idx: trainingEndIndex.value,
+        train_start_date: trainStartDate,
+        train_end_date: trainEndDate,
+        initial_balance: sessionInitialBalance.value,
+      });
+      if (error) {
+        console.error(error);
+        message.warning(t("training.messages.sessionCreateFailed"));
+      } else {
+        activeSessionId.value = data?.id ?? null;
+      }
+    } catch (e) {
+      console.error(e);
+      message.warning(t("training.messages.sessionCreateFailed"));
+    }
+  }
   setFullscreen(true);
   document.documentElement.requestFullscreen().catch((err) => {
     console.error("Error attempting to enable fullscreen:", err);
