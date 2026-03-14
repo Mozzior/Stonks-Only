@@ -396,8 +396,8 @@ export default {
       tPlusOneWarning: "T+1 规则: 当日买入不可当日卖出。",
       dailyOnlyPlayback: "仅日线模式支持播放与步进",
       trainingEndedViewOnly: "训练结束后仅可查看后续K线，不能交易",
-      trainingBoundaryStart: "训练开始",
-      trainingBoundaryEnd: "训练结束",
+      trainingBoundaryStart: "开始",
+      trainingBoundaryEnd: "结束",
     },
   },
   review: {

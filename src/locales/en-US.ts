@@ -400,11 +400,12 @@ export default {
       sessionEnded: "Session Ended",
       sessionStarted: "Training Session Started",
       tPlusOneWarning: "T+1 Rule: You cannot sell on the same day you bought.",
-      dailyOnlyPlayback: "Playback and stepping are only available on daily mode.",
+      dailyOnlyPlayback:
+        "Playback and stepping are only available on daily mode.",
       trainingEndedViewOnly:
         "Training is over. You can continue viewing bars, but trading is disabled.",
-      trainingBoundaryStart: "Training Start",
-      trainingBoundaryEnd: "Training End",
+      trainingBoundaryStart: "Start",
+      trainingBoundaryEnd: "End",
     },
   },
   review: {
