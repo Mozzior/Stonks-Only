@@ -304,6 +304,14 @@ export default {
       startSession: "START SESSION",
       endSession: "END SESSION",
       liveSession: "LIVE SESSION",
+      endedSession: "TRAINING ENDED",
+      remainingBars: "Bars Left",
+      trainingRange: "Training Range",
+    },
+    timeframeOptions: {
+      daily: "Daily",
+      weekly: "Weekly",
+      monthly: "Monthly",
     },
     drawing: {
       trendLine: "Trend Line (L)",
@@ -392,6 +400,11 @@ export default {
       sessionEnded: "Session Ended",
       sessionStarted: "Training Session Started",
       tPlusOneWarning: "T+1 Rule: You cannot sell on the same day you bought.",
+      dailyOnlyPlayback: "Playback and stepping are only available on daily mode.",
+      trainingEndedViewOnly:
+        "Training is over. You can continue viewing bars, but trading is disabled.",
+      trainingBoundaryStart: "Training Start",
+      trainingBoundaryEnd: "Training End",
     },
   },
   review: {

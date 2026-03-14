@@ -419,7 +419,7 @@
               >
                 {{
                   isTrainingWindowEnded
-                    ? "训练已结束"
+                    ? t("training.toolbar.endedSession")
                     : t("training.toolbar.liveSession")
                 }}
               </span>
@@ -428,9 +428,9 @@
               v-if="isTrainingStarted"
               class="flex items-center gap-2 px-3 py-1 bg-[var(--color-bg-sidebar)] rounded border border-[var(--color-border)]"
             >
-              <span class="text-xs text-[var(--color-text-secondary)]"
-                >剩余K线</span
-              >
+              <span class="text-xs text-[var(--color-text-secondary)]">{{
+                t("training.toolbar.remainingBars")
+              }}</span>
               <span
                 class="text-xs font-bold text-[var(--color-brand-primary)]"
                 >{{ remainingTrainingBars }}</span
@@ -440,9 +440,9 @@
               v-if="isTrainingStarted"
               class="flex items-center gap-2 px-3 py-1 bg-[var(--color-bg-sidebar)] rounded border border-[var(--color-border)]"
             >
-              <span class="text-xs text-[var(--color-text-secondary)]"
-                >训练区间</span
-              >
+              <span class="text-xs text-[var(--color-text-secondary)]">{{
+                t("training.toolbar.trainingRange")
+              }}</span>
               <span class="text-xs font-bold text-[var(--color-text-primary)]"
                 >{{ trainingStartDateText }} ~ {{ trainingEndDateText }}</span
               >
@@ -1025,7 +1025,13 @@ import {
   BrushOutline,
   FlashOutline,
 } from "@vicons/ionicons5";
-import { init, Chart, dispose, registerOverlay } from "klinecharts";
+import {
+  init,
+  Chart,
+  dispose,
+  registerOverlay,
+  registerLocale,
+} from "klinecharts";
 import type { KLineData, Period, OverlayCreate, CandleType } from "klinecharts";
 import { useTheme } from "../composables/useTheme";
 import { useLayoutControl } from "../composables/useLayoutControl";
@@ -1035,7 +1041,7 @@ const router = useRouter();
 const message = useMessage();
 const { isDark, candleColorMode } = useTheme();
 const { setFullscreen } = useLayoutControl();
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 // State
 const isChartLoaded = ref(false);
@@ -1073,9 +1079,9 @@ const currentStockSymbol = computed(() =>
 
 // Data
 const timeframeOptions = computed(() => [
-  { label: "日线", value: "daily" },
-  { label: "周线", value: "weekly" },
-  { label: "月线", value: "monthly" },
+  { label: t("training.timeframeOptions.daily"), value: "daily" },
+  { label: t("training.timeframeOptions.weekly"), value: "weekly" },
+  { label: t("training.timeframeOptions.monthly"), value: "monthly" },
 ]);
 
 const chartTypeOptions = computed(() => [
@@ -1271,6 +1277,51 @@ function formatDate(timestamp: number) {
   return new Date(timestamp).toISOString().slice(0, 10);
 }
 
+registerLocale("zh-CN", {
+  time: "时间",
+  open: "开",
+  high: "高",
+  low: "低",
+  close: "收",
+  volume: "成交量",
+  change: "涨跌幅",
+  turnover: "换手率",
+  second: "秒",
+  minute: "分",
+  hour: "小时",
+  day: "日",
+  week: "周",
+  month: "月",
+  year: "年",
+});
+
+registerLocale("en-US", {
+  time: "Time",
+  open: "Open",
+  high: "High",
+  low: "Low",
+  close: "Close",
+  volume: "Volume",
+  change: "Change",
+  turnover: "Turnover",
+  second: "Second",
+  minute: "Minute",
+  hour: "Hour",
+  day: "Day",
+  week: "Week",
+  month: "Month",
+  year: "Year",
+});
+
+function getChartLocale() {
+  return locale.value === "zh-CN" ? "zh-CN" : "en-US";
+}
+
+function applyChartLocale() {
+  if (!chartInstance.value) return;
+  chartInstance.value.setLocale(getChartLocale());
+}
+
 function removeTrainingBoundaryOverlays() {
   if (!chartInstance.value) return;
   if (trainingStartOverlayId.value) {
@@ -1310,12 +1361,12 @@ function syncTrainingBoundaryOverlays() {
 
   const startTextId = chartInstance.value.createOverlay({
     name: "text",
-    extendData: { text: "训练开始" },
+    extendData: { text: t("training.messages.trainingBoundaryStart") },
     points: [{ timestamp: startData.timestamp, value: startData.high }],
   }) as string;
   const endTextId = chartInstance.value.createOverlay({
     name: "text",
-    extendData: { text: "训练结束" },
+    extendData: { text: t("training.messages.trainingBoundaryEnd") },
     points: [{ timestamp: endData.timestamp, value: endData.high }],
   }) as string;
 
@@ -1639,6 +1690,7 @@ async function ensureChartSized() {
   dispose(chartInstance.value);
   chartInstance.value = init(chartRef.value);
   applyBaseStyles();
+  applyChartLocale();
   if (initialDataRef.value.length > 0) {
     setupDataLoader();
     setupIndicatorsFromState();
@@ -1914,6 +1966,7 @@ onMounted(() => {
     window.addEventListener("resize", resizeHandler);
 
     applyBaseStyles();
+    applyChartLocale();
 
     // Watch theme changes
     watch(
@@ -1953,6 +2006,13 @@ onMounted(() => {
         });
       },
       { immediate: true },
+    );
+
+    watch(
+      () => locale.value,
+      () => {
+        applyChartLocale();
+      },
     );
 
     // Initial resize to ensure correct rendering
@@ -2123,7 +2183,6 @@ async function handleTimeframeChange(value: string) {
     stopPlay();
   }
 
-
   if (!chartInstance.value) return;
 
   let period: Period = { type: "day", span: 1 };
@@ -2136,7 +2195,7 @@ async function handleTimeframeChange(value: string) {
 
 function startPlay() {
   if (!isDailyTrainingMode.value) {
-    message.warning("仅日线模式支持播放与步进");
+    message.warning(t("training.messages.dailyOnlyPlayback"));
     return;
   }
   if (currentIndex.value >= fullData.value.length) return;
@@ -2161,7 +2220,7 @@ function stopPlay() {
 
 function togglePlay() {
   if (!isDailyTrainingMode.value) {
-    message.warning("仅日线模式支持播放与步进");
+    message.warning(t("training.messages.dailyOnlyPlayback"));
     return;
   }
   if (isPlaying.value) {
@@ -2175,7 +2234,7 @@ function togglePlay() {
 
 function stepForward() {
   if (!isDailyTrainingMode.value) {
-    message.warning("仅日线模式支持播放与步进");
+    message.warning(t("training.messages.dailyOnlyPlayback"));
     return;
   }
   if (currentIndex.value < fullData.value.length - 1) {
@@ -2437,7 +2496,7 @@ function setAmountByPercent(p: number) {
 
 function handleTrade(side: string) {
   if (isTrainingWindowEnded.value) {
-    message.warning("训练结束后仅可查看后续K线，不能交易");
+    message.warning(t("training.messages.trainingEndedViewOnly"));
     return;
   }
 
@@ -2489,7 +2548,7 @@ function handleTrade(side: string) {
 function closePosition() {
   if (!position.value) return;
   if (isTrainingWindowEnded.value) {
-    message.warning("训练结束后仅可查看后续K线，不能交易");
+    message.warning(t("training.messages.trainingEndedViewOnly"));
     return;
   }
 

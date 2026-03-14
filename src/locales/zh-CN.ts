@@ -301,6 +301,14 @@ export default {
       startSession: "开始训练",
       endSession: "结束训练",
       liveSession: "实盘会话",
+      endedSession: "训练已结束",
+      remainingBars: "剩余K线",
+      trainingRange: "训练区间",
+    },
+    timeframeOptions: {
+      daily: "日线",
+      weekly: "周线",
+      monthly: "月线",
     },
     drawing: {
       trendLine: "趋势线 (L)",
@@ -386,6 +394,10 @@ export default {
       sessionEnded: "训练会话已结束",
       sessionStarted: "训练会话已开始",
       tPlusOneWarning: "T+1 规则: 当日买入不可当日卖出。",
+      dailyOnlyPlayback: "仅日线模式支持播放与步进",
+      trainingEndedViewOnly: "训练结束后仅可查看后续K线，不能交易",
+      trainingBoundaryStart: "训练开始",
+      trainingBoundaryEnd: "训练结束",
     },
   },
   review: {
