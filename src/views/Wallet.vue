@@ -57,7 +57,13 @@
             <n-input-number v-model:value="rechargeAmount" :min="10" :step="10" class="flex-1 text-center" :placeholder="t('wallet.recharge.amount')" :show-button="false">
               <template #prefix>$</template>
             </n-input-number>
-            <n-button type="primary" class="px-6 font-bold" @click="handleRecharge">
+            <n-button
+              type="primary"
+              class="px-6 font-bold"
+              :loading="recharging"
+              :disabled="!user || rechargeAmount <= 0"
+              @click="handleRecharge"
+            >
               {{ t('wallet.recharge.topUp') }}
             </n-button>
           </n-input-group>
@@ -144,17 +150,22 @@ import {
   WalletOutline, InformationCircleOutline, ArrowUpOutline, EyeOutline
 } from '@vicons/ionicons5'
 import { useAuth } from "../composables/useAuth";
-import { listBalanceLedger } from "../services/userProfileRepo";
+import {
+  appendBalanceLedger,
+  listBalanceLedger,
+  updateTrainingBalance,
+} from "../services/userProfileRepo";
 
 const { t } = useI18n()
 const message = useMessage()
-const { user, profile } = useAuth();
+const { user, profile, refreshProfile } = useAuth();
 const rechargeAmount = ref(100)
 const historyFilter = ref('all')
+const recharging = ref(false);
 
 const historyData = ref<any[]>([]);
 
-const totalAssets = computed(() => Number(profile.value?.training_balance ?? 100000));
+const totalAssets = computed(() => Number(profile.value?.training_balance ?? 0));
 const availableCash = computed(() => Number((totalAssets.value * 0.36).toFixed(2)));
 const inPositions = computed(() => Number((totalAssets.value - availableCash.value).toFixed(2)));
 const todayPnl = computed(() =>
@@ -209,20 +220,16 @@ const filteredHistory = computed(() => {
   return historyData.value.filter(h => h.type === 'RECHARGE')
 })
 
-function handleRecharge() {
-  message.success(t('wallet.recharge.success', { amount: rechargeAmount.value }))
-}
-
-function formatCurrency(value: number) {
-  return Number(value).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
-onMounted(async () => {
-  if (!user.value) return;
-  const { data } = await listBalanceLedger(user.value.id, 100);
+async function loadHistory() {
+  if (!user.value) {
+    historyData.value = [];
+    return;
+  }
+  const { data, error } = await listBalanceLedger(user.value.id, 100);
+  if (error) {
+    message.error(error.message);
+    return;
+  }
   historyData.value =
     data?.map((item: any) => {
       const trade = item.change_type === "trade_pnl";
@@ -236,5 +243,60 @@ onMounted(async () => {
         detail: item.note || item.change_type,
       };
     }) ?? [];
+}
+
+async function handleRecharge() {
+  if (!user.value) return;
+  if (recharging.value) return;
+  const amount = Number(rechargeAmount.value);
+  if (!Number.isFinite(amount) || amount <= 0) return;
+
+  recharging.value = true;
+  const previousBalance = Number(profile.value?.training_balance ?? 0);
+  const nextBalance = Number((previousBalance + amount).toFixed(2));
+
+  try {
+    const { error: updateError } = await updateTrainingBalance(
+      user.value.id,
+      nextBalance,
+    );
+    if (updateError) {
+      await refreshProfile();
+      message.error(updateError.message);
+      return;
+    }
+
+    const { error: ledgerError } = await appendBalanceLedger({
+      user_id: user.value.id,
+      session_id: null,
+      change_type: "manual_adjust",
+      amount,
+      balance_after: nextBalance,
+      note: "wallet recharge",
+    });
+    if (ledgerError) {
+      await updateTrainingBalance(user.value.id, previousBalance);
+      await refreshProfile();
+      message.error(ledgerError.message);
+      return;
+    }
+
+    await refreshProfile();
+    await loadHistory();
+    message.success(t('wallet.recharge.success', { amount }));
+  } finally {
+    recharging.value = false;
+  }
+}
+
+function formatCurrency(value: number) {
+  return Number(value).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+onMounted(async () => {
+  await loadHistory();
 });
 </script>

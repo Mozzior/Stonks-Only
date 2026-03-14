@@ -17,12 +17,12 @@
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <n-card :bordered="false" class="bg-[var(--color-bg-card)] rounded-xl shadow-sm hover:shadow-md transition-shadow group">
-        <n-statistic :label="t('home.stats.portfolioValue')" :value="125430.50" :precision="2">
+        <n-statistic :label="t('home.stats.portfolioValue')" :value="portfolioValue" :precision="2">
           <template #prefix>$</template>
           <template #suffix>
             <span class="text-xs font-bold text-[var(--color-success)] bg-[var(--color-success)]/10 px-2 py-0.5 rounded-full ml-2 flex items-center inline-flex group-hover:scale-105 transition-transform">
               <n-icon :component="ArrowUpOutline" class="mr-1" />
-              +2.4%
+              {{ totalPnlRateText }}
             </span>
           </template>
         </n-statistic>
@@ -32,42 +32,46 @@
       </n-card>
 
       <n-card :bordered="false" class="bg-[var(--color-bg-card)] rounded-xl shadow-sm hover:shadow-md transition-shadow">
-        <n-statistic :label="t('home.stats.cash')" :value="45200.00" :precision="2">
+        <n-statistic :label="t('home.stats.cash')" :value="availableCash" :precision="2">
           <template #prefix>$</template>
         </n-statistic>
         <div class="mt-4 flex justify-between text-xs text-[var(--color-text-secondary)]">
           <span>{{ t('home.stats.buyingPower') }}</span>
-          <span class="text-[var(--color-text-primary)]">$180,800.00</span>
+          <span class="text-[var(--color-text-primary)]">${{ formatCurrency(buyingPower) }}</span>
         </div>
       </n-card>
 
       <n-card :bordered="false" class="bg-[var(--color-bg-card)] rounded-xl shadow-sm hover:shadow-md transition-shadow">
-        <n-statistic :label="t('home.stats.totalPL')" :value="15430.50" :precision="2">
+        <n-statistic :label="t('home.stats.totalPL')" :value="Math.abs(totalPnl)" :precision="2">
           <template #prefix>
-            <span class="text-[var(--color-success)]">+$</span>
+            <span :class="totalPnl >= 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-error)]'">
+              {{ totalPnl >= 0 ? '+$' : '-$' }}
+            </span>
           </template>
         </n-statistic>
         <div class="mt-4 flex justify-between text-xs text-[var(--color-text-secondary)]">
           <span>{{ t('home.stats.todayPL') }}</span>
-          <span class="text-[var(--color-success)]">+$1,240.50</span>
+          <span :class="todayPnl >= 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-error)]'">
+            {{ todayPnl >= 0 ? '+$' : '-$' }}{{ formatCurrency(Math.abs(todayPnl)) }}
+          </span>
         </div>
       </n-card>
 
       <n-card :bordered="false" class="bg-[var(--color-bg-card)] rounded-xl shadow-sm hover:shadow-md transition-shadow">
         <div class="flex justify-between items-end mb-1">
           <span class="text-[var(--color-text-secondary)] text-sm">{{ t('home.stats.winRate') }}</span>
-          <span class="text-2xl font-bold text-[var(--color-text-primary)]">68%</span>
+          <span class="text-2xl font-bold text-[var(--color-text-primary)]">{{ winRateText }}</span>
         </div>
         <n-progress
           type="line"
-          :percentage="68"
+          :percentage="winRate"
           :height="8"
           :color="'var(--color-brand-primary)'"
           :rail-color="'rgba(255,255,255,0.1)'"
         />
         <div class="mt-3 flex justify-between text-xs text-[var(--color-text-secondary)]">
-          <span>{{ t('home.stats.trades', { count: 142 }) }}</span>
-          <span>{{ t('home.stats.profitable', { count: 97 }) }}</span>
+          <span>{{ t('home.stats.trades', { count: tradeCount }) }}</span>
+          <span>{{ t('home.stats.profitable', { count: profitableCount }) }}</span>
         </div>
       </n-card>
     </div>
@@ -102,10 +106,7 @@
              
              <!-- Axis Labels -->
              <div class="absolute left-2 top-2 text-xs text-[var(--color-text-secondary)] flex flex-col gap-8">
-               <span>$130k</span>
-               <span>$125k</span>
-               <span>$120k</span>
-               <span>$115k</span>
+               <span v-for="tick in chartTicks" :key="tick">${{ formatTick(tick) }}</span>
              </div>
           </div>
         </n-card>
@@ -173,7 +174,7 @@
 </template>
 
 <script setup lang="ts">
-import { h } from 'vue'
+import { computed, h, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { 
   NCard, NStatistic, NIcon, NProgress, NButton, NSpace, NDataTable, NTag, NList, NListItem, NAvatar 
@@ -182,9 +183,75 @@ import {
   TrendingUpOutline, ArrowUpOutline, AddCircleOutline, ShareOutline, BookOutline, SettingsOutline 
 } from '@vicons/ionicons5'
 import { useI18n } from 'vue-i18n'
+import { useAuth } from "../composables/useAuth";
+import { listBalanceLedger } from "../services/userProfileRepo";
 
 const router = useRouter()
 const { t } = useI18n()
+const { user, profile } = useAuth();
+const ledger = ref<any[]>([]);
+
+const portfolioValue = computed(() => Number(profile.value?.training_balance ?? 0));
+const availableCash = computed(() => Number((portfolioValue.value * 0.36).toFixed(2)));
+const buyingPower = computed(() => Number((availableCash.value * 4).toFixed(2)));
+const tradePnlLedger = computed(() =>
+  ledger.value.filter((item) => item.change_type === "trade_pnl"),
+);
+const totalPnl = computed(() =>
+  Number(
+    tradePnlLedger.value
+      .reduce((sum, item) => sum + Number(item.amount || 0), 0)
+      .toFixed(2),
+  ),
+);
+const todayPnl = computed(() => {
+  const today = new Date().toDateString();
+  return Number(
+    tradePnlLedger.value
+      .filter((item) => new Date(item.created_at).toDateString() === today)
+      .reduce((sum, item) => sum + Number(item.amount || 0), 0)
+      .toFixed(2),
+  );
+});
+const tradeCount = computed(() => tradePnlLedger.value.length);
+const profitableCount = computed(
+  () => tradePnlLedger.value.filter((item) => Number(item.amount) > 0).length,
+);
+const winRate = computed(() => {
+  if (tradeCount.value === 0) return 0;
+  return Number(((profitableCount.value / tradeCount.value) * 100).toFixed(1));
+});
+const winRateText = computed(() => `${winRate.value}%`);
+const totalPnlRateText = computed(() => {
+  const base = portfolioValue.value - totalPnl.value;
+  const rate = base === 0 ? 0 : (totalPnl.value / base) * 100;
+  return `${rate >= 0 ? "+" : ""}${rate.toFixed(2)}%`;
+});
+const chartTicks = computed(() => {
+  const base = Math.max(portfolioValue.value, 1000);
+  const step = Math.max(Math.round(base * 0.04 / 100) * 100, 100);
+  return [base + step * 2, base + step, base, Math.max(base - step, 0)];
+});
+
+function formatCurrency(value: number) {
+  return Number(value).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function formatTick(value: number) {
+  if (value >= 1000) {
+    return `${(value / 1000).toFixed(1)}k`;
+  }
+  return value.toFixed(0);
+}
+
+onMounted(async () => {
+  if (!user.value) return;
+  const { data } = await listBalanceLedger(user.value.id, 200);
+  ledger.value = data ?? [];
+});
 
 // Sample Data for Recent Sessions
 const columns = [

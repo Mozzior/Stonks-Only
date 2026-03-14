@@ -1045,7 +1045,7 @@ const message = useMessage();
 const { isDark, candleColorMode } = useTheme();
 const { setFullscreen } = useLayoutControl();
 const { t, locale } = useI18n();
-const { user, profile } = useAuth();
+const { user, profile, refreshProfile } = useAuth();
 
 // State
 const isChartLoaded = ref(false);
@@ -1074,11 +1074,11 @@ let updateDataCallback: ((data: KLineData) => void) | null = null;
 let resizeHandler: (() => void) | null = null;
 const activeSessionId = ref<number | null>(null);
 const sessionTradeSeq = ref(0);
-const sessionInitialBalance = ref(100000);
+const sessionInitialBalance = ref(0);
 const sessionRealizedPnl = ref(0);
-const sessionPeakBalance = ref(100000);
+const sessionPeakBalance = ref(0);
 const accountBalance = computed(() =>
-  Number(profile.value?.training_balance ?? 100000),
+  Number(profile.value?.training_balance ?? 0),
 );
 
 const currentStock = ref<any>(null);
@@ -2748,6 +2748,7 @@ async function exitTraining() {
 }
 
 async function startTraining() {
+  await refreshProfile();
   isTrainingStarted.value = true;
   sessionTradeSeq.value = 0;
   sessionInitialBalance.value = accountBalance.value;

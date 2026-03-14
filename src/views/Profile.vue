@@ -493,7 +493,7 @@ const joinedText = computed(() => {
 });
 
 const trainingBalanceText = computed(() =>
-  Number(profile.value?.training_balance ?? 100000).toLocaleString(undefined, {
+  Number(profile.value?.training_balance ?? 0).toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }),
