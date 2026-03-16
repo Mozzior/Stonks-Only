@@ -620,7 +620,7 @@ export default {
   },
   about: {
     hero: {
-      title: "Stocks Only Pro",
+      title: "Stocks Only",
       version: "Version {version} (Beta)",
       links: {
         github: "GitHub",
@@ -631,7 +631,7 @@ export default {
     whatsNew: {
       title: "What's New",
       v1: {
-        version: "Version 1.0.0 (Beta)",
+        version: "Version 0.0.1 (Beta)",
         desc: "Initial release with Training Mode and K-Line Charts.",
       },
       v09: {
@@ -679,7 +679,7 @@ export default {
     timezone: "Timezone",
     chartExecution: "Chart & Execution",
     candleColor: "Candle Color",
-    candleColorDesc: "Choose your preferred candle color style",
+    candleColorDesc: "Choose candle color style",
     candleGreenRed: "Green Up / Red Down (International)",
     candleRedGreen: "Red Up / Green Down (China)",
     oneClick: "One-Click Trading",
@@ -694,5 +694,7 @@ export default {
     marketNewsDesc: "Daily summary of market movers",
     leaderboardUpdates: "Leaderboard Updates",
     leaderboardUpdatesDesc: "Weekly ranking notifications",
+    resetDefaults: "Reset to Default",
+    saveChanges: "Save Changes",
   },
 };

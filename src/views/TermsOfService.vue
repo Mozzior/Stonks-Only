@@ -8,7 +8,7 @@
           <template #icon><n-icon :component="CloudDownloadOutline" /></template>
           {{ t('auth.termsOfService.downloadPdf') }}
         </n-button>
-        <n-button ghost @click="router.push('/')">
+        <n-button ghost @click="router.back()">
           <template #icon><n-icon :component="CloseOutline" /></template>
         </n-button>
       </div>

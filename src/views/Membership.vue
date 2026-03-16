@@ -59,7 +59,7 @@
               }}
             </n-button>
 
-            <ul class="space-y-3 flex-1">
+            <ul class="space-y-2 flex-1 mt-6">
               <li
                 v-for="feature in plan.features"
                 :key="feature"

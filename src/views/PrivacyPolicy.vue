@@ -12,7 +12,7 @@
           <template #icon><n-icon :component="PrintOutline" /></template>
           {{ t("auth.privacyPolicy.print") }}
         </n-button>
-        <n-button ghost @click="router.push('/')">
+        <n-button ghost @click="router.back()">
           <template #icon><n-icon :component="CloseOutline" /></template>
         </n-button>
       </div>

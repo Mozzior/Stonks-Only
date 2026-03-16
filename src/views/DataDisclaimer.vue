@@ -3,7 +3,7 @@
     <!-- Header -->
     <header class="h-16 border-b border-[var(--color-border)] bg-[var(--color-bg-card)] flex items-center justify-between px-6 sticky top-0 z-50">
       <div class="text-xl font-bold text-[var(--color-brand-primary)]">STONKS ONLY</div>
-      <n-button ghost @click="router.push('/')">
+      <n-button ghost @click="router.back()">
         <template #icon><n-icon :component="CloseOutline" /></template>
       </n-button>
     </header>

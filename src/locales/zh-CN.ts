@@ -611,7 +611,7 @@ export default {
   },
   about: {
     hero: {
-      title: "Stocks Only Pro",
+      title: "Stocks Only",
       version: "版本 {version} (Beta)",
       links: {
         github: "GitHub",
@@ -622,7 +622,7 @@ export default {
     whatsNew: {
       title: "更新日志",
       v1: {
-        version: "版本 1.0.0 (Beta)",
+        version: "版本 0.0.1 (Beta)",
         desc: "初始版本，包含训练模式和 K 线图表。",
       },
       v09: {
@@ -670,7 +670,7 @@ export default {
     timezone: "时区",
     chartExecution: "图表与执行",
     candleColor: "K线颜色",
-    candleColorDesc: "选择您偏好的涨跌颜色",
+    candleColorDesc: "选择涨跌颜色",
     candleGreenRed: "绿涨 / 红跌 (国际)",
     candleRedGreen: "红涨 / 绿跌 (中国)",
     oneClick: "一键交易",
@@ -685,5 +685,7 @@ export default {
     marketNewsDesc: "每日市场异动摘要",
     leaderboardUpdates: "排行榜更新",
     leaderboardUpdatesDesc: "每周排名通知",
+    resetDefaults: "恢复默认",
+    saveChanges: "保存更改",
   },
 };
