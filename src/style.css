@@ -1,22 +1,22 @@
 @import "tailwindcss";
 @theme {
   /* Brand Colors */
-  --color-brand-primary: #00D2B4;    /* Vibrant Green for positive/growth */
-  --color-brand-secondary: #0F172A;  /* Deep Navy for professional/dark mode */
-  --color-brand-accent: #3B82F6;     /* Blue for actions/links */
-  
+  --color-brand-primary: #00d2b4; /* Vibrant Green for positive/growth */
+  --color-brand-secondary: #0f172a; /* Deep Navy for professional/dark mode */
+  --color-brand-accent: #3b82f6; /* Blue for actions/links */
+
   /* Semantic Colors */
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
-  --color-error: #EF4444;
-  --color-info: #3B82F6;
-  
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+
   /* Backgrounds */
-  --color-bg-body: #0F172A;
-  --color-bg-card: #1E293B;
-  --color-bg-sidebar: #0B1120;
+  --color-bg-body: #0f172a;
+  --color-bg-card: #1e293b;
+  --color-bg-sidebar: #0b1120;
   --color-border: #334155;
-  
+
   /* Typography */
   --font-family-sans: "Inter", system-ui, -apple-system, sans-serif;
   --font-family-mono: "JetBrains Mono", monospace;
@@ -25,7 +25,7 @@
 :root {
   font-family: var(--font-family-sans);
   background-color: var(--color-bg-body);
-  color: #F8FAFC;
+  color: #f8fafc;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -64,7 +64,9 @@ body {
 /* Global Transition Utility */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .fade-enter-from {
@@ -92,4 +94,27 @@ body {
   transform: translateY(-4px);
   box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.5);
   border-color: var(--color-brand-primary);
+}
+
+:root,
+body,
+#app {
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+input,
+textarea,
+[contenteditable],
+.allow-text-select {
+  -webkit-user-select: text;
+  user-select: text;
+
+  a,
+  img,
+  [draggable="true"] {
+    -webkit-user-drag: none;
+    user-drag: none;
+  }
 }
