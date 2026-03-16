@@ -1,6 +1,6 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from "vue-router";
 import AppLayout from "../components/AppLayout.vue";
-import { supabase } from "../utils/supabase";
+import { appwrite } from "../utils/appwrite";
 
 // Lazy load components for performance
 const Home = () => import("../views/Home.vue");
@@ -126,10 +126,11 @@ const router = createRouter({
   routes,
 });
 
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, _from, next) => {
   try {
-    const { data } = await supabase.auth.getSession();
-    const session = data.session;
+    const session = await appwrite.account
+      .getSession("current")
+      .catch(() => null);
 
     if (
       to.meta.public &&

@@ -1,59 +1,125 @@
-import { supabase } from "../utils/supabase";
+import {
+  appwrite,
+  appwriteConfig,
+  assertAppwriteCoreConfigured,
+  ID,
+  Query,
+} from "../utils/appwrite";
+import { fail, ok } from "../utils/backendError";
 import type {
   CreateTrainingSessionPayload,
   TrainingSessionSummaryPayload,
   TrainingTradeLogPayload,
 } from "../types/training";
 
+const {
+  databaseId,
+  trainingSessionCollectionId,
+  trainingTradeLogCollectionId,
+} = appwriteConfig;
+
+function getTrainingRepoConfig() {
+  assertAppwriteCoreConfigured();
+  if (!databaseId) {
+    throw new Error("Missing Appwrite config: VITE_APPWRITE_DATABASE_ID");
+  }
+  if (!trainingSessionCollectionId) {
+    throw new Error("Missing Appwrite config: VITE_APPWRITE_TRAINING_SESSION_COLLECTION_ID");
+  }
+  if (!trainingTradeLogCollectionId) {
+    throw new Error("Missing Appwrite config: VITE_APPWRITE_TRAINING_TRADE_LOG_COLLECTION_ID");
+  }
+  return {
+    databaseId,
+    trainingSessionCollectionId,
+    trainingTradeLogCollectionId,
+  };
+}
+
 export async function createSession(payload: CreateTrainingSessionPayload) {
-  return supabase
-    .from("training_session")
-    .insert({
-      ...payload,
-      meta: payload.meta ?? {},
-    })
-    .select("id")
-    .single();
+  try {
+    const config = getTrainingRepoConfig();
+    const created = await appwrite.databases.createDocument(
+      config.databaseId,
+      config.trainingSessionCollectionId,
+      ID.unique(),
+      {
+        ...payload,
+        meta: JSON.stringify(payload.meta ?? {}),
+      },
+    );
+    return ok({ id: created.$id });
+  } catch (error) {
+    return fail(error);
+  }
 }
 
 export async function finishSession(
-  sessionId: number,
+  sessionId: string,
   summary: TrainingSessionSummaryPayload,
 ) {
-  return supabase
-    .from("training_session")
-    .update(summary)
-    .eq("id", sessionId)
-    .select("id")
-    .single();
+  try {
+    const config = getTrainingRepoConfig();
+    const updated = await appwrite.databases.updateDocument(
+      config.databaseId,
+      config.trainingSessionCollectionId,
+      sessionId,
+      summary,
+    );
+    return ok({ id: updated.$id });
+  } catch (error) {
+    return fail(error);
+  }
 }
 
 export async function appendTradeLog(payload: TrainingTradeLogPayload) {
-  return supabase
-    .from("training_trade_log")
-    .insert({
-      ...payload,
-      fee: payload.fee ?? 0,
-      position_after: payload.position_after ?? {},
-      extra: payload.extra ?? {},
-    })
-    .select("id")
-    .single();
+  try {
+    const config = getTrainingRepoConfig();
+    const created = await appwrite.databases.createDocument(
+      config.databaseId,
+      config.trainingTradeLogCollectionId,
+      ID.unique(),
+      {
+        ...payload,
+        fee: payload.fee ?? 0,
+        position_after: JSON.stringify(payload.position_after ?? {}),
+        extra: JSON.stringify(payload.extra ?? {}),
+      },
+    );
+    return ok({ id: created.$id });
+  } catch (error) {
+    return fail(error);
+  }
 }
 
 export async function listSessions(userId: string, limit = 50) {
-  return supabase
-    .from("training_session")
-    .select("*")
-    .eq("user_id", userId)
-    .order("started_at", { ascending: false })
-    .limit(limit);
+  try {
+    const config = getTrainingRepoConfig();
+    const result = await appwrite.databases.listDocuments(
+      config.databaseId,
+      config.trainingSessionCollectionId,
+      [
+        Query.equal("user_id", [userId]),
+        Query.orderDesc("started_at"),
+        Query.limit(limit),
+      ],
+    );
+    return ok(result.documents);
+  } catch (error) {
+    return fail(error);
+  }
 }
 
-export async function listTradeLogs(sessionId: number) {
-  return supabase
-    .from("training_trade_log")
-    .select("*")
-    .eq("session_id", sessionId)
-    .order("seq_no", { ascending: true });
+export async function listTradeLogs(sessionId: string) {
+  try {
+    const config = getTrainingRepoConfig();
+    const result = await appwrite.databases.listDocuments(
+      config.databaseId,
+      config.trainingTradeLogCollectionId,
+      [Query.equal("session_id", [sessionId]), Query.orderAsc("seq_no")],
+    );
+    return ok(result.documents);
+  } catch (error) {
+    return fail(error);
+  }
 }

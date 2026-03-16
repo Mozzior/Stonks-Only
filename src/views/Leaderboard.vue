@@ -73,9 +73,9 @@
 import { ref, h, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { 
-  NCard, NAvatar, NIcon, NRadioGroup, NRadioButton, NInput, NDataTable, NTag, NEmpty
+  NCard, NAvatar, NIcon, NRadioGroup, NRadioButton, NInput, NDataTable, NEmpty
 } from 'naive-ui'
-import { SearchOutline, RibbonOutline, TrendingUpOutline, TrophyOutline, MedalOutline } from '@vicons/ionicons5'
+import { SearchOutline, RibbonOutline, TrophyOutline, MedalOutline } from '@vicons/ionicons5'
 
 const { t } = useI18n()
 

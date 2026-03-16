@@ -73,7 +73,6 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { 
   NForm, NFormItem, NInput, NButton, NIcon, useMessage,
@@ -85,7 +84,6 @@ import {
 } from '@vicons/ionicons5'
 import { useAuth } from '../composables/useAuth'
 
-const router = useRouter()
 const message = useMessage()
 const { t } = useI18n()
 const { resetPasswordForEmail } = useAuth()

@@ -1,498 +1,361 @@
-var __defProp = Object.defineProperty;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
-import { app, BrowserWindow, ipcMain } from "electron";
-import { fileURLToPath } from "node:url";
-import path$1 from "node:path";
-import fs$1 from "node:fs";
-import require$$0 from "fs";
-import require$$1 from "path";
-import require$$2 from "os";
-import require$$3 from "crypto";
-import Database from "better-sqlite3";
-function getDefaultExportFromCjs(x) {
-  return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, "default") ? x["default"] : x;
+var k = Object.defineProperty;
+var U = (e, t, r) => t in e ? k(e, t, { enumerable: !0, configurable: !0, writable: !0, value: r }) : e[t] = r;
+var V = (e, t, r) => U(e, typeof t != "symbol" ? t + "" : t, r);
+import { app as h, BrowserWindow as L, ipcMain as T } from "electron";
+import { fileURLToPath as x } from "node:url";
+import E from "node:path";
+import O from "node:fs";
+import F from "fs";
+import M from "path";
+import B from "os";
+import j from "crypto";
+import q from "better-sqlite3";
+function Y(e) {
+  return e && e.__esModule && Object.prototype.hasOwnProperty.call(e, "default") ? e.default : e;
 }
-var main = { exports: {} };
-const version$1 = "16.6.1";
-const require$$4 = {
-  version: version$1
-};
-const fs = require$$0;
-const path = require$$1;
-const os = require$$2;
-const crypto = require$$3;
-const packageJson = require$$4;
-const version = packageJson.version;
-const LINE = /(?:^|^)\s*(?:export\s+)?([\w.-]+)(?:\s*=\s*?|:\s+?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*`(?:\\`|[^`])*`|[^#\r\n]+)?\s*(?:#.*)?(?:$|$)/mg;
-function parse(src) {
-  const obj = {};
-  let lines = src.toString();
-  lines = lines.replace(/\r\n?/mg, "\n");
-  let match;
-  while ((match = LINE.exec(lines)) != null) {
-    const key = match[1];
-    let value = match[2] || "";
-    value = value.trim();
-    const maybeQuote = value[0];
-    value = value.replace(/^(['"`])([\s\S]*)\1$/mg, "$2");
-    if (maybeQuote === '"') {
-      value = value.replace(/\\n/g, "\n");
-      value = value.replace(/\\r/g, "\r");
-    }
-    obj[key] = value;
+var d = { exports: {} };
+const G = "16.6.1", J = {
+  version: G
+}, A = F, D = M, z = B, H = j, Q = J, m = Q.version, X = /(?:^|^)\s*(?:export\s+)?([\w.-]+)(?:\s*=\s*?|:\s+?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*`(?:\\`|[^`])*`|[^#\r\n]+)?\s*(?:#.*)?(?:$|$)/mg;
+function Z(e) {
+  const t = {};
+  let r = e.toString();
+  r = r.replace(/\r\n?/mg, `
+`);
+  let n;
+  for (; (n = X.exec(r)) != null; ) {
+    const s = n[1];
+    let o = n[2] || "";
+    o = o.trim();
+    const a = o[0];
+    o = o.replace(/^(['"`])([\s\S]*)\1$/mg, "$2"), a === '"' && (o = o.replace(/\\n/g, `
+`), o = o.replace(/\\r/g, "\r")), t[s] = o;
   }
-  return obj;
+  return t;
 }
-function _parseVault(options) {
-  options = options || {};
-  const vaultPath = _vaultPath(options);
-  options.path = vaultPath;
-  const result = DotenvModule.configDotenv(options);
-  if (!result.parsed) {
-    const err = new Error(`MISSING_DATA: Cannot parse ${vaultPath} for an unknown reason`);
-    err.code = "MISSING_DATA";
-    throw err;
+function ee(e) {
+  e = e || {};
+  const t = w(e);
+  e.path = t;
+  const r = l.configDotenv(e);
+  if (!r.parsed) {
+    const a = new Error(`MISSING_DATA: Cannot parse ${t} for an unknown reason`);
+    throw a.code = "MISSING_DATA", a;
   }
-  const keys = _dotenvKey(options).split(",");
-  const length = keys.length;
-  let decrypted;
-  for (let i = 0; i < length; i++) {
+  const n = C(e).split(","), s = n.length;
+  let o;
+  for (let a = 0; a < s; a++)
     try {
-      const key = keys[i].trim();
-      const attrs = _instructions(result, key);
-      decrypted = DotenvModule.decrypt(attrs.ciphertext, attrs.key);
+      const c = n[a].trim(), u = re(r, c);
+      o = l.decrypt(u.ciphertext, u.key);
       break;
-    } catch (error) {
-      if (i + 1 >= length) {
-        throw error;
-      }
+    } catch (c) {
+      if (a + 1 >= s)
+        throw c;
     }
-  }
-  return DotenvModule.parse(decrypted);
+  return l.parse(o);
 }
-function _warn(message) {
-  console.log(`[dotenv@${version}][WARN] ${message}`);
+function te(e) {
+  console.log(`[dotenv@${m}][WARN] ${e}`);
 }
-function _debug(message) {
-  console.log(`[dotenv@${version}][DEBUG] ${message}`);
+function v(e) {
+  console.log(`[dotenv@${m}][DEBUG] ${e}`);
 }
-function _log(message) {
-  console.log(`[dotenv@${version}] ${message}`);
+function b(e) {
+  console.log(`[dotenv@${m}] ${e}`);
 }
-function _dotenvKey(options) {
-  if (options && options.DOTENV_KEY && options.DOTENV_KEY.length > 0) {
-    return options.DOTENV_KEY;
-  }
-  if (process.env.DOTENV_KEY && process.env.DOTENV_KEY.length > 0) {
-    return process.env.DOTENV_KEY;
-  }
-  return "";
+function C(e) {
+  return e && e.DOTENV_KEY && e.DOTENV_KEY.length > 0 ? e.DOTENV_KEY : process.env.DOTENV_KEY && process.env.DOTENV_KEY.length > 0 ? process.env.DOTENV_KEY : "";
 }
-function _instructions(result, dotenvKey) {
-  let uri;
+function re(e, t) {
+  let r;
   try {
-    uri = new URL(dotenvKey);
-  } catch (error) {
-    if (error.code === "ERR_INVALID_URL") {
-      const err = new Error("INVALID_DOTENV_KEY: Wrong format. Must be in valid uri format like dotenv://:key_1234@dotenvx.com/vault/.env.vault?environment=development");
-      err.code = "INVALID_DOTENV_KEY";
-      throw err;
+    r = new URL(t);
+  } catch (c) {
+    if (c.code === "ERR_INVALID_URL") {
+      const u = new Error("INVALID_DOTENV_KEY: Wrong format. Must be in valid uri format like dotenv://:key_1234@dotenvx.com/vault/.env.vault?environment=development");
+      throw u.code = "INVALID_DOTENV_KEY", u;
     }
-    throw error;
+    throw c;
   }
-  const key = uri.password;
-  if (!key) {
-    const err = new Error("INVALID_DOTENV_KEY: Missing key part");
-    err.code = "INVALID_DOTENV_KEY";
-    throw err;
+  const n = r.password;
+  if (!n) {
+    const c = new Error("INVALID_DOTENV_KEY: Missing key part");
+    throw c.code = "INVALID_DOTENV_KEY", c;
   }
-  const environment = uri.searchParams.get("environment");
-  if (!environment) {
-    const err = new Error("INVALID_DOTENV_KEY: Missing environment part");
-    err.code = "INVALID_DOTENV_KEY";
-    throw err;
+  const s = r.searchParams.get("environment");
+  if (!s) {
+    const c = new Error("INVALID_DOTENV_KEY: Missing environment part");
+    throw c.code = "INVALID_DOTENV_KEY", c;
   }
-  const environmentKey = `DOTENV_VAULT_${environment.toUpperCase()}`;
-  const ciphertext = result.parsed[environmentKey];
-  if (!ciphertext) {
-    const err = new Error(`NOT_FOUND_DOTENV_ENVIRONMENT: Cannot locate environment ${environmentKey} in your .env.vault file.`);
-    err.code = "NOT_FOUND_DOTENV_ENVIRONMENT";
-    throw err;
+  const o = `DOTENV_VAULT_${s.toUpperCase()}`, a = e.parsed[o];
+  if (!a) {
+    const c = new Error(`NOT_FOUND_DOTENV_ENVIRONMENT: Cannot locate environment ${o} in your .env.vault file.`);
+    throw c.code = "NOT_FOUND_DOTENV_ENVIRONMENT", c;
   }
-  return { ciphertext, key };
+  return { ciphertext: a, key: n };
 }
-function _vaultPath(options) {
-  let possibleVaultPath = null;
-  if (options && options.path && options.path.length > 0) {
-    if (Array.isArray(options.path)) {
-      for (const filepath of options.path) {
-        if (fs.existsSync(filepath)) {
-          possibleVaultPath = filepath.endsWith(".vault") ? filepath : `${filepath}.vault`;
-        }
-      }
-    } else {
-      possibleVaultPath = options.path.endsWith(".vault") ? options.path : `${options.path}.vault`;
+function w(e) {
+  let t = null;
+  if (e && e.path && e.path.length > 0)
+    if (Array.isArray(e.path))
+      for (const r of e.path)
+        A.existsSync(r) && (t = r.endsWith(".vault") ? r : `${r}.vault`);
+    else
+      t = e.path.endsWith(".vault") ? e.path : `${e.path}.vault`;
+  else
+    t = D.resolve(process.cwd(), ".env.vault");
+  return A.existsSync(t) ? t : null;
+}
+function y(e) {
+  return e[0] === "~" ? D.join(z.homedir(), e.slice(1)) : e;
+}
+function ne(e) {
+  const t = !!(e && e.debug), r = e && "quiet" in e ? e.quiet : !0;
+  (t || !r) && b("Loading env from encrypted .env.vault");
+  const n = l._parseVault(e);
+  let s = process.env;
+  return e && e.processEnv != null && (s = e.processEnv), l.populate(s, n, e), { parsed: n };
+}
+function oe(e) {
+  const t = D.resolve(process.cwd(), ".env");
+  let r = "utf8";
+  const n = !!(e && e.debug), s = e && "quiet" in e ? e.quiet : !0;
+  e && e.encoding ? r = e.encoding : n && v("No encoding is specified. UTF-8 is used by default");
+  let o = [t];
+  if (e && e.path)
+    if (!Array.isArray(e.path))
+      o = [y(e.path)];
+    else {
+      o = [];
+      for (const I of e.path)
+        o.push(y(I));
     }
-  } else {
-    possibleVaultPath = path.resolve(process.cwd(), ".env.vault");
-  }
-  if (fs.existsSync(possibleVaultPath)) {
-    return possibleVaultPath;
-  }
-  return null;
-}
-function _resolveHome(envPath) {
-  return envPath[0] === "~" ? path.join(os.homedir(), envPath.slice(1)) : envPath;
-}
-function _configVault(options) {
-  const debug = Boolean(options && options.debug);
-  const quiet = options && "quiet" in options ? options.quiet : true;
-  if (debug || !quiet) {
-    _log("Loading env from encrypted .env.vault");
-  }
-  const parsed = DotenvModule._parseVault(options);
-  let processEnv = process.env;
-  if (options && options.processEnv != null) {
-    processEnv = options.processEnv;
-  }
-  DotenvModule.populate(processEnv, parsed, options);
-  return { parsed };
-}
-function configDotenv(options) {
-  const dotenvPath = path.resolve(process.cwd(), ".env");
-  let encoding = "utf8";
-  const debug = Boolean(options && options.debug);
-  const quiet = options && "quiet" in options ? options.quiet : true;
-  if (options && options.encoding) {
-    encoding = options.encoding;
-  } else {
-    if (debug) {
-      _debug("No encoding is specified. UTF-8 is used by default");
-    }
-  }
-  let optionPaths = [dotenvPath];
-  if (options && options.path) {
-    if (!Array.isArray(options.path)) {
-      optionPaths = [_resolveHome(options.path)];
-    } else {
-      optionPaths = [];
-      for (const filepath of options.path) {
-        optionPaths.push(_resolveHome(filepath));
-      }
-    }
-  }
-  let lastError;
-  const parsedAll = {};
-  for (const path2 of optionPaths) {
+  let a;
+  const c = {};
+  for (const I of o)
     try {
-      const parsed = DotenvModule.parse(fs.readFileSync(path2, { encoding }));
-      DotenvModule.populate(parsedAll, parsed, options);
-    } catch (e) {
-      if (debug) {
-        _debug(`Failed to load ${path2} ${e.message}`);
-      }
-      lastError = e;
+      const i = l.parse(A.readFileSync(I, { encoding: r }));
+      l.populate(c, i, e);
+    } catch (i) {
+      n && v(`Failed to load ${I} ${i.message}`), a = i;
     }
-  }
-  let processEnv = process.env;
-  if (options && options.processEnv != null) {
-    processEnv = options.processEnv;
-  }
-  DotenvModule.populate(processEnv, parsedAll, options);
-  if (debug || !quiet) {
-    const keysCount = Object.keys(parsedAll).length;
-    const shortPaths = [];
-    for (const filePath of optionPaths) {
+  let u = process.env;
+  if (e && e.processEnv != null && (u = e.processEnv), l.populate(u, c, e), n || !s) {
+    const I = Object.keys(c).length, i = [];
+    for (const P of o)
       try {
-        const relative = path.relative(process.cwd(), filePath);
-        shortPaths.push(relative);
-      } catch (e) {
-        if (debug) {
-          _debug(`Failed to load ${filePath} ${e.message}`);
-        }
-        lastError = e;
+        const g = D.relative(process.cwd(), P);
+        i.push(g);
+      } catch (g) {
+        n && v(`Failed to load ${P} ${g.message}`), a = g;
       }
-    }
-    _log(`injecting env (${keysCount}) from ${shortPaths.join(",")}`);
+    b(`injecting env (${I}) from ${i.join(",")}`);
   }
-  if (lastError) {
-    return { parsed: parsedAll, error: lastError };
-  } else {
-    return { parsed: parsedAll };
-  }
+  return a ? { parsed: c, error: a } : { parsed: c };
 }
-function config(options) {
-  if (_dotenvKey(options).length === 0) {
-    return DotenvModule.configDotenv(options);
-  }
-  const vaultPath = _vaultPath(options);
-  if (!vaultPath) {
-    _warn(`You set DOTENV_KEY but you are missing a .env.vault file at ${vaultPath}. Did you forget to build it?`);
-    return DotenvModule.configDotenv(options);
-  }
-  return DotenvModule._configVault(options);
+function se(e) {
+  if (C(e).length === 0)
+    return l.configDotenv(e);
+  const t = w(e);
+  return t ? l._configVault(e) : (te(`You set DOTENV_KEY but you are missing a .env.vault file at ${t}. Did you forget to build it?`), l.configDotenv(e));
 }
-function decrypt(encrypted, keyStr) {
-  const key = Buffer.from(keyStr.slice(-64), "hex");
-  let ciphertext = Buffer.from(encrypted, "base64");
-  const nonce = ciphertext.subarray(0, 12);
-  const authTag = ciphertext.subarray(-16);
-  ciphertext = ciphertext.subarray(12, -16);
+function ae(e, t) {
+  const r = Buffer.from(t.slice(-64), "hex");
+  let n = Buffer.from(e, "base64");
+  const s = n.subarray(0, 12), o = n.subarray(-16);
+  n = n.subarray(12, -16);
   try {
-    const aesgcm = crypto.createDecipheriv("aes-256-gcm", key, nonce);
-    aesgcm.setAuthTag(authTag);
-    return `${aesgcm.update(ciphertext)}${aesgcm.final()}`;
-  } catch (error) {
-    const isRange = error instanceof RangeError;
-    const invalidKeyLength = error.message === "Invalid key length";
-    const decryptionFailed = error.message === "Unsupported state or unable to authenticate data";
-    if (isRange || invalidKeyLength) {
-      const err = new Error("INVALID_DOTENV_KEY: It must be 64 characters long (or more)");
-      err.code = "INVALID_DOTENV_KEY";
-      throw err;
-    } else if (decryptionFailed) {
-      const err = new Error("DECRYPTION_FAILED: Please check your DOTENV_KEY");
-      err.code = "DECRYPTION_FAILED";
-      throw err;
-    } else {
-      throw error;
-    }
+    const a = H.createDecipheriv("aes-256-gcm", r, s);
+    return a.setAuthTag(o), `${a.update(n)}${a.final()}`;
+  } catch (a) {
+    const c = a instanceof RangeError, u = a.message === "Invalid key length", I = a.message === "Unsupported state or unable to authenticate data";
+    if (c || u) {
+      const i = new Error("INVALID_DOTENV_KEY: It must be 64 characters long (or more)");
+      throw i.code = "INVALID_DOTENV_KEY", i;
+    } else if (I) {
+      const i = new Error("DECRYPTION_FAILED: Please check your DOTENV_KEY");
+      throw i.code = "DECRYPTION_FAILED", i;
+    } else
+      throw a;
   }
 }
-function populate(processEnv, parsed, options = {}) {
-  const debug = Boolean(options && options.debug);
-  const override = Boolean(options && options.override);
-  if (typeof parsed !== "object") {
-    const err = new Error("OBJECT_REQUIRED: Please check the processEnv argument being passed to populate");
-    err.code = "OBJECT_REQUIRED";
-    throw err;
+function ce(e, t, r = {}) {
+  const n = !!(r && r.debug), s = !!(r && r.override);
+  if (typeof t != "object") {
+    const o = new Error("OBJECT_REQUIRED: Please check the processEnv argument being passed to populate");
+    throw o.code = "OBJECT_REQUIRED", o;
   }
-  for (const key of Object.keys(parsed)) {
-    if (Object.prototype.hasOwnProperty.call(processEnv, key)) {
-      if (override === true) {
-        processEnv[key] = parsed[key];
-      }
-      if (debug) {
-        if (override === true) {
-          _debug(`"${key}" is already defined and WAS overwritten`);
-        } else {
-          _debug(`"${key}" is already defined and was NOT overwritten`);
-        }
-      }
-    } else {
-      processEnv[key] = parsed[key];
-    }
-  }
+  for (const o of Object.keys(t))
+    Object.prototype.hasOwnProperty.call(e, o) ? (s === !0 && (e[o] = t[o]), n && v(s === !0 ? `"${o}" is already defined and WAS overwritten` : `"${o}" is already defined and was NOT overwritten`)) : e[o] = t[o];
 }
-const DotenvModule = {
-  configDotenv,
-  _configVault,
-  _parseVault,
-  config,
-  decrypt,
-  parse,
-  populate
+const l = {
+  configDotenv: oe,
+  _configVault: ne,
+  _parseVault: ee,
+  config: se,
+  decrypt: ae,
+  parse: Z,
+  populate: ce
 };
-main.exports.configDotenv = DotenvModule.configDotenv;
-main.exports._configVault = DotenvModule._configVault;
-main.exports._parseVault = DotenvModule._parseVault;
-main.exports.config = DotenvModule.config;
-main.exports.decrypt = DotenvModule.decrypt;
-main.exports.parse = DotenvModule.parse;
-main.exports.populate = DotenvModule.populate;
-main.exports = DotenvModule;
-var mainExports = main.exports;
-const dotenv = /* @__PURE__ */ getDefaultExportFromCjs(mainExports);
-let db = null;
-function getDB() {
-  if (!db) {
+d.exports.configDotenv = l.configDotenv;
+d.exports._configVault = l._configVault;
+d.exports._parseVault = l._parseVault;
+d.exports.config = l.config;
+d.exports.decrypt = l.decrypt;
+d.exports.parse = l.parse;
+d.exports.populate = l.populate;
+d.exports = l;
+var le = d.exports;
+const ie = /* @__PURE__ */ Y(le);
+let p = null;
+function N() {
+  if (!p)
     throw new Error("Database not initialized. Call initDB() first.");
-  }
-  return db;
+  return p;
 }
-function initDB() {
-  if (db) return db;
-  const userDataPath = app.getPath("userData");
-  const dbPath = path$1.join(userDataPath, "database.sqlite");
-  const dbDir = path$1.dirname(dbPath);
-  if (!fs$1.existsSync(dbDir)) {
-    fs$1.mkdirSync(dbDir, { recursive: true });
-  }
-  console.log(`Initializing database at: ${dbPath}`);
+function Ee() {
+  if (p) return p;
+  const e = h.getPath("userData"), t = E.join(e, "database.sqlite"), r = E.dirname(t);
+  O.existsSync(r) || O.mkdirSync(r, { recursive: !0 }), console.log(`Initializing database at: ${t}`);
   try {
-    db = new Database(dbPath, { verbose: console.log });
-    db.pragma("journal_mode = WAL");
-    return db;
-  } catch (error) {
-    console.error("Failed to initialize database:", error);
-    throw error;
+    return p = new q(t, { verbose: console.log }), p.pragma("journal_mode = WAL"), p;
+  } catch (n) {
+    throw console.error("Failed to initialize database:", n), n;
   }
 }
-class DBManager {
+class _ {
   /**
    * Initialize the database and create tables if they don't exist.
    */
   static init() {
-    this.db = initDB();
-    this.createTables();
+    this.db = Ee(), this.createTables();
   }
   static createTables() {
     if (!this.db) return;
-    const createKVTable = `
+    this.db.exec(`
       CREATE TABLE IF NOT EXISTS app_storage (
         key TEXT PRIMARY KEY,
         value TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
-    `;
-    this.db.exec(createKVTable);
+    `);
   }
   /**
    * Execute a query that does not return data (INSERT, UPDATE, DELETE).
    */
-  static run(sql, params = []) {
-    const db2 = getDB();
-    const stmt = db2.prepare(sql);
-    return stmt.run(...params);
+  static run(t, r = []) {
+    return N().prepare(t).run(...r);
   }
   /**
    * Execute a query that returns a single row.
    */
-  static get(sql, params = []) {
-    const db2 = getDB();
-    const stmt = db2.prepare(sql);
-    return stmt.get(...params);
+  static get(t, r = []) {
+    return N().prepare(t).get(...r);
   }
   /**
    * Execute a query that returns multiple rows.
    */
-  static all(sql, params = []) {
-    const db2 = getDB();
-    const stmt = db2.prepare(sql);
-    return stmt.all(...params);
+  static all(t, r = []) {
+    return N().prepare(t).all(...r);
   }
   // --- Convenience Methods for App Storage ---
-  static setItem(key, value) {
-    const stringValue = JSON.stringify(value);
-    const sql = `
+  static setItem(t, r) {
+    const n = JSON.stringify(r);
+    return this.run(`
       INSERT INTO app_storage (key, value, updated_at)
       VALUES (?, ?, CURRENT_TIMESTAMP)
       ON CONFLICT(key) DO UPDATE SET
         value = excluded.value,
         updated_at = excluded.updated_at;
-    `;
-    return this.run(sql, [key, stringValue]);
+    `, [t, n]);
   }
-  static getItem(key) {
-    const sql = `SELECT value FROM app_storage WHERE key = ?`;
-    const result = this.get(sql, [key]);
-    if (result && result.value) {
+  static getItem(t) {
+    const n = this.get("SELECT value FROM app_storage WHERE key = ?", [t]);
+    if (n && n.value)
       try {
-        return JSON.parse(result.value);
-      } catch (e) {
-        console.error(`Error parsing value for key ${key}:`, e);
-        return null;
+        return JSON.parse(n.value);
+      } catch (s) {
+        return console.error(`Error parsing value for key ${t}:`, s), null;
       }
-    }
     return null;
   }
-  static deleteItem(key) {
-    const sql = `DELETE FROM app_storage WHERE key = ?`;
-    return this.run(sql, [key]);
+  static deleteItem(t) {
+    return this.run("DELETE FROM app_storage WHERE key = ?", [t]);
   }
   static getAllItems() {
-    const sql = `SELECT key, value FROM app_storage`;
-    const rows = this.all(sql);
-    const result = {};
-    for (const row of rows) {
+    const r = this.all("SELECT key, value FROM app_storage"), n = {};
+    for (const s of r)
       try {
-        result[row.key] = JSON.parse(row.value);
-      } catch (e) {
-        result[row.key] = row.value;
+        n[s.key] = JSON.parse(s.value);
+      } catch {
+        n[s.key] = s.value;
       }
-    }
-    return result;
+    return n;
   }
 }
-__publicField(DBManager, "db", null);
-const __dirname$1 = path$1.dirname(fileURLToPath(import.meta.url));
-const appRoot = path$1.join(__dirname$1, "..");
+V(_, "db", null);
+const S = E.dirname(x(import.meta.url)), $ = E.join(S, "..");
 {
-  const mode = process.env.NODE_ENV || (process.env["VITE_DEV_SERVER_URL"] ? "development" : "production");
-  const files = [`.env.${mode}.local`, `.env.${mode}`, `.env.local`, `.env`];
-  for (const f of files) {
-    const p = path$1.join(appRoot, f);
-    if (fs$1.existsSync(p)) dotenv.config({ path: p, override: true });
+  const e = process.env.NODE_ENV || (process.env.VITE_DEV_SERVER_URL ? "development" : "production"), t = [`.env.${e}.local`, `.env.${e}`, ".env.local", ".env"];
+  for (const r of t) {
+    const n = E.join($, r);
+    O.existsSync(n) && ie.config({ path: n, override: !0 });
   }
 }
-process.env.APP_ROOT = appRoot;
-const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
-const MAIN_DIST = path$1.join(process.env.APP_ROOT, "dist-electron");
-const RENDERER_DIST = path$1.join(process.env.APP_ROOT, "dist");
-process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path$1.join(process.env.APP_ROOT, "public") : RENDERER_DIST;
-let win;
-function createWindow() {
-  win = new BrowserWindow({
+process.env.APP_ROOT = $;
+const R = process.env.VITE_DEV_SERVER_URL, De = E.join(process.env.APP_ROOT, "dist-electron"), W = E.join(process.env.APP_ROOT, "dist");
+process.env.VITE_PUBLIC = R ? E.join(process.env.APP_ROOT, "public") : W;
+let f;
+function K() {
+  f = new L({
     title: process.env.APP_NAME || "Stocks Only",
-    icon: path$1.join(process.env.VITE_PUBLIC, "app-icon.png"),
+    icon: E.join(process.env.VITE_PUBLIC, "app-icon.png"),
     width: 1100,
     height: 750,
     minWidth: 1100,
     minHeight: 750,
-    center: true,
+    center: !0,
     webPreferences: {
-      preload: path$1.join(__dirname$1, "preload.mjs")
+      preload: E.join(S, "preload.mjs")
     }
-  });
-  win.webContents.on("did-finish-load", () => {
-    win == null ? void 0 : win.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
-  });
-  if (VITE_DEV_SERVER_URL) {
-    win.loadURL(VITE_DEV_SERVER_URL);
-  } else {
-    win.loadFile(path$1.join(RENDERER_DIST, "index.html"));
-  }
+  }), f.webContents.on("did-finish-load", () => {
+    f == null || f.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
+  }), R ? f.loadURL(R) : f.loadFile(E.join(W, "index.html"));
 }
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-    win = null;
-  }
+h.on("window-all-closed", () => {
+  process.platform !== "darwin" && (h.quit(), f = null);
 });
-app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
-  }
+h.on("activate", () => {
+  L.getAllWindows().length === 0 && K();
 });
-app.whenReady().then(() => {
+h.whenReady().then(() => {
   try {
-    DBManager.init();
-    console.log("Database initialized successfully");
-  } catch (error) {
-    console.error("Failed to initialize database:", error);
+    _.init(), console.log("Database initialized successfully");
+  } catch (e) {
+    console.error("Failed to initialize database:", e);
   }
-  ipcMain.on("env:getSync", (event) => {
-    event.returnValue = {
-      VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL,
-      VITE_SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY
+  T.on("env:getSync", (e) => {
+    e.returnValue = {
+      VITE_APPWRITE_ENDPOINT: process.env.VITE_APPWRITE_ENDPOINT,
+      VITE_APPWRITE_PROJECT_ID: process.env.VITE_APPWRITE_PROJECT_ID,
+      VITE_APPWRITE_DATABASE_ID: process.env.VITE_APPWRITE_DATABASE_ID,
+      VITE_APPWRITE_AVATAR_BUCKET_ID: process.env.VITE_APPWRITE_AVATAR_BUCKET_ID,
+      VITE_APPWRITE_USER_PROFILE_COLLECTION_ID: process.env.VITE_APPWRITE_USER_PROFILE_COLLECTION_ID,
+      VITE_APPWRITE_TRAINING_BALANCE_LEDGER_COLLECTION_ID: process.env.VITE_APPWRITE_TRAINING_BALANCE_LEDGER_COLLECTION_ID,
+      VITE_APPWRITE_TRAINING_SESSION_COLLECTION_ID: process.env.VITE_APPWRITE_TRAINING_SESSION_COLLECTION_ID,
+      VITE_APPWRITE_TRAINING_TRADE_LOG_COLLECTION_ID: process.env.VITE_APPWRITE_TRAINING_TRADE_LOG_COLLECTION_ID,
+      VITE_APPWRITE_STOCK_INFO_COLLECTION_ID: process.env.VITE_APPWRITE_STOCK_INFO_COLLECTION_ID,
+      VITE_APPWRITE_STOCK_KLINE_COLLECTION_ID: process.env.VITE_APPWRITE_STOCK_KLINE_COLLECTION_ID
     };
-  });
-  ipcMain.handle("db:run", (_, sql, params) => DBManager.run(sql, params));
-  ipcMain.handle("db:get", (_, sql, params) => DBManager.get(sql, params));
-  ipcMain.handle("db:all", (_, sql, params) => DBManager.all(sql, params));
-  ipcMain.handle(
+  }), T.handle("db:run", (e, t, r) => _.run(t, r)), T.handle("db:get", (e, t, r) => _.get(t, r)), T.handle("db:all", (e, t, r) => _.all(t, r)), T.handle(
     "storage:set",
-    (_, key, value) => DBManager.setItem(key, value)
-  );
-  ipcMain.handle("storage:get", (_, key) => DBManager.getItem(key));
-  ipcMain.handle("storage:delete", (_, key) => DBManager.deleteItem(key));
-  ipcMain.handle("storage:getAll", () => DBManager.getAllItems());
-  createWindow();
+    (e, t, r) => _.setItem(t, r)
+  ), T.handle("storage:get", (e, t) => _.getItem(t)), T.handle("storage:delete", (e, t) => _.deleteItem(t)), T.handle("storage:getAll", () => _.getAllItems()), K();
 });
 export {
-  MAIN_DIST,
-  RENDERER_DIST,
-  VITE_DEV_SERVER_URL
+  De as MAIN_DIST,
+  W as RENDERER_DIST,
+  R as VITE_DEV_SERVER_URL
 };

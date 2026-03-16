@@ -40,7 +40,7 @@ export interface TrainingSessionSummaryPayload {
 }
 
 export interface TrainingTradeLogPayload {
-  session_id: number;
+  session_id: string;
   user_id: string;
   seq_no: number;
   action: TrainingTradeAction;
@@ -56,7 +56,7 @@ export interface TrainingTradeLogPayload {
 
 export interface BalanceLedgerPayload {
   user_id: string;
-  session_id?: number | null;
+  session_id?: string | null;
   change_type: "init" | "trade_pnl" | "manual_adjust" | "membership_bonus";
   amount: number;
   balance_after: number;

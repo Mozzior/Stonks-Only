@@ -15,19 +15,27 @@ declare namespace NodeJS {
      * │
      * ```
      */
-    APP_ROOT: string
+    APP_ROOT: string;
     /** /dist/ or /public/ */
-    VITE_PUBLIC: string
+    VITE_PUBLIC: string;
   }
 }
 
 // Used in Renderer process, expose in `preload.ts`
 interface Window {
-  ipcRenderer: import('electron').IpcRenderer
+  ipcRenderer: import("electron").IpcRenderer;
   env: {
-    VITE_SUPABASE_URL?: string
-    VITE_SUPABASE_ANON_KEY?: string
-  }
+    VITE_APPWRITE_ENDPOINT?: string;
+    VITE_APPWRITE_PROJECT_ID?: string;
+    VITE_APPWRITE_DATABASE_ID?: string;
+    VITE_APPWRITE_AVATAR_BUCKET_ID?: string;
+    VITE_APPWRITE_USER_PROFILE_COLLECTION_ID?: string;
+    VITE_APPWRITE_TRAINING_BALANCE_LEDGER_COLLECTION_ID?: string;
+    VITE_APPWRITE_TRAINING_SESSION_COLLECTION_ID?: string;
+    VITE_APPWRITE_TRAINING_TRADE_LOG_COLLECTION_ID?: string;
+    VITE_APPWRITE_STOCK_INFO_COLLECTION_ID?: string;
+    VITE_APPWRITE_STOCK_KLINE_COLLECTION_ID?: string;
+  };
   db: {
     run: (sql: string, params?: any[]) => Promise<any>;
     get: <T = any>(sql: string, params?: any[]) => Promise<T | undefined>;
@@ -37,6 +45,6 @@ interface Window {
       get: <T = any>(key: string) => Promise<T | null>;
       delete: (key: string) => Promise<any>;
       getAll: () => Promise<Record<string, any>>;
-    }
-  }
+    };
+  };
 }

@@ -451,7 +451,7 @@ import {
   KeyOutline,
 } from "@vicons/ionicons5";
 import { updateProfileBasic } from "../services/userProfileRepo";
-import { supabase } from "../utils/supabase";
+import { appwrite, appwriteConfig, ID } from "../utils/appwrite";
 import {
   getAvatarUrl,
   getDisplayName,
@@ -511,7 +511,7 @@ function toggleEdit() {
 
 async function saveProfileBasic() {
   if (!user.value) return;
-  const { error } = await updateProfileBasic(user.value.id, {
+  const { error } = await updateProfileBasic(user.value.$id, {
     display_name: editDisplayName.value.trim() || null,
     avatar_url: editAvatarUrl.value.trim() || null,
   });
@@ -535,27 +535,47 @@ async function onAvatarSelected(e: Event) {
   if (!file || !user.value) return;
   uploadingAvatar.value = true;
   try {
-    const ext = file.name.split(".").pop() || "png";
-    const path = `${user.value.id}/${Date.now()}.${ext}`;
-    let publicUrl: string | null = null;
-
-    for (const bucket of ["avatars", "public"]) {
-      const { data, error } = await supabase.storage
-        .from(bucket)
-        .upload(path, file, { upsert: true, contentType: file.type });
-      if (!error && data) {
-        const pub = supabase.storage.from(bucket).getPublicUrl(data.path);
-        publicUrl = pub.data.publicUrl;
-        break;
-      }
-    }
-
-    if (!publicUrl) {
+    const candidates = Array.from(
+      new Set([appwriteConfig.avatarBucketId, "avatars", "public"].filter(Boolean)),
+    ) as string[];
+    if (candidates.length === 0) {
       message.error("头像上传失败，请检查存储桶配置");
       return;
     }
 
-    const { error: updateError } = await updateProfileBasic(user.value.id, {
+    let publicUrl: string | null = null;
+    let lastError: any = null;
+
+    for (const bucketId of candidates) {
+      try {
+        const uploaded = await appwrite.storage.createFile(
+          bucketId,
+          ID.unique(),
+          file,
+        );
+        publicUrl = appwrite.storage
+          .getFileView(bucketId, uploaded.$id)
+          .toString();
+        break;
+      } catch (error: any) {
+        lastError = error;
+        if (error?.type === "storage_bucket_not_found" || error?.code === 404) {
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    if (!publicUrl) {
+      if (lastError?.message) {
+        message.error(`头像上传失败：${lastError.message}`);
+      } else {
+        message.error("头像上传失败，请检查存储桶配置");
+      }
+      return;
+    }
+
+    const { error: updateError } = await updateProfileBasic(user.value.$id, {
       avatar_url: publicUrl,
     });
     if (updateError) {

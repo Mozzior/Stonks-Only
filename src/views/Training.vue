@@ -58,7 +58,12 @@
             >{{ t("training.header.accountBalance") }}</span
           >
           <span class="text-lg font-bold text-[var(--color-brand-primary)]"
-            >${{ accountBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span
+            >${{
+              accountBalance.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })
+            }}</span
           >
         </div>
       </div>
@@ -1036,9 +1041,19 @@ import type { KLineData, Period, OverlayCreate, CandleType } from "klinecharts";
 import { useTheme } from "../composables/useTheme";
 import { useLayoutControl } from "../composables/useLayoutControl";
 import { useAuth } from "../composables/useAuth";
-import { supabase } from "../utils/supabase";
-import { createSession, finishSession, appendTradeLog } from "../services/trainingRepo";
-import { updateTrainingBalance, appendBalanceLedger } from "../services/userProfileRepo";
+import {
+  createSession,
+  finishSession,
+  appendTradeLog,
+} from "../services/trainingRepo";
+import {
+  updateTrainingBalance,
+  appendBalanceLedger,
+} from "../services/userProfileRepo";
+import {
+  fetchRandomStock,
+  listStockKlineByPeriod,
+} from "../services/marketRepo";
 
 const router = useRouter();
 const message = useMessage();
@@ -1072,7 +1087,7 @@ const pendingTextOverlay = ref<any>(null);
 let playInterval: any = null;
 let updateDataCallback: ((data: KLineData) => void) | null = null;
 let resizeHandler: (() => void) | null = null;
-const activeSessionId = ref<number | null>(null);
+const activeSessionId = ref<string | null>(null);
 const sessionTradeSeq = ref(0);
 const sessionInitialBalance = ref(0);
 const sessionRealizedPnl = ref(0);
@@ -1488,11 +1503,9 @@ async function startNewRandomTraining(retries = 20) {
   // Random offset to pick a stock from ~5000 total stocks
   const randomOffset = Math.floor(Math.random() * 5000);
 
-  const { data: stocks, error: stockErr } = await supabase
-    .from("stock_info")
-    .select("ts_code, name, symbol")
-    .range(randomOffset, randomOffset)
-    .limit(1);
+  const stockResult = await fetchRandomStock(randomOffset);
+  const stocks = stockResult.data ? [stockResult.data] : null;
+  const stockErr = stockResult.error;
 
   if (stockErr || !stocks || stocks.length === 0) {
     await startNewRandomTraining(retries - 1);
@@ -1503,24 +1516,9 @@ async function startNewRandomTraining(retries = 20) {
   currentStock.value = randomStock;
 
   const [dailyRes, weeklyRes, monthlyRes] = await Promise.all([
-    supabase
-      .from("stock_kline")
-      .select("*")
-      .eq("ts_code", randomStock.symbol)
-      .eq("period", "daily")
-      .order("trade_date", { ascending: true }),
-    supabase
-      .from("stock_kline")
-      .select("*")
-      .eq("ts_code", randomStock.symbol)
-      .eq("period", "weekly")
-      .order("trade_date", { ascending: true }),
-    supabase
-      .from("stock_kline")
-      .select("*")
-      .eq("ts_code", randomStock.symbol)
-      .eq("period", "monthly")
-      .order("trade_date", { ascending: true }),
+    listStockKlineByPeriod(randomStock.symbol, "daily"),
+    listStockKlineByPeriod(randomStock.symbol, "weekly"),
+    listStockKlineByPeriod(randomStock.symbol, "monthly"),
   ]);
 
   if (
@@ -1546,8 +1544,8 @@ async function startNewRandomTraining(retries = 20) {
     }));
 
   dailyData.value = format(dailyRes.data);
-  weeklyData.value = format(weeklyRes.data);
-  monthlyData.value = format(monthlyRes.data);
+  weeklyData.value = format(weeklyRes.data ?? []);
+  monthlyData.value = format(monthlyRes.data ?? []);
   const minSegmentLength = 50;
   const maxSegmentLength = 150;
   if (dailyData.value.length < minSegmentLength + 1) {
@@ -2521,7 +2519,7 @@ async function persistTradeLog(
   sessionTradeSeq.value += 1;
   await appendTradeLog({
     session_id: activeSessionId.value,
-    user_id: user.value.id,
+    user_id: user.value.$id,
     seq_no: sessionTradeSeq.value,
     action,
     side,
@@ -2545,7 +2543,9 @@ async function finalizeSession(status: "completed" | "aborted") {
   const previousBalance = accountBalance.value;
   const floating = position.value?.plAmount ?? 0;
   const endingBalance = Number(
-    (sessionInitialBalance.value + sessionRealizedPnl.value + floating).toFixed(2),
+    (sessionInitialBalance.value + sessionRealizedPnl.value + floating).toFixed(
+      2,
+    ),
   );
   const realizedPnl = Number(sessionRealizedPnl.value.toFixed(2));
   const returnPct =
@@ -2557,7 +2557,8 @@ async function finalizeSession(status: "completed" | "aborted") {
       ? 0
       : Number(
           (
-            ((sessionPeakBalance.value - endingBalance) / sessionPeakBalance.value) *
+            ((sessionPeakBalance.value - endingBalance) /
+              sessionPeakBalance.value) *
             100
           ).toFixed(4),
         );
@@ -2572,11 +2573,11 @@ async function finalizeSession(status: "completed" | "aborted") {
   });
 
   if (user.value) {
-    await updateTrainingBalance(user.value.id, endingBalance);
+    await updateTrainingBalance(user.value.$id, endingBalance);
     const delta = Number((endingBalance - previousBalance).toFixed(2));
     if (delta !== 0) {
       await appendBalanceLedger({
-        user_id: user.value.id,
+        user_id: user.value.$id,
         session_id: activeSessionId.value,
         change_type: "trade_pnl",
         amount: delta,
@@ -2763,7 +2764,7 @@ async function startTraining() {
         ? formatDate(dailyData.value[trainingEndIndex.value].timestamp)
         : null;
       const { data, error } = await createSession({
-        user_id: user.value.id,
+        user_id: user.value.$id,
         ts_code: currentStock.value.ts_code ?? currentStock.value.symbol ?? "",
         symbol: currentStock.value.symbol ?? null,
         period: "daily",

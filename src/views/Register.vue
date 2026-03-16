@@ -236,7 +236,7 @@ function handleRegister(e: MouseEvent) {
       if (error) {
         console.error('Registration Error:', error)
         message.error(error.message || 'Registration failed')
-      } else if (data.session) {
+      } else if (data?.session) {
         message.success(t('auth.register.messages.success'))
         router.push('/')
       } else {

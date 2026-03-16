@@ -103,9 +103,9 @@ pnpm build
 - 图表组件：KLineCharts（已集成 `klinecharts`，可选用 `@klinecharts/pro`）
 - 数据与后端：
   - 当前：本地渲染示例，无持久化方案强绑定
-  - 规划：本地 SQLite（嵌入式）或云端 Supabase（`@supabase/supabase-js` 已添加依赖）
+  - 规划：本地 SQLite（嵌入式）或云端 Appwrite（`appwrite` SDK）
 - 认证与账户：
-  - 规划：JWT 或基于 Supabase 的认证体系
+  - 规划：JWT 或基于 Appwrite Account 的认证体系
 
 说明：本仓库当前以 Electron + Vue3 的工程化基座为主，后续将逐步接入数据层、交易引擎与评估模块。
 
@@ -137,8 +137,16 @@ pnpm build
 APP_NAME=Stocks Only
 
 # 渲染进程
-VITE_SUPABASE_URL=
-VITE_SUPABASE_ANON_KEY=
+VITE_APPWRITE_ENDPOINT=
+VITE_APPWRITE_PROJECT_ID=
+VITE_APPWRITE_DATABASE_ID=
+VITE_APPWRITE_AVATAR_BUCKET_ID=
+VITE_APPWRITE_USER_PROFILE_COLLECTION_ID=
+VITE_APPWRITE_TRAINING_BALANCE_LEDGER_COLLECTION_ID=
+VITE_APPWRITE_TRAINING_SESSION_COLLECTION_ID=
+VITE_APPWRITE_TRAINING_TRADE_LOG_COLLECTION_ID=
+VITE_APPWRITE_STOCK_INFO_COLLECTION_ID=
+VITE_APPWRITE_STOCK_KLINE_COLLECTION_ID=
 ```
 
 当前生效点：
@@ -148,10 +156,37 @@ VITE_SUPABASE_ANON_KEY=
 
 可选变量说明：
 
-- `VITE_SUPABASE_URL`：Supabase 项目 URL
-- `VITE_SUPABASE_ANON_KEY`：Supabase 匿名 Key
+- `VITE_APPWRITE_ENDPOINT`：Appwrite API Endpoint
+- `VITE_APPWRITE_PROJECT_ID`：Appwrite Project ID
+- `VITE_APPWRITE_DATABASE_ID`：Appwrite Database ID
+- `VITE_APPWRITE_AVATAR_BUCKET_ID`：头像存储桶 ID
+- `VITE_APPWRITE_USER_PROFILE_COLLECTION_ID`：用户资料集合 ID
+- `VITE_APPWRITE_TRAINING_BALANCE_LEDGER_COLLECTION_ID`：训练资金流水集合 ID
+- `VITE_APPWRITE_TRAINING_SESSION_COLLECTION_ID`：训练会话集合 ID
+- `VITE_APPWRITE_TRAINING_TRADE_LOG_COLLECTION_ID`：训练交易日志集合 ID
+- `VITE_APPWRITE_STOCK_INFO_COLLECTION_ID`：股票基础信息集合 ID
+- `VITE_APPWRITE_STOCK_KLINE_COLLECTION_ID`：K 线集合 ID
 
 注：未配置时应用仍可在纯本地模式下运行；接入云端能力后这些变量将启用。
+
+### 数据迁移（Supabase 导出 → Appwrite）
+
+执行入口：
+
+```
+pnpm schema:appwrite
+pnpm migrate:appwrite
+```
+
+`pnpm schema:appwrite` 会根据当前项目代码需要创建 Collection、字段与索引。
+
+迁移脚本读取 `migration-data/*.json`，按集合映射写入 Appwrite。需提供：
+
+- `APPWRITE_ENDPOINT`
+- `APPWRITE_PROJECT_ID`
+- `APPWRITE_API_KEY`
+- `APPWRITE_DATABASE_ID`
+- 以及 `.env` 中对应的集合 ID 变量
 
 ## 使用流程
 
@@ -165,7 +200,7 @@ VITE_SUPABASE_ANON_KEY=
 ## 路线图
 
 - 数据接入：本地 SQLite 与数据导入工具
-- 云端账户：接入 Supabase 账户与同步
+- 云端账户：接入 Appwrite 账户与同步
 - 交易引擎：撮合与成交模型、滑点与费用更精细化
 - 评估系统：收益率、最大回撤、夏普比率等指标
 - 比赛体系：赛制模板、奖惩与回放
