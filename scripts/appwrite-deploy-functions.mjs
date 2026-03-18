@@ -15,7 +15,7 @@ const endpoint = process.env.APPWRITE_ENDPOINT || "http://localhost/v1";
 const projectId = process.env.APPWRITE_PROJECT_ID;
 const apiKey = process.env.APPWRITE_API_KEY;
 const execRole = process.env.APPWRITE_FUNCTION_EXECUTE_ROLE || "any";
-const runtime = process.env.APPWRITE_FUNCTION_RUNTIME || "node-22.0";
+const runtime = process.env.APPWRITE_FUNCTION_RUNTIME || "node-20.0";
 
 function normalizeExecuteRoles(input) {
   if (!input) return ["any"];
@@ -137,6 +137,35 @@ if (packRes.status !== 0) {
 }
 
 const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
+async function detectSupportedRuntime(preferred) {
+  const url = `${endpoint.replace(/\/$/, "")}/functions/runtimes`;
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        "X-Appwrite-Project": projectId,
+        "X-Appwrite-Key": apiKey,
+      },
+    });
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    const data = await res.json();
+    const ids = (data?.runtimes || [])
+      .map((r) => r.$id || r.id)
+      .filter(Boolean);
+    const candidates = [
+      preferred,
+      preferred.replace(/\.0$/, ""),
+      "node-20.0",
+      "node-22",
+    ];
+    const found = candidates.find((c) => ids.includes(c));
+    return found || preferred;
+  } catch {
+    return preferred;
+  }
+}
+const resolvedRuntime = await detectSupportedRuntime(runtime);
+console.log(`Using runtime: ${resolvedRuntime}`);
 const results = [];
 
 for (const f of manifest.functions) {
@@ -145,12 +174,31 @@ for (const f of manifest.functions) {
   const isSchedule = f.trigger === "schedule";
   const schedule = f.schedule;
 
-  const getRes = spawnSync(
-    "appwrite",
-    ["functions", "get", "--function-id", id],
-    { stdio: "ignore" },
+  const spawnCli = (args) =>
+    spawnSync("appwrite", args, { stdio: "pipe", encoding: "utf-8" });
+  const maxAttempts = Number(process.env.APPWRITE_DEPLOY_MAX_ATTEMPTS || 12);
+  const baseDelayMs = Math.max(
+    1000,
+    Number(process.env.APPWRITE_DEPLOY_RETRY_DELAY_MS || 30000),
   );
-  if (getRes.status !== 0) {
+  let exists = false;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const res = spawnCli(["functions", "get", "--function-id", id]);
+    if (res.status === 0) {
+      exists = true;
+      break;
+    }
+    const out = (res.stdout || "") + (res.stderr || "");
+    if (/Rate limit/i.test(out) || /429/.test(out)) {
+      const backoff = Math.floor(
+        baseDelayMs * 2 ** (attempt - 1) * (1 + Math.random() * 0.3),
+      );
+      await new Promise((r) => setTimeout(r, backoff));
+      continue;
+    }
+    break;
+  }
+  if (!exists) {
     const args = [
       "functions",
       "create",
@@ -159,7 +207,7 @@ for (const f of manifest.functions) {
       "--name",
       id,
       "--runtime",
-      runtime,
+      resolvedRuntime,
       "--enabled",
       "true",
       "--logging",
@@ -172,10 +220,39 @@ for (const f of manifest.functions) {
     if (isSchedule && schedule) {
       args.push("--schedule", schedule);
     }
-    const createRes = spawnSync("appwrite", args, { stdio: "inherit" });
-    if (createRes.status !== 0) {
-      results.push({ id, ok: false, step: "create" });
-      continue;
+    let created = false;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const res = spawnCli(args);
+      const out = (res.stdout || "") + (res.stderr || "");
+      if (res.status === 0) {
+        process.stdout.write(out);
+        created = true;
+        break;
+      }
+      process.stdout.write(out);
+      if (/Rate limit/i.test(out) || /429/.test(out)) {
+        const backoff = Math.floor(
+          baseDelayMs * 2 ** (attempt - 1) * (1 + Math.random() * 0.3),
+        );
+        await new Promise((r) => setTimeout(r, backoff));
+        continue;
+      }
+      break;
+    }
+    if (!created) {
+      let finalExists = false;
+      for (let i = 1; i <= 3; i++) {
+        const res = spawnCli(["functions", "get", "--function-id", id]);
+        if (res.status === 0) {
+          finalExists = true;
+          break;
+        }
+        await new Promise((r) => setTimeout(r, 1000 * i));
+      }
+      if (!finalExists) {
+        results.push({ id, ok: false, step: "create" });
+        continue;
+      }
     }
   }
 
@@ -188,23 +265,42 @@ for (const f of manifest.functions) {
   form.append("activate", "true");
   form.append("entrypoint", entrypoint || "");
   const url = `${endpoint.replace(/\/$/, "")}/functions/${id}/deployments`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "X-Appwrite-Project": projectId,
-      "X-Appwrite-Key": apiKey,
-    },
-    body: form,
-  });
-  if (!res.ok) {
-    let errorText = "";
+  let deployed = false;
+  let deployStatus = 0;
+  let deployErrorText = "";
+  for (let attempt = 1; attempt <= maxAttempts && !deployed; attempt++) {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "X-Appwrite-Project": projectId,
+        "X-Appwrite-Key": apiKey,
+      },
+      body: form,
+    });
+    if (res.ok) {
+      deployed = true;
+      break;
+    }
+    deployStatus = res.status;
     try {
-      errorText = await res.text();
-    } catch {}
+      deployErrorText = await res.text();
+    } catch {
+      deployErrorText = "";
+    }
+    if (res.status === 429) {
+      const backoff = Math.floor(
+        baseDelayMs * 2 ** (attempt - 1) * (1 + Math.random() * 0.3),
+      );
+      await new Promise((r) => setTimeout(r, backoff));
+      continue;
+    }
+    break;
+  }
+  if (!deployed) {
     console.error(
-      `Deploy failed for ${id}: ${res.status} ${res.statusText} ${errorText || ""}`.trim(),
+      `Deploy failed for ${id}: ${deployStatus} ${deployErrorText || ""}`.trim(),
     );
-    results.push({ id, ok: false, step: "deploy", status: res.status });
+    results.push({ id, ok: false, step: "deploy", status: deployStatus });
     continue;
   }
   results.push({ id, ok: true });
