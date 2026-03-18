@@ -518,9 +518,24 @@ export default {
     },
   },
   wallet: {
-    member: "MEMBER",
+    member: "Member",
     status: {
       active: "Active",
+      completed: "Completed",
+    },
+    activity: {
+      columns: {
+        time: "Time",
+        activity: "Activity",
+        amount: "Amount",
+        status: "Status",
+      },
+      all: "All",
+      trades: "Trades",
+      adjustments: "Adjustments",
+      noActivity: "No activity to show",
+      recharge: "Recharge",
+      tradePnl: "Trade P&L",
     },
     balance: {
       accountBalance: "Account Balance",

@@ -254,11 +254,18 @@ const historyColumns = computed(() => [
     title: t("wallet.activity.columns.activity"),
     key: "type",
     render(row: any) {
+      let typeText = row.type.replace("_", " ");
+      if (row.type === "RECHARGE") {
+        typeText = t("wallet.activity.recharge");
+      } else if (row.type === "TRADE_PNL") {
+        typeText = t("wallet.activity.tradePnl");
+      }
+
       return h("div", { class: "flex flex-col" }, [
         h(
           "span",
           { class: "text-xs font-bold text-[var(--color-text-primary)]" },
-          row.type.replace("_", " "),
+          typeText,
         ),
         h(
           "span",
@@ -286,10 +293,14 @@ const historyColumns = computed(() => [
     title: t("wallet.activity.columns.status"),
     key: "status",
     render(row: any) {
+      let statusText = row.status;
+      if (row.status === "COMPLETED") {
+        statusText = t("wallet.status.completed");
+      }
       return h(
         NTag,
         { size: "tiny", type: "success", ghost: true, bordered: false },
-        { default: () => row.status },
+        { default: () => statusText },
       );
     },
   },

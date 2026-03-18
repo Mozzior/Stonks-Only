@@ -513,6 +513,21 @@ export default {
     member: "会员",
     status: {
       active: "活跃",
+      completed: "已完成",
+    },
+    activity: {
+      columns: {
+        time: "时间",
+        activity: "活动",
+        amount: "金额",
+        status: "状态",
+      },
+      all: "全部",
+      trades: "交易",
+      adjustments: "其他",
+      noActivity: "暂无活动记录",
+      recharge: "充值",
+      tradePnl: "交易盈亏",
     },
     balance: {
       accountBalance: "账户余额",

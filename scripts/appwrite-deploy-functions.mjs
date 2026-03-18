@@ -137,6 +137,41 @@ if (packRes.status !== 0) {
 }
 
 const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf-8"));
+function getArg(name) {
+  const flag = `--${name}`;
+  for (let i = 2; i < process.argv.length; i++) {
+    const a = process.argv[i];
+    if (a === flag) {
+      const v = process.argv[i + 1];
+      if (v && !v.startsWith("--")) return v;
+    }
+    if (a.startsWith(flag + "=")) {
+      return a.slice(flag.length + 1);
+    }
+  }
+  return "";
+}
+function parseList(src) {
+  return String(src || "")
+    .split(/[,\s]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+const onlyArg = getArg("only") || process.env.APPWRITE_FUNCTIONS_ONLY || "";
+const skipArg = getArg("skip") || process.env.APPWRITE_FUNCTIONS_SKIP || "";
+const onlySet = new Set(parseList(onlyArg));
+const skipSet = new Set(parseList(skipArg));
+let targetFunctions = manifest.functions || [];
+if (onlySet.size > 0) {
+  targetFunctions = targetFunctions.filter((f) => onlySet.has(f.id));
+}
+if (skipSet.size > 0) {
+  targetFunctions = targetFunctions.filter((f) => !skipSet.has(f.id));
+}
+if (!targetFunctions.length) {
+  console.error("No functions selected to deploy");
+  process.exit(1);
+}
 async function detectSupportedRuntime(preferred) {
   const url = `${endpoint.replace(/\/$/, "")}/functions/runtimes`;
   try {
@@ -168,7 +203,7 @@ const resolvedRuntime = await detectSupportedRuntime(runtime);
 console.log(`Using runtime: ${resolvedRuntime}`);
 const results = [];
 
-for (const f of manifest.functions) {
+for (const f of targetFunctions) {
   const id = f.id;
   const entrypoint = f.entrypoint;
   const isSchedule = f.trigger === "schedule";
@@ -264,6 +299,11 @@ for (const f of manifest.functions) {
   form.append("code", file);
   form.append("activate", "true");
   form.append("entrypoint", entrypoint || "");
+  if (f.commands) {
+    form.append("commands", f.commands);
+  } else {
+    form.append("commands", "npm install");
+  }
   const url = `${endpoint.replace(/\/$/, "")}/functions/${id}/deployments`;
   let deployed = false;
   let deployStatus = 0;
