@@ -1,4 +1,4 @@
-import { executeFunction } from "./client";
+import { executeFunction, getUserId } from "./client";
 import { appwrite, appwriteConfig, Query } from "../../utils/appwrite";
 import { fail, ok } from "../../utils/backendError";
 import type { TrainingOrderPayload } from "./types";
@@ -71,6 +71,31 @@ export async function getTrainingTrades(sessionId: string, limit: number = 50, c
       queries
     );
     return ok(response.documents);
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function listSessions(limit: number = 20, cursor?: string) {
+  try {
+    const userId = await getUserId();
+    if (!userId) return fail({ message: "Not logged in", code: "UNAUTHORIZED" });
+
+    const queries = [
+      Query.equal("user_id", userId),
+      Query.limit(limit),
+      Query.orderDesc("$createdAt")
+    ];
+    if (cursor) {
+      queries.push(Query.cursorAfter(cursor));
+    }
+
+    const response = await appwrite.databases.listDocuments(
+      appwriteConfig.databaseId!,
+      appwriteConfig.trainingSessionCollectionId!,
+      queries
+    );
+    return ok(response);
   } catch (error) {
     return fail(error);
   }

@@ -18,92 +18,72 @@
     <!-- KPI Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <n-card :bordered="false" class="bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)]">
-        <n-statistic :label="t('review.kpi.winRate')" :value="68.4">
+        <n-statistic :label="t('review.kpi.winRate')" :value="winRate" :precision="1">
           <template #suffix>%</template>
         </n-statistic>
-        <n-progress type="line" :percentage="68.4" :height="4" :color="'var(--color-brand-primary)'" class="mt-2" :show-indicator="false" />
+        <n-progress type="line" :percentage="winRate" :height="4" :color="'var(--color-brand-primary)'" class="mt-2" :show-indicator="false" />
+        <div class="text-xs text-[var(--color-text-secondary)] mt-2">{{ t('review.kpi.basedOnCompleted') }}</div>
       </n-card>
       
       <n-card :bordered="false" class="bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)]">
-        <n-statistic :label="t('review.kpi.profitFactor')" :value="2.15" :precision="2">
-          <template #prefix>x</template>
+        <n-statistic :label="t('review.kpi.totalPL')" :value="Math.abs(totalPnl)" :precision="2">
+          <template #prefix>
+             <span :class="totalPnl >= 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-error)]'">{{ totalPnl >= 0 ? '+' : '-' }}$</span>
+          </template>
         </n-statistic>
-        <div class="text-xs text-[var(--color-text-secondary)] mt-2">{{ t('review.kpi.grossProfitLoss') }}</div>
+        <div class="text-xs text-[var(--color-text-secondary)] mt-2">{{ t('review.kpi.allTimePL') }}</div>
       </n-card>
 
       <n-card :bordered="false" class="bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)]">
-        <n-statistic :label="t('review.kpi.avgWin')" :value="450.20" :precision="2">
-          <template #prefix>$</template>
+        <n-statistic :label="t('review.kpi.avgReturn')" :value="avgReturn" :precision="2">
+          <template #suffix>%</template>
         </n-statistic>
-        <div class="text-xs text-[var(--color-success)] mt-2">{{ t('review.kpi.avgLoss', { amount: '$210.50' }) }}</div>
+        <div class="text-xs text-[var(--color-text-secondary)] mt-2">{{ t('review.kpi.perSessionAvg') }}</div>
       </n-card>
 
       <n-card :bordered="false" class="bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)]">
-        <n-statistic :label="t('review.kpi.totalTrades')" :value="142" />
-        <div class="text-xs text-[var(--color-text-secondary)] mt-2">{{ t('review.kpi.winsLosses', { wins: 97, losses: 45 }) }}</div>
+        <n-statistic :label="t('review.kpi.totalSessions')" :value="totalSessions" />
+        <div class="text-xs text-[var(--color-text-secondary)] mt-2">{{ completedSessions }} {{ t('review.kpi.completed') }}</div>
       </n-card>
     </div>
 
     <!-- Charts Section -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <n-card :title="t('review.charts.equityCurve')" :bordered="false" class="lg:col-span-2 bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)] h-96">
+      <n-card :title="t('review.charts.performanceCurve')" :bordered="false" class="lg:col-span-2 bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)] h-96">
         <div class="w-full h-full bg-gradient-to-t from-[var(--color-brand-primary)]/5 to-transparent rounded-lg flex items-end relative overflow-hidden">
-          <!-- Mock Chart Line -->
-          <svg class="absolute bottom-0 left-0 w-full h-full" preserveAspectRatio="none">
-            <path d="M0,300 C100,280 200,320 300,250 C400,200 500,220 600,150 C700,100 800,120 900,50 L900,384 L0,384 Z" fill="url(#gradReview)" opacity="0.2"></path>
-            <path d="M0,300 C100,280 200,320 300,250 C400,200 500,220 600,150 C700,100 800,120 900,50" stroke="var(--color-brand-primary)" stroke-width="3" fill="none"></path>
-            <defs>
-              <linearGradient id="gradReview" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" style="stop-color:var(--color-brand-primary);stop-opacity:1" />
-                <stop offset="100%" style="stop-color:var(--color-brand-primary);stop-opacity:0" />
-              </linearGradient>
-            </defs>
-          </svg>
+          <!-- Placeholder for Chart - In a real app, use a charting lib -->
+          <div class="absolute inset-0 flex items-center justify-center text-[var(--color-text-secondary)]">
+             <span v-if="sessions.length > 0">Chart Visualization Placeholder</span>
+             <span v-else>No data available</span>
+          </div>
         </div>
       </n-card>
 
-      <n-card :title="t('review.charts.tradeDistribution')" :bordered="false" class="bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)]">
+      <n-card :title="t('review.charts.sessionDistribution')" :bordered="false" class="bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)]">
         <div class="space-y-6">
           <div>
             <div class="flex justify-between text-xs mb-1">
-              <span class="text-[var(--color-text-secondary)]">{{ t('review.charts.longTrades') }}</span>
-              <span class="text-[var(--color-text-primary)]">85 (60%)</span>
+              <span class="text-[var(--color-text-secondary)]">{{ t('review.charts.profitableSessions') }}</span>
+              <span class="text-[var(--color-text-primary)]">{{ profitableSessionsCount }} ({{ winRate }}%)</span>
             </div>
-            <n-progress type="line" :percentage="60" :height="8" color="#10B981" :show-indicator="false" />
+            <n-progress type="line" :percentage="winRate" :height="8" color="#10B981" :show-indicator="false" />
           </div>
           <div>
             <div class="flex justify-between text-xs mb-1">
-              <span class="text-[var(--color-text-secondary)]">{{ t('review.charts.shortTrades') }}</span>
-              <span class="text-[var(--color-text-primary)]">57 (40%)</span>
+              <span class="text-[var(--color-text-secondary)]">{{ t('review.charts.losingSessions') }}</span>
+              <span class="text-[var(--color-text-primary)]">{{ losingSessionsCount }} ({{ (100 - winRate).toFixed(1) }}%)</span>
             </div>
-            <n-progress type="line" :percentage="40" :height="8" color="#EF4444" :show-indicator="false" />
-          </div>
-          <n-divider />
-          <div>
-            <div class="text-xs text-[var(--color-text-secondary)] mb-2">{{ t('review.charts.bestTradingHours') }}</div>
-            <div class="flex gap-1 h-24 items-end">
-              <div class="flex-1 bg-[var(--color-border)] rounded-t-sm h-[40%] hover:bg-[var(--color-brand-primary)] transition-colors"></div>
-              <div class="flex-1 bg-[var(--color-border)] rounded-t-sm h-[80%] hover:bg-[var(--color-brand-primary)] transition-colors"></div>
-              <div class="flex-1 bg-[var(--color-border)] rounded-t-sm h-[60%] hover:bg-[var(--color-brand-primary)] transition-colors"></div>
-              <div class="flex-1 bg-[var(--color-border)] rounded-t-sm h-[30%] hover:bg-[var(--color-brand-primary)] transition-colors"></div>
-              <div class="flex-1 bg-[var(--color-border)] rounded-t-sm h-[90%] hover:bg-[var(--color-brand-primary)] transition-colors"></div>
-              <div class="flex-1 bg-[var(--color-border)] rounded-t-sm h-[50%] hover:bg-[var(--color-brand-primary)] transition-colors"></div>
-            </div>
-            <div class="flex justify-between text-[10px] text-[var(--color-text-secondary)] mt-1">
-              <span>9am</span>
-              <span>12pm</span>
-              <span>4pm</span>
-            </div>
+            <n-progress type="line" :percentage="100 - winRate" :height="8" color="#EF4444" :show-indicator="false" />
           </div>
         </div>
       </n-card>
     </div>
 
-    <!-- Trade Journal -->
-    <n-card :title="t('review.journal.title')" :bordered="false" class="bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)]">
+    <!-- Session History -->
+    <n-card :title="t('review.sessionHistory')" :bordered="false" class="bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)]">
       <n-data-table
         :columns="columns"
-        :data="trades"
+        :data="sessionTableData"
         :bordered="false"
         :pagination="{ pageSize: 10 }"
       />
@@ -112,14 +92,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, h, computed } from 'vue'
+import { ref, h, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { 
-  NCard, NStatistic, NProgress, NButton, NIcon, NSpace, NSelect, NDivider, NDataTable, NTag 
+  NCard, NStatistic, NProgress, NButton, NIcon, NSpace, NSelect, NDataTable, NTag 
 } from 'naive-ui'
 import { DownloadOutline } from '@vicons/ionicons5'
+import { useAuth } from "../composables/useAuth";
+import { listSessions } from "../services/api/trainingApi";
 
 const { t } = useI18n()
+const { user } = useAuth();
+const sessions = ref<any[]>([]);
 
 const timeRange = ref('30d')
 const timeRangeOptions = computed(() => [
@@ -128,6 +112,51 @@ const timeRangeOptions = computed(() => [
   { label: t('review.journal.filter.thisYear'), value: 'ytd' },
   { label: t('review.journal.filter.allTime'), value: 'all' }
 ])
+
+onMounted(async () => {
+  if (!user.value) return;
+  const { data } = await listSessions(100); 
+  if (data) {
+      sessions.value = data.documents;
+  }
+});
+
+// KPIs
+const totalSessions = computed(() => sessions.value.length);
+const completedSessions = computed(() => sessions.value.filter(s => s.status === 'completed').length);
+const profitableSessionsCount = computed(() => sessions.value.filter(s => s.status === 'completed' && Number(s.realized_pnl) > 0).length);
+const losingSessionsCount = computed(() => completedSessions.value - profitableSessionsCount.value);
+
+const winRate = computed(() => {
+    if (completedSessions.value === 0) return 0;
+    return Number(((profitableSessionsCount.value / completedSessions.value) * 100).toFixed(1));
+});
+
+const totalPnl = computed(() => 
+    sessions.value
+        .filter(s => s.status === 'completed')
+        .reduce((sum, s) => sum + Number(s.realized_pnl || 0), 0)
+);
+
+const avgReturn = computed(() => {
+    if (completedSessions.value === 0) return 0;
+    const totalRet = sessions.value
+        .filter(s => s.status === 'completed')
+        .reduce((sum, s) => sum + Number(s.return_pct || 0), 0);
+    return totalRet / completedSessions.value;
+});
+
+const sessionTableData = computed(() => {
+    return sessions.value.map(s => ({
+        date: new Date(s.$createdAt).toLocaleDateString(),
+        symbol: s.symbol,
+        period: s.period,
+        pnl: Number(s.realized_pnl || 0),
+        roi: Number(s.return_pct || 0),
+        status: s.status,
+        id: s.$id
+    }));
+});
 
 const columns = computed(() => [
   { title: t('review.journal.date'), key: 'date', width: 120 },
@@ -138,28 +167,25 @@ const columns = computed(() => [
       return h('span', { class: 'font-bold text-[var(--color-text-primary)]' }, row.symbol)
     }
   },
-  { 
-    title: t('review.journal.side'), 
-    key: 'side',
-    render(row: any) {
-      return h(NTag, { 
-        type: row.side === 'LONG' ? 'success' : 'error', 
-        size: 'small', 
-        bordered: false 
-      }, { default: () => row.side })
-    }
-  },
-  { title: t('review.journal.entry'), key: 'entry', render: (row: any) => `$${row.entry}` },
-  { title: t('review.journal.exit'), key: 'exit', render: (row: any) => `$${row.exit}` },
-  { title: t('review.journal.size'), key: 'size' },
+  { title: t('review.journal.period'), key: 'period' },
   { 
     title: t('review.journal.pl'), 
-    key: 'pl',
+    key: 'pnl',
     render(row: any) {
-      const isWin = row.pl > 0
+      const isWin = row.pnl > 0
       return h('span', { 
         class: isWin ? 'text-[var(--color-success)] font-bold' : 'text-[var(--color-error)] font-bold' 
-      }, `${isWin ? '+' : ''}$${row.pl}`)
+      }, `${isWin ? '+' : ''}$${row.pnl.toFixed(2)}`)
+    }
+  },
+  { 
+    title: t('review.journal.roi'), 
+    key: 'roi',
+    render(row: any) {
+      const isWin = row.roi > 0
+      return h('span', { 
+        class: isWin ? 'text-[var(--color-success)]' : 'text-[var(--color-error)]' 
+      }, `${isWin ? '+' : ''}${row.roi.toFixed(2)}%`)
     }
   },
   { 
@@ -170,12 +196,4 @@ const columns = computed(() => [
     }
   }
 ])
-
-const trades = [
-  { date: '2023-10-24', symbol: 'NVDA', side: 'LONG', entry: 850.40, exit: 865.20, size: 200, pl: 2960.00, status: 'CLOSED' },
-  { date: '2023-10-23', symbol: 'TSLA', side: 'SHORT', entry: 240.50, exit: 235.10, size: 500, pl: 2700.00, status: 'CLOSED' },
-  { date: '2023-10-22', symbol: 'AAPL', side: 'LONG', entry: 175.20, exit: 174.10, size: 300, pl: -330.00, status: 'CLOSED' },
-  { date: '2023-10-21', symbol: 'AMD', side: 'LONG', entry: 105.40, exit: 108.90, size: 400, pl: 1400.00, status: 'CLOSED' },
-  { date: '2023-10-20', symbol: 'MSFT', side: 'SHORT', entry: 330.10, exit: 335.40, size: 150, pl: -795.00, status: 'CLOSED' },
-]
 </script>

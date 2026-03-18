@@ -4,7 +4,7 @@
     <div class="flex items-center justify-between">
       <div>
         <h1 class="text-2xl font-bold text-[var(--color-text-primary)] mb-1">
-          {{ t("common.welcome", { name: "Trader" }) }}
+          {{ t("common.welcome", { name: user?.name || "Trader" }) }}
         </h1>
         <p class="text-[var(--color-text-secondary)] text-sm">
           {{ t("home.subtitle") }}
@@ -20,6 +20,7 @@
 
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Portfolio Value -->
       <n-card
         :bordered="false"
         class="bg-[var(--color-bg-card)] rounded-xl shadow-sm hover:shadow-md transition-shadow group"
@@ -48,27 +49,27 @@
         </div>
       </n-card>
 
+      <!-- Total Sessions -->
       <n-card
         :bordered="false"
         class="bg-[var(--color-bg-card)] rounded-xl shadow-sm hover:shadow-md transition-shadow"
       >
         <n-statistic
-          :label="t('home.stats.cash')"
-          :value="availableCash"
-          :precision="2"
+          :label="t('home.stats.totalSessions')"
+          :value="totalSessions"
         >
-          <template #prefix>$</template>
         </n-statistic>
         <div
           class="mt-4 flex justify-between text-xs text-[var(--color-text-secondary)]"
         >
-          <span>{{ t("home.stats.buyingPower") }}</span>
+          <span>{{ t('home.stats.completed') }}</span>
           <span class="text-[var(--color-text-primary)]"
-            >${{ formatCurrency(buyingPower) }}</span
+            >{{ completedSessions }}</span
           >
         </div>
       </n-card>
 
+      <!-- Total P/L (Session Based) -->
       <n-card
         :bordered="false"
         class="bg-[var(--color-bg-card)] rounded-xl shadow-sm hover:shadow-md transition-shadow"
@@ -93,20 +94,20 @@
         <div
           class="mt-4 flex justify-between text-xs text-[var(--color-text-secondary)]"
         >
-          <span>{{ t("home.stats.todayPL") }}</span>
+          <span>{{ t('home.stats.avgReturn') }}</span>
           <span
             :class="
-              todayPnl >= 0
+              avgReturn >= 0
                 ? 'text-[var(--color-success)]'
                 : 'text-[var(--color-error)]'
             "
           >
-            {{ todayPnl >= 0 ? "+$" : "-$"
-            }}{{ formatCurrency(Math.abs(todayPnl)) }}
+            {{ avgReturn >= 0 ? "+" : "" }}{{ avgReturn.toFixed(2) }}%
           </span>
         </div>
       </n-card>
 
+      <!-- Win Rate (Session Based) -->
       <n-card
         :bordered="false"
         class="bg-[var(--color-bg-card)] rounded-xl shadow-sm hover:shadow-md transition-shadow"
@@ -129,91 +130,27 @@
         <div
           class="mt-3 flex justify-between text-xs text-[var(--color-text-secondary)]"
         >
-          <span>{{ t("home.stats.trades", { count: tradeCount }) }}</span>
-          <span>{{
-            t("home.stats.profitable", { count: profitableCount })
-          }}</span>
+          <span>{{ t('home.stats.profitableSessions') }}</span>
+          <span>{{ profitableSessionsCount }}</span>
         </div>
       </n-card>
     </div>
 
     <!-- Main Content Area -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Chart / Performance (Span 2) -->
+      <!-- Recent Sessions (Span 2) -->
       <div class="lg:col-span-2 space-y-6">
-        <n-card
-          :title="t('home.performance')"
-          :bordered="false"
-          class="bg-[var(--color-bg-card)] rounded-xl min-h-[400px]"
-        >
-          <template #header-extra>
-            <n-space>
-              <n-button size="small" ghost>1D</n-button>
-              <n-button size="small" type="primary" ghost>1W</n-button>
-              <n-button size="small" ghost>1M</n-button>
-              <n-button size="small" ghost>YTD</n-button>
-            </n-space>
-          </template>
-
-          <!-- Placeholder Chart Visual -->
-          <div
-            class="relative w-full h-[320px] bg-gradient-to-t from-[var(--color-brand-primary)]/5 to-transparent rounded-lg border border-dashed border-[var(--color-border)] flex items-end justify-between px-4 pb-4 overflow-hidden group"
-          >
-            <!-- Simulated Chart Line (SVG) -->
-            <svg
-              class="absolute bottom-0 left-0 w-full h-full transition-transform duration-700 group-hover:scale-[1.02]"
-              preserveAspectRatio="none"
-            >
-              <path
-                d="M0,320 L0,280 C50,250 100,300 150,260 C200,220 250,240 300,200 C350,160 400,180 450,150 C500,120 550,140 600,100 C650,60 700,80 750,50 L800,0 L800,320 Z"
-                fill="url(#grad)"
-                opacity="0.2"
-              ></path>
-              <path
-                d="M0,280 C50,250 100,300 150,260 C200,220 250,240 300,200 C350,160 400,180 450,150 C500,120 550,140 600,100 C650,60 700,80 750,50"
-                stroke="var(--color-brand-primary)"
-                stroke-width="2"
-                fill="none"
-              ></path>
-              <defs>
-                <linearGradient id="grad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop
-                    offset="0%"
-                    style="
-                      stop-color: var(--color-brand-primary);
-                      stop-opacity: 1;
-                    "
-                  />
-                  <stop
-                    offset="100%"
-                    style="
-                      stop-color: var(--color-brand-primary);
-                      stop-opacity: 0;
-                    "
-                  />
-                </linearGradient>
-              </defs>
-            </svg>
-
-            <!-- Axis Labels -->
-            <div
-              class="absolute left-2 top-2 text-xs text-[var(--color-text-secondary)] flex flex-col gap-8"
-            >
-              <span v-for="tick in chartTicks" :key="tick"
-                >${{ formatTick(tick) }}</span
-              >
-            </div>
-          </div>
-        </n-card>
-
         <n-card
           :title="t('home.recentSessions')"
           :bordered="false"
-          class="bg-[var(--color-bg-card)] rounded-xl"
+          class="bg-[var(--color-bg-card)] rounded-xl min-h-[400px]"
         >
+           <template #header-extra>
+              <n-button size="small" ghost @click="router.push('/review')">{{ t('common.viewAll') }}</n-button>
+           </template>
           <n-data-table
             :columns="columns"
-            :data="data"
+            :data="recentSessions"
             :bordered="false"
             :pagination="false"
             size="small"
@@ -221,7 +158,7 @@
         </n-card>
       </div>
 
-      <!-- Right Side: Watchlist & Quick Actions -->
+      <!-- Right Side: Quick Actions & Recommended -->
       <div class="space-y-6">
         <!-- Quick Actions -->
         <n-card
@@ -230,29 +167,29 @@
           class="bg-[var(--color-bg-card)] rounded-xl"
         >
           <div class="grid grid-cols-2 gap-3">
-            <n-button class="h-24 flex flex-col gap-2" dashed>
+            <n-button class="h-24 flex flex-col gap-2" dashed @click="router.push('/training')">
               <n-icon
                 size="24"
-                :component="AddCircleOutline"
+                :component="TrendingUpOutline"
                 class="text-[var(--color-brand-primary)]"
               />
-              <span class="text-xs">{{ t("home.actions.deposit") }}</span>
+              <span class="text-xs">{{ t('home.actions.newSession') }}</span>
             </n-button>
-            <n-button class="h-24 flex flex-col gap-2" dashed>
-              <n-icon
-                size="24"
-                :component="ShareOutline"
-                class="text-blue-400"
-              />
-              <span class="text-xs">{{ t("home.actions.invite") }}</span>
-            </n-button>
-            <n-button class="h-24 flex flex-col gap-2" dashed>
+            <n-button class="h-24 flex flex-col gap-2" dashed @click="router.push('/review')">
               <n-icon
                 size="24"
                 :component="BookOutline"
-                class="text-purple-400"
+                class="text-blue-400"
               />
-              <span class="text-xs">{{ t("home.actions.journal") }}</span>
+              <span class="text-xs">{{ t('home.actions.reviewHistory') }}</span>
+            </n-button>
+            <n-button class="h-24 flex flex-col gap-2" dashed @click="router.push('/wallet')">
+               <n-icon
+                size="24"
+                :component="WalletOutline"
+                class="text-green-400"
+              />
+              <span class="text-xs">{{ t('home.actions.myWallet') }}</span>
             </n-button>
             <n-button class="h-24 flex flex-col gap-2" dashed>
               <n-icon
@@ -265,46 +202,45 @@
           </div>
         </n-card>
 
-        <!-- Market Overview -->
+        <!-- Recommended Scenarios -->
         <n-card
-          :title="t('home.marketMovers')"
+          :title="t('home.trainingFocus')"
           :bordered="false"
           class="bg-[var(--color-bg-card)] rounded-xl"
         >
-          <n-list>
-            <n-list-item v-for="stock in marketMovers" :key="stock.symbol">
-              <div class="flex justify-between items-center">
-                <div class="flex items-center gap-3">
-                  <n-avatar
-                    size="small"
-                    :style="{ backgroundColor: stock.color }"
-                    >{{ stock.symbol[0] }}</n-avatar
-                  >
+          <n-list hoverable clickable>
+            <n-list-item>
+               <div class="flex items-center gap-3">
+                  <n-avatar size="small" style="background-color: #fde68a; color: #d97706">
+                     <n-icon :component="TrendingUpOutline" />
+                  </n-avatar>
                   <div>
-                    <div class="font-bold text-[var(--color-text-primary)]">
-                      {{ stock.symbol }}
-                    </div>
-                    <div class="text-xs text-[var(--color-text-secondary)]">
-                      {{ stock.name }}
-                    </div>
+                     <div class="font-medium">{{ t('home.focus.trend') }}</div>
+                     <div class="text-xs text-[var(--color-text-secondary)]">{{ t('home.focus.trendDesc') }}</div>
                   </div>
-                </div>
-                <div class="text-right">
-                  <div class="font-medium text-[var(--color-text-primary)]">
-                    ${{ stock.price }}
+               </div>
+            </n-list-item>
+             <n-list-item>
+               <div class="flex items-center gap-3">
+                  <n-avatar size="small" style="background-color: #bfdbfe; color: #2563eb">
+                     <n-icon :component="ArrowUpOutline" />
+                  </n-avatar>
+                  <div>
+                     <div class="font-medium">{{ t('home.focus.breakout') }}</div>
+                     <div class="text-xs text-[var(--color-text-secondary)]">{{ t('home.focus.breakoutDesc') }}</div>
                   </div>
-                  <div
-                    :class="
-                      stock.change > 0
-                        ? 'text-[var(--color-success)]'
-                        : 'text-[var(--color-error)]'
-                    "
-                    class="text-xs font-bold"
-                  >
-                    {{ stock.change > 0 ? "+" : "" }}{{ stock.change }}%
+               </div>
+            </n-list-item>
+             <n-list-item>
+               <div class="flex items-center gap-3">
+                  <n-avatar size="small" style="background-color: #fecaca; color: #dc2626">
+                     <n-icon :component="TrendingUpOutline" class="transform rotate-180" />
+                  </n-avatar>
+                  <div>
+                     <div class="font-medium">{{ t('home.focus.reversal') }}</div>
+                     <div class="text-xs text-[var(--color-text-secondary)]">{{ t('home.focus.reversalDesc') }}</div>
                   </div>
-                </div>
-              </div>
+               </div>
             </n-list-item>
           </n-list>
         </n-card>
@@ -336,154 +272,108 @@ import {
   ShareOutline,
   BookOutline,
   SettingsOutline,
+  WalletOutline
 } from "@vicons/ionicons5";
 import { useI18n } from "vue-i18n";
 import { useAuth } from "../composables/useAuth";
-import { getWalletLedger } from "../services/api/walletApi";
+import { listSessions } from "../services/api/trainingApi";
 
 const router = useRouter();
 const { t } = useI18n();
 const { user, profile } = useAuth();
-const ledger = ref<any[]>([]);
+const sessions = ref<any[]>([]);
 
 const portfolioValue = computed(() =>
   Number(profile.value?.training_balance ?? 0),
 );
-const availableCash = computed(() =>
-  Number((portfolioValue.value * 0.36).toFixed(2)),
-);
-const buyingPower = computed(() =>
-  Number((availableCash.value * 4).toFixed(2)),
-);
-const tradePnlLedger = computed(() =>
-  ledger.value.filter((item) => item.change_type === "trade_pnl"),
-);
+
+// Session Stats
+const totalSessions = computed(() => sessions.value.length);
+const completedSessions = computed(() => sessions.value.filter(s => s.status === 'completed').length);
+
 const totalPnl = computed(() =>
-  Number(
-    tradePnlLedger.value
-      .reduce((sum, item) => sum + Number(item.amount || 0), 0)
-      .toFixed(2),
-  ),
+  sessions.value
+    .filter(s => s.status === 'completed')
+    .reduce((sum, s) => sum + Number(s.realized_pnl || 0), 0)
 );
-const todayPnl = computed(() => {
-  const today = new Date().toDateString();
-  return Number(
-    tradePnlLedger.value
-      .filter((item) => new Date(item.created_at).toDateString() === today)
-      .reduce((sum, item) => sum + Number(item.amount || 0), 0)
-      .toFixed(2),
-  );
+
+const avgReturn = computed(() => {
+    const completed = sessions.value.filter(s => s.status === 'completed');
+    if (completed.length === 0) return 0;
+    const totalReturn = completed.reduce((sum, s) => sum + Number(s.return_pct || 0), 0);
+    return totalReturn / completed.length;
 });
-const tradeCount = computed(() => tradePnlLedger.value.length);
-const profitableCount = computed(
-  () => tradePnlLedger.value.filter((item) => Number(item.amount) > 0).length,
+
+const profitableSessionsCount = computed(
+  () => sessions.value.filter((s) => s.status === 'completed' && Number(s.realized_pnl) > 0).length,
 );
+
 const winRate = computed(() => {
-  if (tradeCount.value === 0) return 0;
-  return Number(((profitableCount.value / tradeCount.value) * 100).toFixed(1));
+  const completedCount = completedSessions.value;
+  if (completedCount === 0) return 0;
+  return Number(((profitableSessionsCount.value / completedCount) * 100).toFixed(1));
 });
+
 const winRateText = computed(() => `${winRate.value}%`);
+
 const totalPnlRateText = computed(() => {
+  // Global ROI based on current balance vs initial (hard to track without ledger, so using session sum vs balance)
+  // For now just show accumulated PnL % relative to current balance (approx)
+  // Or just use the same logic as before: PnL / (Balance - PnL)
   const base = portfolioValue.value - totalPnl.value;
   const rate = base === 0 ? 0 : (totalPnl.value / base) * 100;
   return `${rate >= 0 ? "+" : ""}${rate.toFixed(2)}%`;
 });
-const chartTicks = computed(() => {
-  const base = Math.max(portfolioValue.value, 1000);
-  const step = Math.max(Math.round((base * 0.04) / 100) * 100, 100);
-  return [base + step * 2, base + step, base, Math.max(base - step, 0)];
-});
 
-function formatCurrency(value: number) {
-  return Number(value).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
-function formatTick(value: number) {
-  if (value >= 1000) {
-    return `${(value / 1000).toFixed(1)}k`;
-  }
-  return value.toFixed(0);
-}
 
 onMounted(async () => {
   if (!user.value) return;
-  const { data } = await getWalletLedger(200);
-  ledger.value = data ?? [];
+  const { data } = await listSessions(50); // Get last 50 for stats
+  if (data) {
+      sessions.value = data.documents;
+  }
 });
 
-// Sample Data for Recent Sessions
-const columns = [
-  { title: "Date", key: "date" },
-  { title: "Market", key: "market" },
-  { title: "Duration", key: "duration" },
+const recentSessions = computed(() => {
+    return sessions.value.slice(0, 5).map(s => ({
+        date: new Date(s.$createdAt).toLocaleDateString(),
+        market: `${s.symbol} (${s.period})`,
+        duration: 'N/A', // Can be calc from start/end time if available
+        pl: Number(s.return_pct || 0).toFixed(2),
+        id: s.$id
+    }));
+});
+
+const columns = computed(() => [
+  { title: t('review.journal.date'), key: "date" },
+  { title: t('review.columns.market'), key: "market" },
   {
-    title: "P/L",
+    title: t('review.columns.return'),
     key: "pl",
     render(row: any) {
       return h(
         NTag,
         {
-          type: row.pl > 0 ? "success" : "error",
+          type: Number(row.pl) > 0 ? "success" : "error",
           bordered: false,
           round: true,
           size: "small",
         },
-        { default: () => (row.pl > 0 ? "+" : "") + row.pl + "%" },
+        { default: () => (Number(row.pl) > 0 ? "+" : "") + row.pl + "%" },
       );
     },
   },
   {
-    title: "Action",
+    title: t('review.columns.action'),
     key: "actions",
-    render() {
+    render(row: any) {
       return h(
         NButton,
-        { size: "tiny", ghost: true },
-        { default: () => "Review" },
+        { size: "tiny", ghost: true, onClick: () => console.log('View session', row.id) }, // In real app, navigate to details
+        { default: () => t('menu.review') },
       );
     },
   },
-];
+]);
 
-const data = [
-  { date: "2023-10-24", market: "AAPL (15m)", duration: "45m", pl: 12.5 },
-  { date: "2023-10-23", market: "TSLA (1h)", duration: "1h 20m", pl: -3.2 },
-  { date: "2023-10-22", market: "BTC (4h)", duration: "30m", pl: 5.8 },
-  { date: "2023-10-21", market: "NVDA (Daily)", duration: "2h", pl: 24.1 },
-];
-
-// Sample Data for Market Movers
-const marketMovers = [
-  {
-    symbol: "NVDA",
-    name: "NVIDIA Corp",
-    price: "892.10",
-    change: 4.5,
-    color: "#76B900",
-  },
-  {
-    symbol: "TSLA",
-    name: "Tesla Inc",
-    price: "175.34",
-    change: -2.1,
-    color: "#E31937",
-  },
-  {
-    symbol: "AAPL",
-    name: "Apple Inc",
-    price: "168.45",
-    change: 0.8,
-    color: "#A2AAAD",
-  },
-  {
-    symbol: "AMD",
-    name: "Advanced Micro",
-    price: "180.20",
-    change: 3.2,
-    color: "#000000",
-  },
-];
 </script>

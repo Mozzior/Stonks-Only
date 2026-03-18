@@ -18,7 +18,7 @@
               <div
                 class="text-[var(--color-text-secondary)] text-sm mb-1 uppercase tracking-widest font-bold opacity-80"
               >
-                {{ t("wallet.balance.totalAssets") }}
+                {{ t("wallet.balance.accountBalance") }}
               </div>
               <div class="flex items-baseline gap-3">
                 <span
@@ -33,39 +33,19 @@
                 </span>
               </div>
             </div>
-            <n-button
-              circle
-              secondary
-              type="primary"
-              class="bg-white/10 hover:bg-white/20 border-none text-white"
-            >
-              <template #icon><n-icon :component="EyeOutline" /></template>
-            </n-button>
+            <n-tag type="warning" size="large" round>
+              {{
+                profile?.membership_tier
+                  ? profile.membership_tier.toUpperCase()
+                  : "FREE"
+              }}
+              {{ t("wallet.member") }}
+            </n-tag>
           </div>
 
           <div
             class="grid grid-cols-2 md:grid-cols-4 gap-6 pt-6 border-t border-[var(--color-border)]/30"
           >
-            <div>
-              <div
-                class="text-xs text-[var(--color-text-secondary)] mb-1 opacity-80"
-              >
-                {{ t("wallet.balance.availableCash") }}
-              </div>
-              <div class="text-lg font-bold text-[var(--color-text-primary)]">
-                ${{ formatCurrency(availableCash) }}
-              </div>
-            </div>
-            <div>
-              <div
-                class="text-xs text-[var(--color-text-secondary)] mb-1 opacity-80"
-              >
-                {{ t("wallet.balance.inPositions") }}
-              </div>
-              <div class="text-lg font-bold text-[var(--color-text-primary)]">
-                ${{ formatCurrency(inPositions) }}
-              </div>
-            </div>
             <div>
               <div
                 class="text-xs text-[var(--color-text-secondary)] mb-1 opacity-80"
@@ -84,6 +64,26 @@
               </div>
               <div class="text-lg font-bold text-[var(--color-text-primary)]">
                 {{ tradeCount }}
+              </div>
+            </div>
+            <div>
+              <div
+                class="text-xs text-[var(--color-text-secondary)] mb-1 opacity-80"
+              >
+                {{ t("wallet.balance.currency") }}
+              </div>
+              <div class="text-lg font-bold text-[var(--color-text-primary)]">
+                {{ profile?.currency || "USD" }}
+              </div>
+            </div>
+            <div>
+              <div
+                class="text-xs text-[var(--color-text-secondary)] mb-1 opacity-80"
+              >
+                {{ t("wallet.balance.status") }}
+              </div>
+              <div class="text-lg font-bold text-[var(--color-success)]">
+                {{ t("wallet.status.active") }}
               </div>
             </div>
           </div>
@@ -157,110 +157,39 @@
       </n-card>
     </div>
 
-    <!-- Asset Distribution & History -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Left: Asset Distribution -->
-      <n-card
-        :title="t('wallet.distribution.title')"
+    <!-- Transaction History -->
+    <n-card
+      :title="t('wallet.history.title')"
+      :bordered="false"
+      class="bg-[var(--color-bg-card)] rounded-2xl border border-[var(--color-border)]"
+    >
+      <template #header-extra>
+        <n-radio-group v-model:value="historyFilter" size="small">
+          <n-radio-button value="all">{{
+            t("wallet.activity.all")
+          }}</n-radio-button>
+          <n-radio-button value="trade">{{
+            t("wallet.activity.trades")
+          }}</n-radio-button>
+          <n-radio-button value="other">{{
+            t("wallet.activity.adjustments")
+          }}</n-radio-button>
+        </n-radio-group>
+      </template>
+      <n-empty
+        v-if="filteredHistory.length === 0"
+        :description="t('wallet.activity.noActivity')"
+        class="py-12"
+      />
+      <n-data-table
+        v-else
+        :columns="historyColumns"
+        :data="filteredHistory"
+        :pagination="{ pageSize: 10 }"
+        size="small"
         :bordered="false"
-        class="bg-[var(--color-bg-card)] rounded-2xl border border-[var(--color-border)]"
-      >
-        <div class="h-64 flex items-center justify-center relative">
-          <!-- Placeholder for Donut Chart -->
-          <div
-            class="w-48 h-48 rounded-full border-[16px] border-[var(--color-border)] flex items-center justify-center relative"
-          >
-            <div
-              class="absolute inset-[-16px] rounded-full border-[16px] border-[var(--color-brand-primary)]"
-              style="
-                clip-path: polygon(
-                  50% 50%,
-                  50% 0%,
-                  100% 0%,
-                  100% 100%,
-                  0% 100%,
-                  0% 60%
-                );
-              "
-            ></div>
-            <div class="text-center">
-              <div class="text-2xl font-bold text-[var(--color-text-primary)]">
-                64%
-              </div>
-              <div
-                class="text-[10px] text-[var(--color-text-secondary)] uppercase"
-              >
-                {{ t("wallet.distribution.stocks") }}
-              </div>
-            </div>
-          </div>
-        </div>
-        <n-list :bordered="false" size="small">
-          <n-list-item>
-            <template #prefix
-              ><div
-                class="w-2 h-2 rounded-full bg-[var(--color-brand-primary)]"
-              ></div
-            ></template>
-            <div class="flex justify-between w-full text-xs">
-              <span class="text-[var(--color-text-secondary)]">{{
-                t("wallet.distribution.equityPositions")
-              }}</span>
-              <span class="text-[var(--color-text-primary)] font-bold"
-                >${{ formatCurrency(inPositions) }}</span
-              >
-            </div>
-          </n-list-item>
-          <n-list-item>
-            <template #prefix
-              ><div class="w-2 h-2 rounded-full bg-[var(--color-border)]"></div
-            ></template>
-            <div class="flex justify-between w-full text-xs">
-              <span class="text-[var(--color-text-secondary)]">{{
-                t("wallet.distribution.cashBalance")
-              }}</span>
-              <span class="text-[var(--color-text-primary)] font-bold"
-                >${{ formatCurrency(availableCash) }}</span
-              >
-            </div>
-          </n-list-item>
-        </n-list>
-      </n-card>
-
-      <!-- Right: Transaction History -->
-      <n-card
-        :title="t('wallet.activity.title')"
-        :bordered="false"
-        class="lg:col-span-2 bg-[var(--color-bg-card)] rounded-2xl border border-[var(--color-border)]"
-      >
-        <template #header-extra>
-          <n-radio-group v-model:value="historyFilter" size="small">
-            <n-radio-button value="all">{{
-              t("wallet.activity.all")
-            }}</n-radio-button>
-            <n-radio-button value="trade">{{
-              t("wallet.activity.trades")
-            }}</n-radio-button>
-            <n-radio-button value="recharge">{{
-              t("wallet.activity.recharge")
-            }}</n-radio-button>
-          </n-radio-group>
-        </template>
-        <n-empty
-          v-if="filteredHistory.length === 0"
-          :description="t('wallet.activity.noActivity')"
-          class="py-12"
-        />
-        <n-data-table
-          v-else
-          :columns="historyColumns"
-          :data="filteredHistory"
-          :pagination="{ pageSize: 5 }"
-          size="small"
-          :bordered="false"
-        />
-      </n-card>
-    </div>
+      />
+    </n-card>
   </div>
 </template>
 
@@ -270,24 +199,21 @@ import { useI18n } from "vue-i18n";
 import {
   NCard,
   NIcon,
-  NButton,
-  NInputGroup,
-  NInputNumber,
-  NTooltip,
-  NList,
-  NListItem,
-  NDataTable,
   NTag,
   NRadioGroup,
   NRadioButton,
   useMessage,
   NEmpty,
+  NDataTable,
+  NInputGroup,
+  NInputNumber,
+  NTooltip,
+  NButton,
 } from "naive-ui";
 import {
   WalletOutline,
-  InformationCircleOutline,
   ArrowUpOutline,
-  EyeOutline,
+  InformationCircleOutline,
 } from "@vicons/ionicons5";
 import { useAuth } from "../composables/useAuth";
 import { getWalletLedger, rechargeWallet } from "../services/api/walletApi";
@@ -295,8 +221,8 @@ import { getWalletLedger, rechargeWallet } from "../services/api/walletApi";
 const { t } = useI18n();
 const message = useMessage();
 const { user, profile, refreshProfile } = useAuth();
-const rechargeAmount = ref(100);
 const historyFilter = ref("all");
+const rechargeAmount = ref(100);
 const recharging = ref(false);
 
 const historyData = ref<any[]>([]);
@@ -304,12 +230,7 @@ const historyData = ref<any[]>([]);
 const totalAssets = computed(() =>
   Number(profile.value?.training_balance ?? 0),
 );
-const availableCash = computed(() =>
-  Number((totalAssets.value * 0.36).toFixed(2)),
-);
-const inPositions = computed(() =>
-  Number((totalAssets.value - availableCash.value).toFixed(2)),
-);
+
 const todayPnl = computed(() =>
   historyData.value
     .filter((h) => h.type === "TRADE_PNL")
@@ -378,7 +299,7 @@ const filteredHistory = computed(() => {
   if (historyFilter.value === "all") return historyData.value;
   if (historyFilter.value === "trade")
     return historyData.value.filter((h) => h.type.startsWith("TRADE"));
-  return historyData.value.filter((h) => h.type === "RECHARGE");
+  return historyData.value.filter((h) => !h.type.startsWith("TRADE"));
 });
 
 async function loadHistory() {
@@ -394,13 +315,10 @@ async function loadHistory() {
   historyData.value =
     data?.map((item: any) => {
       const trade = item.change_type === "trade_pnl";
-      const recharge =
-        item.change_type === "manual_adjust" ||
-        item.change_type === "membership_bonus" ||
-        item.change_type === "recharge";
+      // Map other types if necessary
       return {
         id: item.$id,
-        type: trade ? "TRADE_PNL" : recharge ? "RECHARGE" : "OTHER",
+        type: trade ? "TRADE_PNL" : item.change_type.toUpperCase(),
         amount: Number(item.amount),
         time: new Date(item.created_at).toLocaleString(),
         status: "COMPLETED",
