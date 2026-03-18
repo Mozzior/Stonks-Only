@@ -829,6 +829,7 @@
           size="small"
           :bordered="false"
           :pagination="false"
+          :scroll-x="2200"
         >
           <template #empty>
             <div class="p-4 text-center text-[var(--color-text-secondary)]">
@@ -1042,14 +1043,10 @@ import { useTheme } from "../composables/useTheme";
 import { useLayoutControl } from "../composables/useLayoutControl";
 import { useAuth } from "../composables/useAuth";
 import {
-  createSession,
-  finishSession,
-  appendTradeLog,
-} from "../services/trainingRepo";
-import {
-  updateTrainingBalance,
-  appendBalanceLedger,
-} from "../services/userProfileRepo";
+  createTrainingSession,
+  executeTrainingOrder,
+  settleTrainingSession,
+} from "../services/api/trainingApi";
 import {
   fetchRandomStock,
   listStockKlineByPeriod,
@@ -1217,51 +1214,141 @@ const orderTypeOptions = computed(() => [
 
 const position = ref<any>(null);
 
-const tradeHistory = ref([
-  {
-    id: 1,
-    time: "10:45:22",
-    type: "BUY",
-    price: 150.4,
-    amount: 200,
-    total: 30080.0,
-    status: "FILLED",
-  },
-]);
+type PositionSnapshot = {
+  side: "LONG" | "SHORT" | "FLAT" | null;
+  amount: number;
+  entryPrice: number;
+  plAmount?: number;
+};
+
+type TradeHistoryRow = {
+  id: number;
+  seqNo: number;
+  time: string;
+  action: "BUY" | "SELL" | "CLOSE";
+  side: "LONG" | "SHORT" | "FLAT";
+  orderType: string;
+  price: number;
+  amount: number;
+  notional: number;
+  fee: number;
+  beforePosition: PositionSnapshot;
+  afterPosition: PositionSnapshot;
+  realizedPnl: number;
+  floatingPnl: number;
+  status: string;
+};
+
+const tradeHistory = ref<TradeHistoryRow[]>([]);
+
+function formatMoney(value: number) {
+  return `$${Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+}
+
+function snapshotPosition(input: any): PositionSnapshot {
+  if (!input) return { side: "FLAT", amount: 0, entryPrice: 0, plAmount: 0 };
+  return {
+    side: input.side ?? "FLAT",
+    amount: Number(input.amount ?? 0),
+    entryPrice: Number(input.entryPrice ?? 0),
+    plAmount: Number(input.plAmount ?? 0),
+  };
+}
+
+function formatPositionSnapshot(input: PositionSnapshot) {
+  if (!input || !input.side || input.side === "FLAT" || input.amount <= 0) {
+    return "FLAT";
+  }
+  return `${input.side} ${input.amount}@${Number(input.entryPrice || 0).toFixed(2)}`;
+}
 
 const historyColumns = computed(() => [
+  { title: t("training.history.seq"), key: "seqNo" },
   { title: t("training.history.time"), key: "time" },
   {
-    title: t("training.history.type"),
-    key: "type",
-    render(row: any) {
+    title: t("training.history.action"),
+    key: "action",
+    render(row: TradeHistoryRow) {
+      const color =
+        row.action === "BUY"
+          ? "success"
+          : row.action === "SELL"
+            ? "error"
+            : "warning";
       return h(
         NTag,
-        {
-          type: row.type === "BUY" ? "success" : "error",
-          size: "tiny",
-          bordered: false,
-        },
-        { default: () => row.type },
+        { type: color, size: "tiny", bordered: false },
+        { default: () => row.action },
       );
     },
   },
   {
+    title: t("training.history.side"),
+    key: "side",
+    render(row: TradeHistoryRow) {
+      const color =
+        row.side === "LONG"
+          ? "success"
+          : row.side === "SHORT"
+            ? "error"
+            : "default";
+      return h(
+        NTag,
+        { type: color, size: "tiny", bordered: false },
+        { default: () => row.side },
+      );
+    },
+  },
+  { title: t("training.history.orderType"), key: "orderType" },
+  {
     title: t("training.history.price"),
     key: "price",
-    render: (row: any) => `$${row.price}`,
+    render: (row: TradeHistoryRow) => formatMoney(row.price),
   },
   { title: t("training.history.amount"), key: "amount" },
   {
-    title: t("training.history.total"),
-    key: "total",
-    render: (row: any) => `$${row.total.toLocaleString()}`,
+    title: t("training.history.notional"),
+    key: "notional",
+    render: (row: TradeHistoryRow) => formatMoney(row.notional),
+  },
+  {
+    title: t("training.history.fee"),
+    key: "fee",
+    render: (row: TradeHistoryRow) => formatMoney(row.fee),
+  },
+  {
+    title: t("training.history.beforePosition"),
+    key: "beforePosition",
+    render: (row: TradeHistoryRow) =>
+      formatPositionSnapshot(row.beforePosition),
+  },
+  {
+    title: t("training.history.afterPosition"),
+    key: "afterPosition",
+    render: (row: TradeHistoryRow) => formatPositionSnapshot(row.afterPosition),
+  },
+  {
+    title: t("training.history.realizedPnl"),
+    key: "realizedPnl",
+    render: (row: TradeHistoryRow) => formatMoney(row.realizedPnl),
+  },
+  {
+    title: t("training.history.floatingPnl"),
+    key: "floatingPnl",
+    render: (row: TradeHistoryRow) => formatMoney(row.floatingPnl),
   },
   {
     title: t("training.history.status"),
     key: "status",
-    render: (row: any) =>
-      h(NTag, { size: "tiny", ghost: true }, { default: () => row.status }),
+    render: (row: TradeHistoryRow) =>
+      h(
+        NTag,
+        {
+          size: "tiny",
+          ghost: true,
+        },
+        { default: () => row.status },
+      ),
   },
 ]);
 
@@ -2511,83 +2598,81 @@ function setAmountByPercent(p: number) {
 
 async function persistTradeLog(
   action: "BUY" | "SELL" | "CLOSE",
-  side: "LONG" | "SHORT",
   amount: number,
   price: number,
+  detail?: {
+    beforePosition?: PositionSnapshot;
+    afterPosition?: PositionSnapshot;
+    realizedPnl?: number;
+    floatingPnl?: number;
+    status?: string;
+  },
 ) {
   if (!activeSessionId.value || !user.value) return;
-  sessionTradeSeq.value += 1;
-  await appendTradeLog({
-    session_id: activeSessionId.value,
-    user_id: user.value.$id,
-    seq_no: sessionTradeSeq.value,
-    action,
-    side,
+  const klineTimestamp = fullData.value[currentIndex.value]?.timestamp ?? null;
+
+  const result = await executeTrainingOrder({
+    sessionId: activeSessionId.value,
+    action: action as "BUY" | "SELL" | "CLOSE",
     amount,
+    priceHint: price,
+    klineTimestamp,
+  });
+
+  if (result.error || !result.data) {
+    message.error(t("training.messages.orderFailed") || "Order failed");
+    return;
+  }
+
+  const tradeData = result.data as any;
+  const nextSeq = tradeData.seqNo;
+  const tradeTime = tradeData.tradeTime || new Date().toISOString();
+  const afterPosition =
+    tradeData.afterPosition || snapshotPosition(position.value);
+  const beforePosition =
+    tradeData.beforePosition ||
+    detail?.beforePosition ||
+    snapshotPosition(null);
+
+  sessionTradeSeq.value = nextSeq;
+  tradeHistory.value.unshift({
+    id: Date.now(),
+    seqNo: nextSeq,
+    time: new Date(tradeTime).toLocaleTimeString(),
+    action,
+    side:
+      afterPosition.side === null
+        ? "FLAT"
+        : (afterPosition.side as "LONG" | "SHORT" | "FLAT"),
+    orderType: orderType.value,
     price,
-    trade_time: new Date().toISOString(),
-    kline_timestamp: fullData.value[currentIndex.value]?.timestamp ?? null,
-    position_after: position.value
-      ? {
-          side: position.value.side,
-          amount: position.value.amount,
-          entryPrice: position.value.entryPrice,
-          plAmount: position.value.plAmount,
-        }
-      : { side: null, amount: 0 },
+    amount,
+    notional: tradeData.notional || Number((amount * price).toFixed(2)),
+    fee: tradeData.fee || 0,
+    beforePosition,
+    afterPosition,
+    realizedPnl: tradeData.realizedPnl || 0,
+    floatingPnl: detail?.floatingPnl ?? 0,
+    status: tradeData.status || "FILLED",
   });
 }
 
 async function finalizeSession(status: "completed" | "aborted") {
   if (!activeSessionId.value) return;
-  const previousBalance = accountBalance.value;
-  const floating = position.value?.plAmount ?? 0;
-  const endingBalance = Number(
-    (sessionInitialBalance.value + sessionRealizedPnl.value + floating).toFixed(
-      2,
-    ),
-  );
-  const realizedPnl = Number(sessionRealizedPnl.value.toFixed(2));
-  const returnPct =
-    sessionInitialBalance.value === 0
-      ? 0
-      : Number(((realizedPnl / sessionInitialBalance.value) * 100).toFixed(4));
-  const drawdown =
-    sessionPeakBalance.value === 0
-      ? 0
-      : Number(
-          (
-            ((sessionPeakBalance.value - endingBalance) /
-              sessionPeakBalance.value) *
-            100
-          ).toFixed(4),
-        );
 
-  await finishSession(activeSessionId.value, {
-    ended_at: new Date().toISOString(),
-    status,
-    ending_balance: endingBalance,
-    realized_pnl: realizedPnl,
-    return_pct: returnPct,
-    max_drawdown: drawdown,
-  });
+  const result = await settleTrainingSession(activeSessionId.value, status);
 
-  if (user.value) {
-    await updateTrainingBalance(user.value.$id, endingBalance);
-    const delta = Number((endingBalance - previousBalance).toFixed(2));
-    if (delta !== 0) {
-      await appendBalanceLedger({
-        user_id: user.value.$id,
-        session_id: activeSessionId.value,
-        change_type: "trade_pnl",
-        amount: delta,
-        balance_after: endingBalance,
-        note: "training session settlement",
-      });
-    }
-    if (profile.value) {
-      profile.value = { ...profile.value, training_balance: endingBalance };
-    }
+  if (result.error || !result.data) {
+    message.error(
+      t("training.messages.sessionSaveFailed") || "Session settle failed",
+    );
+    return;
+  }
+
+  const data = result.data as any;
+
+  if (user.value && profile.value) {
+    profile.value = { ...profile.value, training_balance: data.endingBalance };
   }
 
   activeSessionId.value = null;
@@ -2611,7 +2696,7 @@ async function handleTrade(side: string) {
     return;
   }
 
-  const total = currentPrice.value * tradeAmount.value;
+  const beforePosition = snapshotPosition(position.value);
   position.value = {
     side: side === "BUY" ? "LONG" : "SHORT",
     amount: tradeAmount.value,
@@ -2620,16 +2705,7 @@ async function handleTrade(side: string) {
     pl: 0,
     plAmount: 0,
   };
-
-  tradeHistory.value.unshift({
-    id: Date.now(),
-    time: new Date().toLocaleTimeString(),
-    type: side,
-    price: currentPrice.value,
-    amount: tradeAmount.value,
-    total: total,
-    status: "FILLED",
-  });
+  const afterPosition = snapshotPosition(position.value);
 
   // Add marker to chart
   if (chartInstance.value) {
@@ -2650,9 +2726,15 @@ async function handleTrade(side: string) {
 
   await persistTradeLog(
     side === "BUY" ? "BUY" : "SELL",
-    side === "BUY" ? "LONG" : "SHORT",
     tradeAmount.value,
     currentPrice.value,
+    {
+      beforePosition,
+      afterPosition,
+      realizedPnl: 0,
+      floatingPnl: Number(position.value?.plAmount ?? 0),
+      status: "FILLED",
+    },
   );
 }
 
@@ -2688,17 +2770,7 @@ async function closePosition() {
   }
 
   const side = position.value.side === "LONG" ? "SELL" : "BUY";
-  const total = currentPrice.value * position.value.amount;
-
-  tradeHistory.value.unshift({
-    id: Date.now(),
-    time: new Date().toLocaleTimeString(),
-    type: side,
-    price: currentPrice.value,
-    amount: position.value.amount,
-    total: total,
-    status: "FILLED",
-  });
+  const beforePosition = snapshotPosition(position.value);
 
   // Add marker to chart
   if (chartInstance.value) {
@@ -2716,12 +2788,13 @@ async function closePosition() {
   const liveBalance = sessionInitialBalance.value + sessionRealizedPnl.value;
   sessionPeakBalance.value = Math.max(sessionPeakBalance.value, liveBalance);
   message.success(t("training.messages.positionClosed", { pl: pl.toFixed(2) }));
-  await persistTradeLog(
-    "CLOSE",
-    side === "BUY" ? "SHORT" : "LONG",
-    position.value.amount,
-    currentPrice.value,
-  );
+  await persistTradeLog("CLOSE", position.value.amount, currentPrice.value, {
+    beforePosition,
+    afterPosition: snapshotPosition(null),
+    realizedPnl: Number(pl.toFixed(2)),
+    floatingPnl: 0,
+    status: "FILLED",
+  });
   position.value = null;
 }
 
@@ -2751,34 +2824,27 @@ async function exitTraining() {
 async function startTraining() {
   await refreshProfile();
   isTrainingStarted.value = true;
+  tradeHistory.value = [];
   sessionTradeSeq.value = 0;
   sessionInitialBalance.value = accountBalance.value;
   sessionRealizedPnl.value = 0;
   sessionPeakBalance.value = sessionInitialBalance.value;
   if (user.value && currentStock.value) {
     try {
-      const trainStartDate = dailyData.value[trainingStartIndex.value]
-        ? formatDate(dailyData.value[trainingStartIndex.value].timestamp)
-        : null;
-      const trainEndDate = dailyData.value[trainingEndIndex.value]
-        ? formatDate(dailyData.value[trainingEndIndex.value].timestamp)
-        : null;
-      const { data, error } = await createSession({
-        user_id: user.value.$id,
-        ts_code: currentStock.value.ts_code ?? currentStock.value.symbol ?? "",
-        symbol: currentStock.value.symbol ?? null,
+      const { data, error } = await createTrainingSession({
+        tsCode: currentStock.value.ts_code ?? currentStock.value.symbol ?? "",
+        symbol: currentStock.value.symbol ?? "",
         period: "daily",
-        train_start_idx: trainingStartIndex.value,
-        train_end_idx: trainingEndIndex.value,
-        train_start_date: trainStartDate,
-        train_end_date: trainEndDate,
-        initial_balance: sessionInitialBalance.value,
+        trainRange: {
+          startIndex: trainingStartIndex.value,
+          endIndex: trainingEndIndex.value,
+        },
       });
       if (error) {
         console.error(error);
         message.warning(t("training.messages.sessionCreateFailed"));
       } else {
-        activeSessionId.value = data?.id ?? null;
+        activeSessionId.value = (data?.sessionId as string) ?? null;
       }
     } catch (e) {
       console.error(e);

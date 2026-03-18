@@ -450,7 +450,7 @@ import {
   ShieldCheckmarkOutline,
   KeyOutline,
 } from "@vicons/ionicons5";
-import { updateProfileBasic } from "../services/userProfileRepo";
+import { patchProfileMe } from "../services/api/profileApi";
 import { appwrite, appwriteConfig, ID } from "../utils/appwrite";
 import {
   getAvatarUrl,
@@ -511,7 +511,7 @@ function toggleEdit() {
 
 async function saveProfileBasic() {
   if (!user.value) return;
-  const { error } = await updateProfileBasic(user.value.$id, {
+  const { error } = await patchProfileMe({
     display_name: editDisplayName.value.trim() || null,
     avatar_url: editAvatarUrl.value.trim() || null,
   });
@@ -575,7 +575,7 @@ async function onAvatarSelected(e: Event) {
       return;
     }
 
-    const { error: updateError } = await updateProfileBasic(user.value.$id, {
+    const { error: updateError } = await patchProfileMe({
       avatar_url: publicUrl,
     });
     if (updateError) {

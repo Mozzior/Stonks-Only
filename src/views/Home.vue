@@ -339,7 +339,7 @@ import {
 } from "@vicons/ionicons5";
 import { useI18n } from "vue-i18n";
 import { useAuth } from "../composables/useAuth";
-import { listBalanceLedger } from "../services/userProfileRepo";
+import { getWalletLedger } from "../services/api/walletApi";
 
 const router = useRouter();
 const { t } = useI18n();
@@ -410,7 +410,7 @@ function formatTick(value: number) {
 
 onMounted(async () => {
   if (!user.value) return;
-  const { data } = await listBalanceLedger(user.value.$id, 200);
+  const { data } = await getWalletLedger(200);
   ledger.value = data ?? [];
 });
 

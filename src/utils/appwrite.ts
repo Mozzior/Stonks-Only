@@ -26,6 +26,7 @@ function readEnvValue(key: keyof ImportMetaEnv & keyof Window["env"]) {
   return normalizeEnvValue(rendererValue || preloadValue);
 }
 
+// Ensure the keys are present in ImportMetaEnv (vite-env.d.ts)
 const endpoint = readEnvValue("VITE_APPWRITE_ENDPOINT");
 const projectId = readEnvValue("VITE_APPWRITE_PROJECT_ID");
 const databaseId = readEnvValue("VITE_APPWRITE_DATABASE_ID");
@@ -47,6 +48,15 @@ const stockInfoCollectionId = readEnvValue(
 );
 const stockKlineCollectionId = readEnvValue(
   "VITE_APPWRITE_STOCK_KLINE_COLLECTION_ID",
+);
+const membershipPlansCollectionId = readEnvValue(
+  "VITE_APPWRITE_MEMBERSHIP_PLANS_COLLECTION_ID",
+);
+const userAchievementsCollectionId = readEnvValue(
+  "VITE_APPWRITE_USER_ACHIEVEMENTS_COLLECTION_ID",
+);
+const reviewSnapshotsCollectionId = readEnvValue(
+  "VITE_APPWRITE_REVIEW_SNAPSHOTS_COLLECTION_ID",
 );
 
 const appwriteClient = new Client();
@@ -79,6 +89,9 @@ export const appwriteConfig = {
   trainingTradeLogCollectionId,
   stockInfoCollectionId,
   stockKlineCollectionId,
+  membershipPlansCollectionId,
+  userAchievementsCollectionId,
+  reviewSnapshotsCollectionId,
 };
 
 if (import.meta.env.DEV) {

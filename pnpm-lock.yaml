@@ -26,6 +26,9 @@ dependencies:
   naive-ui:
     specifier: ^2.44.1
     version: 2.44.1(vue@3.5.30)
+  node-appwrite:
+    specifier: ^14.2.0
+    version: 14.2.0
   vue:
     specifier: ^3.4.21
     version: 3.5.30(typescript@5.9.3)
@@ -3039,6 +3042,16 @@ packages:
     requiresBuild: true
     dev: true
     optional: true
+
+  /node-appwrite@14.2.0:
+    resolution: {integrity: sha512-sPPA+JzdBJRS+lM6azX85y3/6iyKQYlHcXCbjMuWLROh6IiU9EfXRW3XSUTa5HDoBrlo8ve+AnVA6BIjQfUs1g==}
+    dependencies:
+      node-fetch-native-with-agent: 1.7.2
+    dev: false
+
+  /node-fetch-native-with-agent@1.7.2:
+    resolution: {integrity: sha512-5MaOOCuJEvcckoz7/tjdx1M6OusOY6Xc5f459IaruGStWnKzlI1qpNgaAwmn4LmFYcsSlj+jBMk84wmmRxfk5g==}
+    dev: false
 
   /node-releases@2.0.36:
     resolution: {integrity: sha512-TdC8FSgHz8Mwtw9g5L4gR/Sh9XhSP/0DEkQxfEFXOpiul5IiHgHan2VhYYb6agDSfp4KuvltmGApc8HMgUrIkA==}

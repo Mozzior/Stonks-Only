@@ -17,6 +17,7 @@
     "@vicons/ionicons5": "^0.13.0",
     "better-sqlite3": "^12.6.2",
     "dotenv": "^16.4.5",
+    "node-appwrite": "^14.2.0",
     "klinecharts": "10.0.0-beta1",
     "naive-ui": "^2.44.1",
     "vue": "^3.4.21",

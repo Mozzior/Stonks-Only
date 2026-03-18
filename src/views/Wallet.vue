@@ -290,11 +290,7 @@ import {
   EyeOutline,
 } from "@vicons/ionicons5";
 import { useAuth } from "../composables/useAuth";
-import {
-  appendBalanceLedger,
-  listBalanceLedger,
-  updateTrainingBalance,
-} from "../services/userProfileRepo";
+import { getWalletLedger, rechargeWallet } from "../services/api/walletApi";
 
 const { t } = useI18n();
 const message = useMessage();
@@ -390,7 +386,7 @@ async function loadHistory() {
     historyData.value = [];
     return;
   }
-  const { data, error } = await listBalanceLedger(user.value.$id, 100);
+  const { data, error } = await getWalletLedger(100);
   if (error) {
     message.error(error.message);
     return;
@@ -400,9 +396,10 @@ async function loadHistory() {
       const trade = item.change_type === "trade_pnl";
       const recharge =
         item.change_type === "manual_adjust" ||
-        item.change_type === "membership_bonus";
+        item.change_type === "membership_bonus" ||
+        item.change_type === "recharge";
       return {
-        id: item.id,
+        id: item.$id,
         type: trade ? "TRADE_PNL" : recharge ? "RECHARGE" : "OTHER",
         amount: Number(item.amount),
         time: new Date(item.created_at).toLocaleString(),
@@ -419,32 +416,15 @@ async function handleRecharge() {
   if (!Number.isFinite(amount) || amount <= 0) return;
 
   recharging.value = true;
-  const previousBalance = Number(profile.value?.training_balance ?? 0);
-  const nextBalance = Number((previousBalance + amount).toFixed(2));
-
   try {
-    const { error: updateError } = await updateTrainingBalance(
-      user.value.$id,
-      nextBalance,
-    );
-    if (updateError) {
-      await refreshProfile();
-      message.error(updateError.message);
-      return;
-    }
-
-    const { error: ledgerError } = await appendBalanceLedger({
-      user_id: user.value.$id,
-      session_id: null,
-      change_type: "manual_adjust",
+    const { error } = await rechargeWallet({
       amount,
-      balance_after: nextBalance,
-      note: "wallet recharge",
+      channel: "manual",
+      clientTxnId: `txn_${Date.now()}`,
     });
-    if (ledgerError) {
-      await updateTrainingBalance(user.value.$id, previousBalance);
-      await refreshProfile();
-      message.error(ledgerError.message);
+
+    if (error) {
+      message.error(error.message);
       return;
     }
 
