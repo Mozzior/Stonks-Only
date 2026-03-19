@@ -86,6 +86,82 @@ export async function fetchRandomStock(offset: number) {
   }
 }
 
+export async function fetchRandomStockSmart() {
+  try {
+    const config = getMarketRepoConfig();
+    const first = await appwrite.databases.listDocuments(
+      config.databaseId,
+      config.stockInfoCollectionId,
+      [Query.limit(1), Query.offset(0)],
+    );
+    const total = Number(first.total || 0);
+    const offset = total > 1 ? Math.floor(Math.random() * total) : 0;
+    const result = await appwrite.databases.listDocuments(
+      config.databaseId,
+      config.stockInfoCollectionId,
+      [Query.limit(1), Query.offset(offset)],
+    );
+    const stock = result.documents[0];
+    return ok(stock ? toStockInfo(stock) : null);
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function listStockKlineByAny(codes: string[], period: string) {
+  try {
+    const config = getMarketRepoConfig();
+    for (const code of codes) {
+      const res = await appwrite.databases.listDocuments(
+        config.databaseId,
+        config.stockKlineCollectionId,
+        [
+          Query.equal("ts_code", [code]),
+          Query.equal("period", [period]),
+          Query.orderAsc("trade_date"),
+          Query.limit(5000),
+        ],
+      );
+      if (res.total > 0) {
+        return ok(res.documents.map(toStockKline));
+      }
+    }
+    return ok([]);
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function getStockInfoByTsCode(tsCode: string) {
+  try {
+    const config = getMarketRepoConfig();
+    const result = await appwrite.databases.listDocuments(
+      config.databaseId,
+      config.stockInfoCollectionId,
+      [Query.equal("ts_code", [tsCode]), Query.limit(1)],
+    );
+    const stock = result.total > 0 ? result.documents[0] : null;
+    return ok(stock ? toStockInfo(stock) : null);
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function getStockInfoBySymbol(symbol: string) {
+  try {
+    const config = getMarketRepoConfig();
+    const result = await appwrite.databases.listDocuments(
+      config.databaseId,
+      config.stockInfoCollectionId,
+      [Query.equal("symbol", [symbol]), Query.limit(1)],
+    );
+    const stock = result.total > 0 ? result.documents[0] : null;
+    return ok(stock ? toStockInfo(stock) : null);
+  } catch (error) {
+    return fail(error);
+  }
+}
+
 export async function listStockKlineByPeriod(tsCode: string, period: string) {
   try {
     const config = getMarketRepoConfig();

@@ -806,38 +806,76 @@
       </div>
     </div>
 
-    <!-- Bottom: Trade History -->
+    <!-- Bottom: History / Report -->
     <div
-      class="h-48 bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)] flex flex-col overflow-hidden"
-      v-show="!isTrainingStarted"
+      class="h-56 bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)] flex flex-col overflow-hidden"
     >
-      <div
-        class="px-4 py-2 border-b border-[var(--color-border)] bg-[var(--color-bg-sidebar)] flex items-center justify-between"
-      >
-        <span
-          class="text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-widest"
-          >{{ t("training.history.title") }}</span
-        >
-        <n-button text size="tiny" type="primary">{{
-          t("training.history.viewFullJournal")
-        }}</n-button>
-      </div>
-      <div class="flex-1 overflow-auto">
-        <n-data-table
-          :columns="historyColumns"
-          :data="tradeHistory"
-          size="small"
-          :bordered="false"
-          :pagination="false"
-          :scroll-x="2200"
-        >
-          <template #empty>
-            <div class="p-4 text-center text-[var(--color-text-secondary)]">
-              {{ t("training.history.noTrades") }}
-            </div>
-          </template>
-        </n-data-table>
-      </div>
+      <n-tabs v-model:value="activeTab" type="line" animated>
+        <n-tab-pane name="history" :tab="t('training.history.title')">
+          <div
+            class="flex items-center justify-between px-4 py-2 border-b border-[var(--color-border)] bg-[var(--color-bg-sidebar)]"
+          >
+            <span
+              class="text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-widest"
+            >
+              {{ t("training.history.title") }}
+            </span>
+            <n-button text size="tiny" type="primary">
+              {{ t("training.history.viewFullJournal") }}
+            </n-button>
+          </div>
+          <div class="flex-1 overflow-auto">
+            <n-data-table
+              :columns="historyColumns"
+              :data="tradeHistory"
+              size="small"
+              :bordered="false"
+              :pagination="false"
+              :scroll-x="2200"
+            >
+              <template #empty>
+                <div class="p-4 text-center text-[var(--color-text-secondary)]">
+                  {{ t("training.history.noTrades") }}
+                </div>
+              </template>
+            </n-data-table>
+          </div>
+        </n-tab-pane>
+        <n-tab-pane name="report" :tab="t('training.report.title')">
+          <div class="p-4 grid grid-cols-4 gap-4">
+            <n-statistic
+              v-if="reportStats"
+              :label="t('training.report.winRate')"
+              :value="(reportStats.winRate * 100).toFixed(2) + '%'"
+            />
+            <n-statistic
+              v-if="reportStats"
+              :label="t('training.report.profitFactor')"
+              :value="reportStats.profitFactor?.toFixed(2)"
+            />
+            <n-statistic
+              v-if="reportStats"
+              :label="t('training.report.maxDrawdown')"
+              :value="(reportStats.maxDrawdown * 100).toFixed(2) + '%'"
+            />
+            <n-statistic
+              v-if="reportStats"
+              :label="t('training.report.totalReturnPct')"
+              :value="(reportStats.totalReturnPct * 100).toFixed(2) + '%'"
+            />
+          </div>
+          <div class="px-4 pb-3">
+            <n-button
+              size="tiny"
+              tertiary
+              @click="recalcStats"
+              :disabled="!activeSessionId"
+            >
+              {{ t("training.report.recalc") }}
+            </n-button>
+          </div>
+        </n-tab-pane>
+      </n-tabs>
     </div>
 
     <!-- Help Modal -->
@@ -1046,10 +1084,16 @@ import {
   createTrainingSession,
   executeTrainingOrder,
   settleTrainingSession,
+  getTrainingStats,
+  recalcSessionStats,
+  listSessions,
 } from "../services/api/trainingApi";
 import {
   fetchRandomStock,
-  listStockKlineByPeriod,
+  fetchRandomStockSmart,
+  getStockInfoByTsCode,
+  getStockInfoBySymbol,
+  listStockKlineByAny,
 } from "../services/marketRepo";
 
 const router = useRouter();
@@ -1066,6 +1110,7 @@ const isPlaying = ref(false);
 const isTrainingStarted = ref(false);
 const showQuickTrade = ref(false);
 const playSpeed = ref(2);
+const activeTab = ref("history");
 const currentTimeframe = ref("daily");
 const currentChartType = ref<CandleType>("candle_solid");
 const orderType = ref("MARKET");
@@ -1089,6 +1134,12 @@ const sessionTradeSeq = ref(0);
 const sessionInitialBalance = ref(0);
 const sessionRealizedPnl = ref(0);
 const sessionPeakBalance = ref(0);
+const reportStats = ref<any | null>(null);
+const isOnline = ref(
+  typeof navigator !== "undefined" ? navigator.onLine : true,
+);
+const OFFLINE_SESSION_KEY = "so_training_offline_session";
+const OFFLINE_ORDERS_KEY = "so_training_offline_orders";
 const accountBalance = computed(() =>
   Number(profile.value?.training_balance ?? 0),
 );
@@ -1580,17 +1631,21 @@ async function startNewRandomTraining(retries = 20) {
   activeSessionId.value = null;
   sessionTradeSeq.value = 0;
   if (retries <= 0) {
-    message.error("Failed to find stock data after multiple attempts");
+    message.error(
+      t("training.messages.sessionNotInitialized") ||
+        "Failed to load K-Line data",
+    );
     isChartLoaded.value = true;
     return;
   }
 
   isChartLoaded.value = false;
 
-  // Random offset to pick a stock from ~5000 total stocks
-  const randomOffset = Math.floor(Math.random() * 5000);
-
-  const stockResult = await fetchRandomStock(randomOffset);
+  let stockResult = await fetchRandomStockSmart();
+  if (stockResult.error || !stockResult.data) {
+    const randomOffset = Math.floor(Math.random() * 1000);
+    stockResult = await fetchRandomStock(randomOffset);
+  }
   const stocks = stockResult.data ? [stockResult.data] : null;
   const stockErr = stockResult.error;
 
@@ -1602,10 +1657,16 @@ async function startNewRandomTraining(retries = 20) {
   const randomStock = stocks[0];
   currentStock.value = randomStock;
 
+  const codeCandidates = [
+    (randomStock as any).ts_code,
+    randomStock.symbol,
+    `${randomStock.symbol}.SZ`,
+    `${randomStock.symbol}.SH`,
+  ].filter(Boolean) as string[];
   const [dailyRes, weeklyRes, monthlyRes] = await Promise.all([
-    listStockKlineByPeriod(randomStock.symbol, "daily"),
-    listStockKlineByPeriod(randomStock.symbol, "weekly"),
-    listStockKlineByPeriod(randomStock.symbol, "monthly"),
+    listStockKlineByAny(codeCandidates, "daily"),
+    listStockKlineByAny(codeCandidates, "weekly"),
+    listStockKlineByAny(codeCandidates, "monthly"),
   ]);
 
   if (
@@ -2117,15 +2178,21 @@ onMounted(() => {
     // Initial resize to ensure correct rendering
     chartInstance.value.resize();
 
-    // Start training mode with random stock
     setTimeout(() => {
       if (!isMounted.value) return;
-      startNewRandomTraining();
+      bootstrapSession();
     }, 500);
 
     // Handle resize
     // Removed duplicate listener logic
   }
+  window.addEventListener("online", () => {
+    isOnline.value = true;
+    syncOfflineIfAny();
+  });
+  window.addEventListener("offline", () => {
+    isOnline.value = false;
+  });
 });
 
 onUnmounted(() => {
@@ -2144,6 +2211,8 @@ onUnmounted(() => {
   }
 
   window.removeEventListener("keydown", handleKeydown);
+  window.removeEventListener("online", syncOfflineIfAny as any);
+  window.removeEventListener("offline", () => {});
 
   if (chartInstance.value) {
     dispose(chartInstance.value);
@@ -2608,29 +2677,39 @@ async function persistTradeLog(
     status?: string;
   },
 ) {
-  if (!activeSessionId.value || !user.value) return;
+  if (!user.value) return;
   const klineTimestamp = fullData.value[currentIndex.value]?.timestamp ?? null;
 
-  const result = await executeTrainingOrder({
-    sessionId: activeSessionId.value,
-    action: action as "BUY" | "SELL" | "CLOSE",
-    amount,
-    priceHint: price,
-    klineTimestamp,
-  });
-
-  if (result.error || !result.data) {
-    message.error(t("training.messages.orderFailed") || "Order failed");
-    return;
+  let tradeData: any = null;
+  if (activeSessionId.value) {
+    const result = await executeTrainingOrder({
+      sessionId: activeSessionId.value,
+      action: action as "BUY" | "SELL" | "CLOSE",
+      amount,
+      priceHint: price,
+      klineTimestamp,
+    });
+    if (result.error || !result.data) {
+      saveOfflineOrder({ action, amount, priceHint: price, klineTimestamp });
+      message.warning(
+        t("training.messages.offlineOrderSaved") || "Saved offline",
+      );
+    } else {
+      tradeData = result.data as any;
+    }
+  } else {
+    saveOfflineOrder({ action, amount, priceHint: price, klineTimestamp });
+    message.warning(
+      t("training.messages.offlineOrderSaved") || "Saved offline",
+    );
   }
 
-  const tradeData = result.data as any;
-  const nextSeq = tradeData.seqNo;
-  const tradeTime = tradeData.tradeTime || new Date().toISOString();
+  const nextSeq = tradeData?.seqNo ?? sessionTradeSeq.value + 1;
+  const tradeTime = tradeData?.tradeTime || new Date().toISOString();
   const afterPosition =
-    tradeData.afterPosition || snapshotPosition(position.value);
+    tradeData?.afterPosition || snapshotPosition(position.value);
   const beforePosition =
-    tradeData.beforePosition ||
+    tradeData?.beforePosition ||
     detail?.beforePosition ||
     snapshotPosition(null);
 
@@ -2647,13 +2726,13 @@ async function persistTradeLog(
     orderType: orderType.value,
     price,
     amount,
-    notional: tradeData.notional || Number((amount * price).toFixed(2)),
-    fee: tradeData.fee || 0,
+    notional: tradeData?.notional || Number((amount * price).toFixed(2)),
+    fee: tradeData?.fee || 0,
     beforePosition,
     afterPosition,
-    realizedPnl: tradeData.realizedPnl || 0,
+    realizedPnl: tradeData?.realizedPnl || 0,
     floatingPnl: detail?.floatingPnl ?? 0,
-    status: tradeData.status || "FILLED",
+    status: tradeData?.status || "PENDING",
   });
 }
 
@@ -2799,25 +2878,199 @@ async function closePosition() {
 }
 
 async function exitTraining() {
-  if (isTrainingStarted.value) {
-    try {
-      await finalizeSession("completed");
-    } catch (e) {
-      console.error(e);
-      message.error(t("training.messages.sessionSaveFailed"));
-    }
+  if (!isTrainingStarted.value) {
+    router.push("/");
+    return;
+  }
+  if (!isTrainingWindowEnded.value) {
     stopPlay();
     isTrainingStarted.value = false;
     setFullscreen(false);
     if (document.fullscreenElement) {
       document.exitFullscreen().catch((err) => console.error(err));
     }
-    message.info(t("training.messages.sessionEnded"));
+    message.warning(
+      t("training.messages.onlyEndAtTerminal") ||
+        "Only when reaching the end date can you end this session",
+    );
+    return;
+  }
+  try {
+    await finalizeSession("completed");
+  } catch (e) {
+    console.error(e);
+    message.error(t("training.messages.sessionSaveFailed"));
+  }
+  stopPlay();
+  isTrainingStarted.value = false;
+  setFullscreen(false);
+  if (document.fullscreenElement) {
+    document.exitFullscreen().catch((err) => console.error(err));
+  }
+  message.info(t("training.messages.sessionEnded"));
+}
 
-    // Load a new random stock for the next session
-    startNewRandomTraining();
-  } else {
-    router.push("/");
+async function loadStats() {
+  if (!activeSessionId.value) return;
+  const { data } = await getTrainingStats(activeSessionId.value);
+  if (data) {
+    reportStats.value = data;
+    return;
+  }
+  const recalcRes = await recalcSessionStats(activeSessionId.value);
+  const stats = (recalcRes.data as any)?.stats;
+  if (stats) {
+    reportStats.value = stats;
+  }
+}
+
+async function bootstrapSession() {
+  try {
+    const res = await listSessions(1);
+    const latest = res.data?.documents?.[0];
+    if (
+      latest &&
+      (latest.status === "active" ||
+        latest.status === "running" ||
+        latest.status === "initialized" ||
+        latest.status === "pending" ||
+        latest.status === "in_progress" ||
+        latest.status === "not_started")
+    ) {
+      const tsCode = latest.ts_code || latest.symbol;
+      const displaySymbol = latest.symbol || tsCode;
+      let info = (await getStockInfoByTsCode(tsCode)).data;
+      if (!info) {
+        info = (await getStockInfoBySymbol(displaySymbol)).data;
+      }
+      currentStock.value = {
+        symbol: info?.symbol || displaySymbol,
+        name: info?.name || displaySymbol,
+        ts_code: tsCode,
+      } as any;
+      const codeCandidates = [
+        tsCode,
+        displaySymbol,
+        `${displaySymbol}.SZ`,
+        `${displaySymbol}.SH`,
+      ].filter(Boolean) as string[];
+      const [dailyRes, weeklyRes, monthlyRes] = await Promise.all([
+        listStockKlineByAny(codeCandidates, "daily"),
+        listStockKlineByAny(codeCandidates, "weekly"),
+        listStockKlineByAny(codeCandidates, "monthly"),
+      ]);
+      // 若会话存在但暂无对应K线，保持当前会话，不自动切换随机训练
+      if (!dailyRes.data || dailyRes.data.length === 0) {
+        message.warning(
+          t("training.messages.sessionNotInitialized") ||
+            "No K-Line data for this session",
+        );
+        isChartLoaded.value = true;
+        activeSessionId.value = latest.$id;
+        return;
+      }
+      const format = (data: any[]) =>
+        data.map((k) => ({
+          timestamp: new Date(k.trade_date).getTime(),
+          open: Number(k.open),
+          high: Number(k.high),
+          low: Number(k.low),
+          close: Number(k.close),
+          volume: Number(k.volume),
+          turnover: Number(k.amount),
+        }));
+      dailyData.value = format(dailyRes.data ?? []);
+      weeklyData.value = format(weeklyRes.data ?? []);
+      monthlyData.value = format(monthlyRes.data ?? []);
+      const sDate = new Date(
+        latest.train_start_date || latest.start_date,
+      ).getTime();
+      const eDate = new Date(
+        latest.train_end_date || latest.end_date,
+      ).getTime();
+      let sIdx = dailyData.value.findIndex((d) => d.timestamp >= sDate);
+      if (sIdx < 0) sIdx = 0;
+      let eIdx = dailyData.value.findIndex((d) => d.timestamp > eDate);
+      if (eIdx < 0) eIdx = dailyData.value.length - 1;
+      trainingStartIndex.value = sIdx;
+      trainingEndIndex.value = Math.max(eIdx - 1, sIdx + 10);
+      fullData.value = dailyData.value;
+      initialDataRef.value = dailyData.value.slice(
+        0,
+        trainingStartIndex.value + 1,
+      );
+      currentIndex.value = trainingStartIndex.value;
+      currentDate.value =
+        dailyData.value[trainingStartIndex.value]?.timestamp ?? null;
+      currentPrice.value =
+        dailyData.value[trainingStartIndex.value]?.close ?? 0;
+      if (chartInstance.value) {
+        clearIndicators();
+        chartInstance.value.resetData();
+        setupDataLoader();
+        setupIndicatorsFromState();
+        chartInstance.value.setSymbol({
+          ticker: displaySymbol,
+          pricePrecision: 2,
+          volumePrecision: 0,
+        });
+        currentTimeframe.value = "daily";
+        chartInstance.value.setPeriod({ type: "day", span: 1 });
+        updateChartForDate(currentDate.value!);
+        syncTrainingBoundaryOverlays();
+        await ensureChartSized();
+      }
+      activeSessionId.value = latest.$id;
+      isChartLoaded.value = true;
+      await loadStats();
+      return;
+    }
+  } catch (e) {
+    const offline = loadOfflineSession();
+    if (offline) {
+      currentStock.value = { symbol: offline.symbol, name: offline.symbol };
+      await startNewRandomTraining();
+      activeSessionId.value = null;
+      isChartLoaded.value = true;
+      message.warning(t("training.messages.offlineMode") || "Offline mode");
+      return;
+    }
+  }
+  await startNewRandomTraining();
+  const sDate = new Date(
+    dailyData.value[trainingStartIndex.value].timestamp,
+  ).toISOString();
+  const eDate = new Date(
+    dailyData.value[trainingEndIndex.value].timestamp,
+  ).toISOString();
+  try {
+    const { data } = await createTrainingSession({
+      tsCode:
+        (currentStock.value as any)?.ts_code ??
+        currentStock.value?.symbol ??
+        "",
+      symbol: currentStock.value?.symbol ?? "",
+      period: "daily",
+      trainRange: {
+        startIndex: trainingStartIndex.value,
+        endIndex: trainingEndIndex.value,
+        startDate: sDate,
+        endDate: eDate,
+      },
+      startDate: sDate,
+      endDate: eDate,
+      startPrice: dailyData.value[trainingStartIndex.value].close,
+    });
+    activeSessionId.value = (data?.sessionId as string) ?? null;
+  } catch {
+    saveOfflineSession({
+      symbol: currentStock.value?.symbol ?? "",
+      startDate: sDate,
+      endDate: eDate,
+      startPrice: dailyData.value[trainingStartIndex.value].close,
+    });
+    activeSessionId.value = null;
+    message.warning(t("training.messages.offlineMode") || "Offline mode");
   }
 }
 
@@ -2829,27 +3082,34 @@ async function startTraining() {
   sessionInitialBalance.value = accountBalance.value;
   sessionRealizedPnl.value = 0;
   sessionPeakBalance.value = sessionInitialBalance.value;
-  if (user.value && currentStock.value) {
+  if (!activeSessionId.value && user.value && currentStock.value) {
     try {
+      const sDate = new Date(
+        dailyData.value[trainingStartIndex.value].timestamp,
+      ).toISOString();
+      const eDate = new Date(
+        dailyData.value[trainingEndIndex.value].timestamp,
+      ).toISOString();
       const { data, error } = await createTrainingSession({
-        tsCode: currentStock.value.ts_code ?? currentStock.value.symbol ?? "",
+        tsCode:
+          (currentStock.value as any)?.ts_code ??
+          currentStock.value.symbol ??
+          "",
         symbol: currentStock.value.symbol ?? "",
         period: "daily",
         trainRange: {
           startIndex: trainingStartIndex.value,
           endIndex: trainingEndIndex.value,
+          startDate: sDate,
+          endDate: eDate,
         },
+        startDate: sDate,
+        endDate: eDate,
+        startPrice: dailyData.value[trainingStartIndex.value].close,
       });
-      if (error) {
-        console.error(error);
-        message.warning(t("training.messages.sessionCreateFailed"));
-      } else {
-        activeSessionId.value = (data?.sessionId as string) ?? null;
-      }
-    } catch (e) {
-      console.error(e);
-      message.warning(t("training.messages.sessionCreateFailed"));
-    }
+      if (!error && data?.sessionId)
+        activeSessionId.value = data.sessionId as string;
+    } catch {}
   }
   setFullscreen(true);
   document.documentElement.requestFullscreen().catch((err) => {
@@ -2884,6 +3144,80 @@ function cancelText() {
   showTextModal.value = false;
   pendingTextOverlay.value = null;
   editingText.value = "";
+}
+
+// resetSession removed per requirement: training can be moved only after completion
+
+function saveOfflineSession(payload: any) {
+  localStorage.setItem(OFFLINE_SESSION_KEY, JSON.stringify(payload));
+}
+function loadOfflineSession(): any | null {
+  try {
+    const v = localStorage.getItem(OFFLINE_SESSION_KEY);
+    return v ? JSON.parse(v) : null;
+  } catch {
+    return null;
+  }
+}
+function clearOfflineSession() {
+  localStorage.removeItem(OFFLINE_SESSION_KEY);
+}
+function saveOfflineOrder(order: any) {
+  try {
+    const arr = loadOfflineOrders();
+    arr.push(order);
+    localStorage.setItem(OFFLINE_ORDERS_KEY, JSON.stringify(arr));
+  } catch {}
+}
+function loadOfflineOrders(): any[] {
+  try {
+    const v = localStorage.getItem(OFFLINE_ORDERS_KEY);
+    return v ? JSON.parse(v) : [];
+  } catch {
+    return [];
+  }
+}
+function clearOfflineOrders() {
+  localStorage.removeItem(OFFLINE_ORDERS_KEY);
+}
+async function syncOfflineIfAny() {
+  const offline = loadOfflineSession();
+  const orders = loadOfflineOrders();
+  if (!isOnline.value || (!offline && orders.length === 0)) return;
+  try {
+    let sid = activeSessionId.value;
+    if (!sid && offline) {
+      const { data } = await createTrainingSession({
+        symbol: offline.symbol,
+        period: "daily",
+        startDate: offline.startDate,
+        endDate: offline.endDate,
+        startPrice: offline.startPrice,
+      });
+      sid = (data?.sessionId as string) ?? null;
+      activeSessionId.value = sid;
+    }
+    if (sid && orders.length > 0) {
+      for (const o of orders) {
+        await executeTrainingOrder({ ...o, sessionId: sid });
+      }
+    }
+    clearOfflineOrders();
+    clearOfflineSession();
+    await loadStats();
+    message.success(t("training.messages.synced") || "Synced");
+  } catch {}
+}
+
+async function recalcStats() {
+  if (!activeSessionId.value) return;
+  const res = await recalcSessionStats(activeSessionId.value);
+  const stats = (res.data as any)?.stats;
+  if (stats) {
+    reportStats.value = stats;
+    return;
+  }
+  await loadStats();
 }
 </script>
 

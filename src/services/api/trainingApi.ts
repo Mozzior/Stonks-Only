@@ -12,18 +12,26 @@ const trainingSettlementFunctionId =
   import.meta.env.VITE_APPWRITE_FN_TRAINING_SETTLEMENT_ID || "fn-training-settlement";
 
 export function createTrainingSession(payload: {
-  tsCode: string;
-  symbol: string;
-  period: "daily" | "weekly" | "monthly";
-  trainRange: { startIndex: number; endIndex: number };
+  tsCode?: string;
+  symbol?: string;
+  period?: "daily" | "weekly" | "monthly";
+  trainRange?: { startIndex: number; endIndex: number; startDate?: string; endDate?: string };
+  startDate?: string;
+  endDate?: string;
+  startPrice?: number;
+  initialBalance?: number;
 }) {
   const body = {
     tsCode: payload.tsCode,
     symbol: payload.symbol,
-    period: payload.period,
+    period: payload.period ?? "daily",
     trainRange: payload.trainRange,
     startIndex: payload.trainRange?.startIndex,
     endIndex: payload.trainRange?.endIndex,
+    startDate: payload.startDate ?? payload.trainRange?.startDate,
+    endDate: payload.endDate ?? payload.trainRange?.endDate,
+    startPrice: payload.startPrice,
+    initialBalance: payload.initialBalance,
   };
   return executeFunction<typeof body, Record<string, unknown>>(trainingSessionCreateFunctionId, body);
 }
@@ -39,6 +47,13 @@ export function settleTrainingSession(sessionId: string, reason: "completed" | "
   return executeFunction<{ sessionId: string; reason: string }, Record<string, unknown>>(
     trainingSettlementFunctionId,
     { sessionId, reason },
+  );
+}
+
+export function recalcSessionStats(sessionId: string) {
+  return executeFunction<{ sessionId: string; reason: string }, Record<string, unknown>>(
+    trainingSettlementFunctionId,
+    { sessionId, reason: "recalc" },
   );
 }
 
@@ -96,6 +111,22 @@ export async function listSessions(limit: number = 20, cursor?: string) {
       queries
     );
     return ok(response);
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function getTrainingStats(sessionId: string) {
+  try {
+    if (!appwriteConfig.trainingStatsCollectionId) {
+      return fail({ message: "Stats collection not configured", code: "CONFIG" });
+    }
+    const doc = await appwrite.databases.getDocument(
+      appwriteConfig.databaseId!,
+      appwriteConfig.trainingStatsCollectionId!,
+      sessionId
+    );
+    return ok(doc);
   } catch (error) {
     return fail(error);
   }

@@ -263,7 +263,6 @@ const sessionTableData = computed(() => {
   return sessions.value.map((s) => ({
     date: new Date(s.$createdAt).toLocaleDateString(),
     symbol: s.symbol,
-    period: s.period,
     pnl: Number(s.realized_pnl || 0),
     roi: Number(s.return_pct || 0),
     status: s.status,
@@ -284,7 +283,6 @@ const columns = computed(() => [
       );
     },
   },
-  { title: t("review.journal.period"), key: "period" },
   {
     title: t("review.journal.pl"),
     key: "pnl",
@@ -321,11 +319,9 @@ const columns = computed(() => [
     title: t("review.journal.status"),
     key: "status",
     render(row: any) {
-      return h(
-        NTag,
-        { size: "tiny", ghost: true },
-        { default: () => row.status },
-      );
+      const labelKey = `review.status.${String(row.status || "").toLowerCase()}`;
+      const label = t(labelKey) || row.status;
+      return h(NTag, { size: "tiny", ghost: true }, { default: () => label });
     },
   },
 ]);

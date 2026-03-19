@@ -43,6 +43,9 @@ const trainingSessionCollectionId = readEnvValue(
 const trainingTradeLogCollectionId = readEnvValue(
   "VITE_APPWRITE_TRAINING_TRADE_LOG_COLLECTION_ID",
 );
+const trainingStatsCollectionId = readEnvValue(
+  "VITE_APPWRITE_TRAINING_STATS_COLLECTION_ID",
+);
 const stockInfoCollectionId = readEnvValue(
   "VITE_APPWRITE_STOCK_INFO_COLLECTION_ID",
 );
@@ -87,6 +90,7 @@ export const appwriteConfig = {
   trainingBalanceLedgerCollectionId,
   trainingSessionCollectionId,
   trainingTradeLogCollectionId,
+  trainingStatsCollectionId,
   stockInfoCollectionId,
   stockKlineCollectionId,
   membershipPlansCollectionId,
