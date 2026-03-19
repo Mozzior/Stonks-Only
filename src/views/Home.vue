@@ -62,10 +62,10 @@
         <div
           class="mt-4 flex justify-between text-xs text-[var(--color-text-secondary)]"
         >
-          <span>{{ t('home.stats.completed') }}</span>
-          <span class="text-[var(--color-text-primary)]"
-            >{{ completedSessions }}</span
-          >
+          <span>{{ t("home.stats.completed") }}</span>
+          <span class="text-[var(--color-text-primary)]">{{
+            completedSessions
+          }}</span>
         </div>
       </n-card>
 
@@ -94,7 +94,7 @@
         <div
           class="mt-4 flex justify-between text-xs text-[var(--color-text-secondary)]"
         >
-          <span>{{ t('home.stats.avgReturn') }}</span>
+          <span>{{ t("home.stats.avgReturn") }}</span>
           <span
             :class="
               avgReturn >= 0
@@ -130,7 +130,7 @@
         <div
           class="mt-3 flex justify-between text-xs text-[var(--color-text-secondary)]"
         >
-          <span>{{ t('home.stats.profitableSessions') }}</span>
+          <span>{{ t("home.stats.profitableSessions") }}</span>
           <span>{{ profitableSessionsCount }}</span>
         </div>
       </n-card>
@@ -145,9 +145,11 @@
           :bordered="false"
           class="bg-[var(--color-bg-card)] rounded-xl min-h-[400px]"
         >
-           <template #header-extra>
-              <n-button size="small" ghost @click="router.push('/review')">{{ t('common.viewAll') }}</n-button>
-           </template>
+          <template #header-extra>
+            <n-button size="small" ghost @click="router.push('/review')">{{
+              t("common.viewAll")
+            }}</n-button>
+          </template>
           <n-data-table
             :columns="columns"
             :data="recentSessions"
@@ -167,29 +169,41 @@
           class="bg-[var(--color-bg-card)] rounded-xl"
         >
           <div class="grid grid-cols-2 gap-3">
-            <n-button class="h-24 flex flex-col gap-2" dashed @click="router.push('/training')">
+            <n-button
+              class="h-24 flex flex-col gap-2"
+              dashed
+              @click="router.push('/training')"
+            >
               <n-icon
                 size="24"
                 :component="TrendingUpOutline"
                 class="text-[var(--color-brand-primary)]"
               />
-              <span class="text-xs">{{ t('home.actions.newSession') }}</span>
+              <span class="text-xs">{{ t("home.actions.newSession") }}</span>
             </n-button>
-            <n-button class="h-24 flex flex-col gap-2" dashed @click="router.push('/review')">
+            <n-button
+              class="h-24 flex flex-col gap-2"
+              dashed
+              @click="router.push('/review')"
+            >
               <n-icon
                 size="24"
                 :component="BookOutline"
                 class="text-blue-400"
               />
-              <span class="text-xs">{{ t('home.actions.reviewHistory') }}</span>
+              <span class="text-xs">{{ t("home.actions.reviewHistory") }}</span>
             </n-button>
-            <n-button class="h-24 flex flex-col gap-2" dashed @click="router.push('/wallet')">
-               <n-icon
+            <n-button
+              class="h-24 flex flex-col gap-2"
+              dashed
+              @click="router.push('/wallet')"
+            >
+              <n-icon
                 size="24"
                 :component="WalletOutline"
                 class="text-green-400"
               />
-              <span class="text-xs">{{ t('home.actions.myWallet') }}</span>
+              <span class="text-xs">{{ t("home.actions.myWallet") }}</span>
             </n-button>
             <n-button class="h-24 flex flex-col gap-2" dashed>
               <n-icon
@@ -210,37 +224,55 @@
         >
           <n-list hoverable clickable>
             <n-list-item>
-               <div class="flex items-center gap-3">
-                  <n-avatar size="small" style="background-color: #fde68a; color: #d97706">
-                     <n-icon :component="TrendingUpOutline" />
-                  </n-avatar>
-                  <div>
-                     <div class="font-medium">{{ t('home.focus.trend') }}</div>
-                     <div class="text-xs text-[var(--color-text-secondary)]">{{ t('home.focus.trendDesc') }}</div>
+              <div class="flex items-center gap-3">
+                <n-avatar
+                  size="small"
+                  style="background-color: #fde68a; color: #d97706"
+                >
+                  <n-icon :component="TrendingUpOutline" />
+                </n-avatar>
+                <div>
+                  <div class="font-medium">{{ t("home.focus.trend") }}</div>
+                  <div class="text-xs text-[var(--color-text-secondary)]">
+                    {{ t("home.focus.trendDesc") }}
                   </div>
-               </div>
+                </div>
+              </div>
             </n-list-item>
-             <n-list-item>
-               <div class="flex items-center gap-3">
-                  <n-avatar size="small" style="background-color: #bfdbfe; color: #2563eb">
-                     <n-icon :component="ArrowUpOutline" />
-                  </n-avatar>
-                  <div>
-                     <div class="font-medium">{{ t('home.focus.breakout') }}</div>
-                     <div class="text-xs text-[var(--color-text-secondary)]">{{ t('home.focus.breakoutDesc') }}</div>
+            <n-list-item>
+              <div class="flex items-center gap-3">
+                <n-avatar
+                  size="small"
+                  style="background-color: #bfdbfe; color: #2563eb"
+                >
+                  <n-icon :component="ArrowUpOutline" />
+                </n-avatar>
+                <div>
+                  <div class="font-medium">{{ t("home.focus.breakout") }}</div>
+                  <div class="text-xs text-[var(--color-text-secondary)]">
+                    {{ t("home.focus.breakoutDesc") }}
                   </div>
-               </div>
+                </div>
+              </div>
             </n-list-item>
-             <n-list-item>
-               <div class="flex items-center gap-3">
-                  <n-avatar size="small" style="background-color: #fecaca; color: #dc2626">
-                     <n-icon :component="TrendingUpOutline" class="transform rotate-180" />
-                  </n-avatar>
-                  <div>
-                     <div class="font-medium">{{ t('home.focus.reversal') }}</div>
-                     <div class="text-xs text-[var(--color-text-secondary)]">{{ t('home.focus.reversalDesc') }}</div>
+            <n-list-item>
+              <div class="flex items-center gap-3">
+                <n-avatar
+                  size="small"
+                  style="background-color: #fecaca; color: #dc2626"
+                >
+                  <n-icon
+                    :component="TrendingUpOutline"
+                    class="transform rotate-180"
+                  />
+                </n-avatar>
+                <div>
+                  <div class="font-medium">{{ t("home.focus.reversal") }}</div>
+                  <div class="text-xs text-[var(--color-text-secondary)]">
+                    {{ t("home.focus.reversalDesc") }}
                   </div>
-               </div>
+                </div>
+              </div>
             </n-list-item>
           </n-list>
         </n-card>
@@ -286,29 +318,39 @@ const portfolioValue = computed(() =>
 
 // Session Stats
 const totalSessions = computed(() => sessions.value.length);
-const completedSessions = computed(() => sessions.value.filter(s => s.status === 'completed').length);
+const completedSessions = computed(
+  () => sessions.value.filter((s) => s.status === "completed").length,
+);
 
 const totalPnl = computed(() =>
   sessions.value
-    .filter(s => s.status === 'completed')
-    .reduce((sum, s) => sum + Number(s.realized_pnl || 0), 0)
+    .filter((s) => s.status === "completed")
+    .reduce((sum, s) => sum + Number(s.realized_pnl || 0), 0),
 );
 
 const avgReturn = computed(() => {
-    const completed = sessions.value.filter(s => s.status === 'completed');
-    if (completed.length === 0) return 0;
-    const totalReturn = completed.reduce((sum, s) => sum + Number(s.return_pct || 0), 0);
-    return totalReturn / completed.length;
+  const completed = sessions.value.filter((s) => s.status === "completed");
+  if (completed.length === 0) return 0;
+  const totalReturn = completed.reduce(
+    (sum, s) => sum + Number(s.return_pct || 0),
+    0,
+  );
+  return totalReturn / completed.length;
 });
 
 const profitableSessionsCount = computed(
-  () => sessions.value.filter((s) => s.status === 'completed' && Number(s.realized_pnl) > 0).length,
+  () =>
+    sessions.value.filter(
+      (s) => s.status === "completed" && Number(s.realized_pnl) > 0,
+    ).length,
 );
 
 const winRate = computed(() => {
   const completedCount = completedSessions.value;
   if (completedCount === 0) return 0;
-  return Number(((profitableSessionsCount.value / completedCount) * 100).toFixed(1));
+  return Number(
+    ((profitableSessionsCount.value / completedCount) * 100).toFixed(1),
+  );
 });
 
 const winRateText = computed(() => `${winRate.value}%`);
@@ -322,30 +364,29 @@ const totalPnlRateText = computed(() => {
   return `${rate >= 0 ? "+" : ""}${rate.toFixed(2)}%`;
 });
 
-
 onMounted(async () => {
   if (!user.value) return;
   const { data } = await listSessions(50); // Get last 50 for stats
   if (data) {
-      sessions.value = data.documents;
+    sessions.value = data.documents;
   }
 });
 
 const recentSessions = computed(() => {
-    return sessions.value.slice(0, 5).map(s => ({
-        date: new Date(s.$createdAt).toLocaleDateString(),
-        market: `${s.symbol} (${s.period})`,
-        duration: 'N/A', // Can be calc from start/end time if available
-        pl: Number(s.return_pct || 0).toFixed(2),
-        id: s.$id
-    }));
+  return sessions.value.slice(0, 5).map((s) => ({
+    date: new Date(s.$createdAt).toLocaleDateString(),
+    market: `${s.symbol} (${s.period})`,
+    duration: "N/A", // Can be calc from start/end time if available
+    pl: Number(s.return_pct || 0).toFixed(2),
+    id: s.$id,
+  }));
 });
 
 const columns = computed(() => [
-  { title: t('review.journal.date'), key: "date" },
-  { title: t('review.columns.market'), key: "market" },
+  { title: t("review.journal.date"), key: "date" },
+  { title: t("review.columns.market"), key: "market" },
   {
-    title: t('review.columns.return'),
+    title: t("review.columns.return"),
     key: "pl",
     render(row: any) {
       return h(
@@ -361,16 +402,19 @@ const columns = computed(() => [
     },
   },
   {
-    title: t('review.columns.action'),
+    title: t("review.columns.action"),
     key: "actions",
     render(row: any) {
       return h(
         NButton,
-        { size: "tiny", ghost: true, onClick: () => console.log('View session', row.id) }, // In real app, navigate to details
-        { default: () => t('menu.review') },
+        {
+          size: "tiny",
+          ghost: true,
+          onClick: () => console.log("View session", row.id),
+        }, // In real app, navigate to details
+        { default: () => t("menu.review") },
       );
     },
   },
 ]);
-
 </script>

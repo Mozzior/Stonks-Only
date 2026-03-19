@@ -11,11 +11,6 @@
       "trigger": "http"
     },
     {
-      "id": "fn-payment-webhook",
-      "entrypoint": "payment-webhook/index.mjs",
-      "trigger": "http"
-    },
-    {
       "id": "fn-membership-expiry-cron",
       "entrypoint": "membership-expiry-cron/index.mjs",
       "trigger": "schedule",
