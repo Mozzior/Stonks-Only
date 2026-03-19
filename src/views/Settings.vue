@@ -124,7 +124,7 @@
             <h3
               class="text-lg font-bold text-[var(--color-text-primary)] flex items-center gap-2"
             >
-              <n-icon :component="GlobeOutline" /> Localization
+              <n-icon :component="GlobeOutline" /> {{ t("settings.localization") }}
             </h3>
             <n-form-item
               :label="t('settings.language')"
@@ -321,9 +321,9 @@ const showExecutions = ref(true);
 const defaultOrderSize = ref(100);
 
 function saveSettings() {
-  message.loading("Saving settings...");
+  message.loading(t("settings.saving"));
   setTimeout(() => {
-    message.success("Settings saved successfully");
+    message.success(t("settings.saveSuccess"));
   }, 800);
 }
 </script>
