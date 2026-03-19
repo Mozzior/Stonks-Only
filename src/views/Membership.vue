@@ -85,25 +85,16 @@
         <h2 class="text-xl font-bold text-[var(--color-text-primary)]">
           {{ t("membership.achievements.title") }}
         </h2>
-        <div class="w-full max-w-xl flex items-center gap-3">
+        <div class="w-full max-w-2xs flex items-center gap-3">
           <span
             class="text-sm font-bold text-[var(--color-text-primary)] whitespace-nowrap"
           >
             Lv. 12
           </span>
-          <n-tag
-            size="small"
-            :bordered="false"
-            type="info"
-            round
-            class="font-medium whitespace-nowrap"
-          >
-            Advanced Trader
-          </n-tag>
           <n-progress
             type="line"
             :percentage="45"
-            :height="20"
+            :height="16"
             indicator-placement="inside"
             color="var(--color-brand-primary)"
             rail-color="var(--color-bg-sidebar)"
