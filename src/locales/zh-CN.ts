@@ -566,8 +566,10 @@ export default {
     plans: {
       popular: "热门",
       perMonth: "/月",
-      currentPlan: "当前方案",
+      currentPlan: "当前计划",
       upgradeNow: "立即升级",
+      upgradeSuccess: "升级成功！",
+      upgradeFailed: "升级失败",
       rookie: {
         name: "新手",
         desc: "适合开启交易之旅的初学者。",

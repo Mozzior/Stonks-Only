@@ -49,8 +49,10 @@
             <n-button
               :type="plan.current ? 'default' : 'primary'"
               :disabled="plan.current"
+              :loading="isUpgrading === plan.id"
               block
               class="mb-6 font-bold"
+              @click="handleUpgrade(plan)"
             >
               {{
                 plan.current
@@ -166,9 +168,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { ref, computed } from "vue";
 import { useI18n } from "vue-i18n";
-import { NCard, NButton, NIcon, NTag, NProgress } from "naive-ui";
+import { NCard, NButton, NIcon, NTag, NProgress, useMessage } from "naive-ui";
 import {
   CheckmarkCircleOutline,
   TrophyOutline,
@@ -178,15 +180,48 @@ import {
 } from "@vicons/ionicons5";
 import { useAuth } from "../composables/useAuth";
 import { mapLegacyTier } from "../utils/userProfile";
+import { upgradeMembership } from "../services/api/membershipApi";
+import { ID } from "../utils/appwrite";
 
 const { t } = useI18n();
-const { profile } = useAuth();
+const { profile, refreshProfile } = useAuth();
+const message = useMessage();
+const isUpgrading = ref<string | null>(null);
+
 const currentTier = computed(() =>
   mapLegacyTier(profile.value?.membership_tier),
 );
 
+const handleUpgrade = async (plan: any) => {
+  if (plan.current) return;
+  isUpgrading.value = plan.id;
+  try {
+    const payload = {
+      planId: plan.id,
+      paymentMethod: "system",
+      clientTxnId: ID.unique(),
+    };
+    const res = await upgradeMembership(payload);
+    if (res.error) {
+      message.error(
+        t("membership.plans.upgradeFailed") + ": " + res.error.message,
+      );
+    } else {
+      message.success(
+        t("membership.plans.upgradeSuccess") || "Upgrade successful",
+      );
+      await refreshProfile();
+    }
+  } catch (error: any) {
+    message.error(t("membership.plans.upgradeFailed") || "Upgrade failed");
+  } finally {
+    isUpgrading.value = null;
+  }
+};
+
 const plans = computed(() => [
   {
+    id: "free",
     name: t("membership.plans.rookie.name"),
     price: "0",
     description: t("membership.plans.rookie.desc"),
@@ -200,6 +235,7 @@ const plans = computed(() => [
     ],
   },
   {
+    id: "pro",
     name: t("membership.plans.pro.name"),
     price: "29",
     description: t("membership.plans.pro.desc"),
@@ -214,6 +250,7 @@ const plans = computed(() => [
     ],
   },
   {
+    id: "vip",
     name: t("membership.plans.elite.name"),
     price: "99",
     description: t("membership.plans.elite.desc"),

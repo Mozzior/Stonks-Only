@@ -1,0 +1,6 @@
+{
+  "type": "module",
+  "dependencies": {
+    "node-appwrite": "^14.2.0"
+  }
+}

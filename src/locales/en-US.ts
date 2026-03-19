@@ -577,6 +577,8 @@ export default {
       perMonth: "/month",
       currentPlan: "Current Plan",
       upgradeNow: "Upgrade Now",
+      upgradeSuccess: "Upgrade successful!",
+      upgradeFailed: "Failed to upgrade",
       rookie: {
         name: "Rookie",
         desc: "Perfect for beginners starting their journey.",

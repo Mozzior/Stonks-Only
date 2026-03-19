@@ -193,8 +193,6 @@ import {
   NCard,
   NStatistic,
   NProgress,
-  NButton,
-  NIcon,
   NSpace,
   NSelect,
   NDataTable,

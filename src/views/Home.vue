@@ -258,7 +258,6 @@ import {
   NIcon,
   NProgress,
   NButton,
-  NSpace,
   NDataTable,
   NTag,
   NList,
@@ -268,11 +267,9 @@ import {
 import {
   TrendingUpOutline,
   ArrowUpOutline,
-  AddCircleOutline,
-  ShareOutline,
   BookOutline,
   SettingsOutline,
-  WalletOutline
+  WalletOutline,
 } from "@vicons/ionicons5";
 import { useI18n } from "vue-i18n";
 import { useAuth } from "../composables/useAuth";
