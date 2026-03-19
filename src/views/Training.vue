@@ -808,6 +808,7 @@
 
     <!-- Bottom: History / Report -->
     <div
+      v-if="!isTrainingStarted"
       class="h-56 bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)] flex flex-col overflow-hidden"
     >
       <n-tabs v-model:value="activeTab" type="line" animated>
@@ -2165,7 +2166,19 @@ onMounted(() => {
           },
           xAxis: { tickText: { color: textColor } },
           yAxis: { tickText: { color: textColor } },
-        });
+        } as any);
+
+        chartInstance.value?.setStyles({
+          indicator: {
+            bars: [
+              {
+                upColor: upColor,
+                downColor: downColor,
+                noChangeColor: textColor,
+              },
+            ],
+          },
+        } as any);
       },
       { immediate: true },
     );
@@ -2728,27 +2741,29 @@ async function persistTradeLog(
     detail?.beforePosition ||
     snapshotPosition(null);
 
-  sessionTradeSeq.value = nextSeq;
-  tradeHistory.value.unshift({
-    id: Date.now(),
-    seqNo: nextSeq,
-    time: new Date(tradeTime).toLocaleTimeString(),
-    action,
-    side:
-      afterPosition.side === null
-        ? "FLAT"
-        : (afterPosition.side as "LONG" | "SHORT" | "FLAT"),
-    orderType: orderType.value,
-    price,
-    amount,
-    notional: tradeData?.notional || Number((amount * price).toFixed(2)),
-    fee: tradeData?.fee || 0,
-    beforePosition,
-    afterPosition,
-    realizedPnl: tradeData?.realizedPnl || 0,
-    floatingPnl: detail?.floatingPnl ?? 0,
-    status: tradeData?.status || "PENDING",
-  });
+  if (!isTrainingStarted.value) {
+    sessionTradeSeq.value = nextSeq;
+    tradeHistory.value.unshift({
+      id: Date.now(),
+      seqNo: nextSeq,
+      time: new Date(tradeTime).toLocaleTimeString(),
+      action,
+      side:
+        afterPosition.side === null
+          ? "FLAT"
+          : (afterPosition.side as "LONG" | "SHORT" | "FLAT"),
+      orderType: orderType.value,
+      price,
+      amount,
+      notional: tradeData?.notional || Number((amount * price).toFixed(2)),
+      fee: tradeData?.fee || 0,
+      beforePosition,
+      afterPosition,
+      realizedPnl: tradeData?.realizedPnl || 0,
+      floatingPnl: detail?.floatingPnl ?? 0,
+      status: tradeData?.status || "PENDING",
+    });
+  }
 }
 
 async function finalizeSession(status: "completed" | "aborted") {
@@ -3223,7 +3238,9 @@ async function syncOfflineIfAny() {
     }
     clearOfflineOrders();
     clearOfflineSession();
-    await loadStats();
+    if (!isTrainingStarted.value) {
+      await loadStats();
+    }
     message.success(t("training.messages.synced") || "Synced");
   } catch {}
 }
