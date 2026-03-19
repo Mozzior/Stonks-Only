@@ -33,14 +33,6 @@
                 </span>
               </div>
             </div>
-            <n-tag type="warning" size="large" round>
-              {{
-                profile?.membership_tier
-                  ? profile.membership_tier.toUpperCase()
-                  : "FREE"
-              }}
-              {{ t("wallet.member") }}
-            </n-tag>
           </div>
 
           <div
