@@ -3,12 +3,14 @@
     <!-- Balance Overview -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div
-        class="lg:col-span-2 relative group overflow-hidden rounded-2xl shadow-lg transition-transform hover:-translate-y-1 duration-300"
+        class="lg:col-span-2 relative group overflow-hidden rounded-2xl shadow-sm border border-[var(--color-border)] transition-all hover:shadow-md duration-300 bg-[var(--color-bg-card)]"
       >
         <div
-          class="absolute inset-0 bg-gradient-to-br from-[var(--color-brand-secondary)] to-[var(--color-bg-sidebar)] z-0"
+          class="absolute inset-0 bg-gradient-to-br from-[var(--color-brand-primary)]/5 to-transparent z-0"
         ></div>
-        <div class="absolute top-0 right-0 p-8 opacity-10 z-0">
+        <div
+          class="absolute top-0 right-0 p-8 opacity-5 z-0 text-[var(--color-brand-primary)]"
+        >
           <n-icon size="120" :component="WalletOutline" />
         </div>
 
@@ -26,7 +28,7 @@
                   >${{ formatCurrency(totalAssets) }}</span
                 >
                 <span
-                  class="bg-[var(--color-brand-primary)]/20 text-[var(--color-brand-primary)] px-2 py-1 rounded-md font-bold text-xs flex items-center"
+                  class="bg-[var(--color-brand-primary)]/10 text-[var(--color-brand-primary)] px-2.5 py-1 rounded-md font-bold text-xs flex items-center border border-[var(--color-brand-primary)]/20"
                 >
                   <n-icon :component="ArrowUpOutline" class="mr-1" />
                   {{ pnlRateText }}
@@ -36,45 +38,64 @@
           </div>
 
           <div
-            class="grid grid-cols-2 md:grid-cols-4 gap-6 pt-6 border-t border-[var(--color-border)]/30"
+            class="grid grid-cols-2 md:grid-cols-4 gap-6 pt-6 mt-2 border-t border-[var(--color-border)]/40"
           >
-            <div>
+            <div
+              class="bg-[var(--color-bg-sidebar)]/30 p-4 rounded-xl border border-[var(--color-border)]/30 transition-colors hover:bg-[var(--color-bg-sidebar)]/50"
+            >
               <div
-                class="text-xs text-[var(--color-text-secondary)] mb-1 opacity-80"
+                class="text-xs text-[var(--color-text-secondary)] mb-1 opacity-90 font-medium flex items-center gap-1"
               >
                 {{ t("wallet.balance.todayPL") }}
               </div>
-              <div class="text-lg font-bold text-[var(--color-success)]">
+              <div
+                class="text-xl font-bold text-[var(--color-success)] tracking-tight"
+              >
                 {{ todayPnlText }}
               </div>
             </div>
-            <div>
+            <div
+              class="bg-[var(--color-bg-sidebar)]/30 p-4 rounded-xl border border-[var(--color-border)]/30 transition-colors hover:bg-[var(--color-bg-sidebar)]/50"
+            >
               <div
-                class="text-xs text-[var(--color-text-secondary)] mb-1 opacity-80"
+                class="text-xs text-[var(--color-text-secondary)] mb-1 opacity-90 font-medium flex items-center gap-1"
               >
                 {{ t("wallet.balance.totalTrades") }}
               </div>
-              <div class="text-lg font-bold text-[var(--color-text-primary)]">
+              <div
+                class="text-xl font-bold text-[var(--color-text-primary)] tracking-tight"
+              >
                 {{ tradeCount }}
               </div>
             </div>
-            <div>
+            <div
+              class="bg-[var(--color-bg-sidebar)]/30 p-4 rounded-xl border border-[var(--color-border)]/30 transition-colors hover:bg-[var(--color-bg-sidebar)]/50"
+            >
               <div
-                class="text-xs text-[var(--color-text-secondary)] mb-1 opacity-80"
+                class="text-xs text-[var(--color-text-secondary)] mb-1 opacity-90 font-medium flex items-center gap-1"
               >
                 {{ t("wallet.balance.currency") }}
               </div>
-              <div class="text-lg font-bold text-[var(--color-text-primary)]">
+              <div
+                class="text-xl font-bold text-[var(--color-text-primary)] tracking-tight"
+              >
                 {{ profile?.currency || "USD" }}
               </div>
             </div>
-            <div>
+            <div
+              class="bg-[var(--color-bg-sidebar)]/30 p-4 rounded-xl border border-[var(--color-border)]/30 transition-colors hover:bg-[var(--color-bg-sidebar)]/50"
+            >
               <div
-                class="text-xs text-[var(--color-text-secondary)] mb-1 opacity-80"
+                class="text-xs text-[var(--color-text-secondary)] mb-1 opacity-90 font-medium flex items-center gap-1"
               >
                 {{ t("wallet.balance.status") }}
               </div>
-              <div class="text-lg font-bold text-[var(--color-success)]">
+              <div
+                class="text-xl font-bold text-[var(--color-success)] tracking-tight flex items-center gap-2"
+              >
+                <span
+                  class="w-2 h-2 rounded-full bg-[var(--color-success)] shadow-[0_0_8px_var(--color-success)]"
+                ></span>
                 {{ t("wallet.status.active") }}
               </div>
             </div>
