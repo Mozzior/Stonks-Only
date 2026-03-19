@@ -52,11 +52,22 @@
 
         <div class="flex-1 mb-2">
           <div class="flex items-center gap-3">
-            <h1
-              class="text-3xl font-bold text-[var(--color-text-primary)] tracking-tight"
-            >
-              {{ displayName }}
-            </h1>
+            <template v-if="isEditing">
+              <n-input
+                v-model:value="editDisplayName"
+                size="large"
+                round
+                class="max-w-xs"
+                :placeholder="t('profile.info.editProfile')"
+              />
+            </template>
+            <template v-else>
+              <h1
+                class="text-3xl font-bold text-[var(--color-text-primary)] tracking-tight"
+              >
+                {{ displayName }}
+              </h1>
+            </template>
             <n-tag
               :type="membershipTagType as any"
               round
@@ -81,15 +92,7 @@
               trainingBalanceText
             }}
           </p>
-          <div
-            v-if="isEditing"
-            class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2 max-w-2xl"
-          >
-            <n-input
-              v-model:value="editDisplayName"
-              :placeholder="t('profile.info.editProfile')"
-            />
-          </div>
+          <!-- inline edit replaces standalone input block -->
         </div>
 
         <div class="flex gap-3 mb-2">
@@ -100,12 +103,6 @@
           <n-button secondary v-if="isEditing" @click="saveProfileBasic">
             <template #icon><n-icon :component="CreateOutline" /></template>
             {{ t("common.save") }}
-          </n-button>
-          <n-button secondary v-else>
-            <template #icon
-              ><n-icon :component="ShareSocialOutline"
-            /></template>
-            {{ t("profile.info.shareStats") }}
           </n-button>
         </div>
       </div>
@@ -441,7 +438,6 @@ import {
   MailOutline,
   CalendarOutline,
   CreateOutline,
-  ShareSocialOutline,
   RibbonOutline,
   TrophyOutline,
   TrendingUpOutline,
@@ -536,7 +532,9 @@ async function onAvatarSelected(e: Event) {
   uploadingAvatar.value = true;
   try {
     const candidates = Array.from(
-      new Set([appwriteConfig.avatarBucketId, "avatars", "public"].filter(Boolean)),
+      new Set(
+        [appwriteConfig.avatarBucketId, "avatars", "public"].filter(Boolean),
+      ),
     ) as string[];
     if (candidates.length === 0) {
       message.error("头像上传失败，请检查存储桶配置");

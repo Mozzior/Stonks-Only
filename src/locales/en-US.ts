@@ -441,7 +441,6 @@ export default {
   review: {
     title: "Training History",
     subtitle: "Review your past training sessions.",
-    exportCsv: "Export CSV",
     kpi: {
       winRate: "Win Rate",
       basedOnCompleted: "Based on completed sessions",

@@ -83,21 +83,38 @@
         <h2 class="text-xl font-bold text-[var(--color-text-primary)]">
           {{ t("membership.achievements.title") }}
         </h2>
-        <n-progress
-          type="line"
-          :percentage="45"
-          :indicator-placement="'inside'"
-          :height="20"
-          class="max-w-xs"
-          processing
-        >
-          <span class="text-xs font-bold text-[var(--color-text-primary)]">{{
-            t("membership.achievements.level", {
-              level: 12,
-              title: "Advanced Trader",
-            })
-          }}</span>
-        </n-progress>
+        <div class="w-full max-w-xl flex items-center gap-3">
+          <span
+            class="text-sm font-bold text-[var(--color-text-primary)] whitespace-nowrap"
+          >
+            Lv. 12
+          </span>
+          <n-tag
+            size="small"
+            :bordered="false"
+            type="info"
+            round
+            class="font-medium whitespace-nowrap"
+          >
+            Advanced Trader
+          </n-tag>
+          <n-progress
+            type="line"
+            :percentage="45"
+            :height="20"
+            indicator-placement="inside"
+            color="var(--color-brand-primary)"
+            rail-color="var(--color-bg-sidebar)"
+            processing
+            class="rounded-full overflow-hidden flex-1 min-w-0"
+          >
+            <span
+              class="text-[11px] font-bold tracking-wider px-2 text-white drop-shadow-md whitespace-nowrap"
+            >
+              4,500 / 10,000 XP
+            </span>
+          </n-progress>
+        </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

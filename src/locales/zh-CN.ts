@@ -433,7 +433,6 @@ export default {
   review: {
     title: "训练历史",
     subtitle: "回顾您过去的训练会话。",
-    exportCsv: "导出 CSV",
     kpi: {
       winRate: "胜率",
       basedOnCompleted: "基于已完成会话",
