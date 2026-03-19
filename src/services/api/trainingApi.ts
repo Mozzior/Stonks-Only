@@ -7,15 +7,22 @@ const trainingSessionCreateFunctionId =
   import.meta.env.VITE_APPWRITE_FN_TRAINING_SESSION_CREATE_ID ||
   "fn-training-session-create";
 const trainingOrderFunctionId =
-  import.meta.env.VITE_APPWRITE_FN_TRAINING_ORDER_EXEC_ID || "fn-training-order-exec";
+  import.meta.env.VITE_APPWRITE_FN_TRAINING_ORDER_EXEC_ID ||
+  "fn-training-order-exec";
 const trainingSettlementFunctionId =
-  import.meta.env.VITE_APPWRITE_FN_TRAINING_SETTLEMENT_ID || "fn-training-settlement";
+  import.meta.env.VITE_APPWRITE_FN_TRAINING_SETTLEMENT_ID ||
+  "fn-training-settlement";
 
 export function createTrainingSession(payload: {
   tsCode?: string;
   symbol?: string;
   period?: "daily" | "weekly" | "monthly";
-  trainRange?: { startIndex: number; endIndex: number; startDate?: string; endDate?: string };
+  trainRange?: {
+    startIndex: number;
+    endIndex: number;
+    startDate?: string;
+    endDate?: string;
+  };
   startDate?: string;
   endDate?: string;
   startPrice?: number;
@@ -33,7 +40,10 @@ export function createTrainingSession(payload: {
     startPrice: payload.startPrice,
     initialBalance: payload.initialBalance,
   };
-  return executeFunction<typeof body, Record<string, unknown>>(trainingSessionCreateFunctionId, body);
+  return executeFunction<typeof body, Record<string, unknown>>(
+    trainingSessionCreateFunctionId,
+    body,
+  );
 }
 
 export function executeTrainingOrder(payload: TrainingOrderPayload) {
@@ -43,18 +53,21 @@ export function executeTrainingOrder(payload: TrainingOrderPayload) {
   );
 }
 
-export function settleTrainingSession(sessionId: string, reason: "completed" | "aborted") {
-  return executeFunction<{ sessionId: string; reason: string }, Record<string, unknown>>(
-    trainingSettlementFunctionId,
-    { sessionId, reason },
-  );
+export function settleTrainingSession(
+  sessionId: string,
+  reason: "completed" | "aborted",
+) {
+  return executeFunction<
+    { sessionId: string; reason: string },
+    Record<string, unknown>
+  >(trainingSettlementFunctionId, { sessionId, reason });
 }
 
 export function recalcSessionStats(sessionId: string) {
-  return executeFunction<{ sessionId: string; reason: string }, Record<string, unknown>>(
-    trainingSettlementFunctionId,
-    { sessionId, reason: "recalc" },
-  );
+  return executeFunction<
+    { sessionId: string; reason: string },
+    Record<string, unknown>
+  >(trainingSettlementFunctionId, { sessionId, reason: "recalc" });
 }
 
 export async function getTrainingSession(sessionId: string) {
@@ -62,7 +75,7 @@ export async function getTrainingSession(sessionId: string) {
     const doc = await appwrite.databases.getDocument(
       appwriteConfig.databaseId!,
       appwriteConfig.trainingSessionCollectionId!,
-      sessionId
+      sessionId,
     );
     return ok(doc);
   } catch (error) {
@@ -70,12 +83,16 @@ export async function getTrainingSession(sessionId: string) {
   }
 }
 
-export async function getTrainingTrades(sessionId: string, limit: number = 50, cursor?: string) {
+export async function getTrainingTrades(
+  sessionId: string,
+  limit: number = 50,
+  cursor?: string,
+) {
   try {
     const queries = [
       Query.equal("session_id", sessionId),
       Query.limit(limit),
-      Query.orderDesc("trade_time") // Assuming order by trade time
+      Query.orderDesc("trade_time"), // Assuming order by trade time
     ];
     if (cursor) {
       queries.push(Query.cursorAfter(cursor));
@@ -83,7 +100,7 @@ export async function getTrainingTrades(sessionId: string, limit: number = 50, c
     const response = await appwrite.databases.listDocuments(
       appwriteConfig.databaseId!,
       appwriteConfig.trainingTradeLogCollectionId!,
-      queries
+      queries,
     );
     return ok(response.documents);
   } catch (error) {
@@ -94,12 +111,13 @@ export async function getTrainingTrades(sessionId: string, limit: number = 50, c
 export async function listSessions(limit: number = 20, cursor?: string) {
   try {
     const userId = await getUserId();
-    if (!userId) return fail({ message: "Not logged in", code: "UNAUTHORIZED" });
+    if (!userId)
+      return fail({ message: "Not logged in", code: "UNAUTHORIZED" });
 
     const queries = [
       Query.equal("user_id", userId),
       Query.limit(limit),
-      Query.orderDesc("$createdAt")
+      Query.orderDesc("$createdAt"),
     ];
     if (cursor) {
       queries.push(Query.cursorAfter(cursor));
@@ -108,7 +126,7 @@ export async function listSessions(limit: number = 20, cursor?: string) {
     const response = await appwrite.databases.listDocuments(
       appwriteConfig.databaseId!,
       appwriteConfig.trainingSessionCollectionId!,
-      queries
+      queries,
     );
     return ok(response);
   } catch (error) {
@@ -119,14 +137,38 @@ export async function listSessions(limit: number = 20, cursor?: string) {
 export async function getTrainingStats(sessionId: string) {
   try {
     if (!appwriteConfig.trainingStatsCollectionId) {
-      return fail({ message: "Stats collection not configured", code: "CONFIG" });
+      return fail({
+        message: "Stats collection not configured",
+        code: "CONFIG",
+      });
     }
     const doc = await appwrite.databases.getDocument(
       appwriteConfig.databaseId!,
       appwriteConfig.trainingStatsCollectionId!,
-      sessionId
+      sessionId,
     );
     return ok(doc);
+  } catch (error) {
+    return fail(error);
+  }
+}
+
+export async function saveSessionProgress(
+  sessionId: string,
+  currentDateIso: string,
+) {
+  try {
+    const payload: Record<string, unknown> = {
+      current_date: currentDateIso,
+      updated_at: new Date().toISOString(),
+    };
+    const res = await appwrite.databases.updateDocument(
+      appwriteConfig.databaseId!,
+      appwriteConfig.trainingSessionCollectionId!,
+      sessionId,
+      payload,
+    );
+    return ok(res);
   } catch (error) {
     return fail(error);
   }

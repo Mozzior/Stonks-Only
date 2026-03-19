@@ -1095,6 +1095,7 @@ import {
   getStockInfoBySymbol,
   listStockKlineByAny,
 } from "../services/marketRepo";
+import { saveSessionProgress } from "../services/api/trainingApi";
 
 const router = useRouter();
 const message = useMessage();
@@ -1129,6 +1130,7 @@ const pendingTextOverlay = ref<any>(null);
 let playInterval: any = null;
 let updateDataCallback: ((data: KLineData) => void) | null = null;
 let resizeHandler: (() => void) | null = null;
+let progressSaveTimer: any = null;
 const activeSessionId = ref<string | null>(null);
 const sessionTradeSeq = ref(0);
 const sessionInitialBalance = ref(0);
@@ -2327,6 +2329,9 @@ function updateChart() {
   }
   currentDate.value = newData.timestamp;
   currentPrice.value = newData.close;
+  if (activeSessionId.value && currentDate.value) {
+    scheduleProgressSave();
+  }
 
   // Update position P/L if active
   if (position.value) {
@@ -2339,6 +2344,16 @@ function updateChart() {
       100;
     position.value.pl = Number(position.value.pl.toFixed(2));
   }
+}
+
+function scheduleProgressSave() {
+  if (!activeSessionId.value || !currentDate.value) return;
+  const id = activeSessionId.value;
+  const ts = new Date(currentDate.value).toISOString();
+  if (progressSaveTimer) clearTimeout(progressSaveTimer);
+  progressSaveTimer = setTimeout(() => {
+    saveSessionProgress(id, ts);
+  }, 800);
 }
 
 // Actions
@@ -2995,15 +3010,19 @@ async function bootstrapSession() {
       trainingStartIndex.value = sIdx;
       trainingEndIndex.value = Math.max(eIdx - 1, sIdx + 10);
       fullData.value = dailyData.value;
-      initialDataRef.value = dailyData.value.slice(
-        0,
-        trainingStartIndex.value + 1,
-      );
-      currentIndex.value = trainingStartIndex.value;
-      currentDate.value =
-        dailyData.value[trainingStartIndex.value]?.timestamp ?? null;
-      currentPrice.value =
-        dailyData.value[trainingStartIndex.value]?.close ?? 0;
+      // 恢复进度：如果存在 current_date，则按其定位 currentIndex；否则用训练开始索引
+      let resumeIdx = trainingStartIndex.value;
+      if (latest.current_date) {
+        const cd = new Date(latest.current_date).getTime();
+        const idx = dailyData.value.findIndex((d) => d.timestamp >= cd);
+        if (idx >= 0 && idx <= trainingEndIndex.value) {
+          resumeIdx = idx;
+        }
+      }
+      initialDataRef.value = dailyData.value.slice(0, resumeIdx + 1);
+      currentIndex.value = resumeIdx;
+      currentDate.value = dailyData.value[resumeIdx]?.timestamp ?? null;
+      currentPrice.value = dailyData.value[resumeIdx]?.close ?? 0;
       if (chartInstance.value) {
         clearIndicators();
         chartInstance.value.resetData();
