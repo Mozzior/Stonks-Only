@@ -175,7 +175,7 @@
               @click="router.push('/training')"
             >
               <n-icon
-                size="24"
+                size="16"
                 :component="TrendingUpOutline"
                 class="text-[var(--color-brand-primary)]"
               />
@@ -187,7 +187,7 @@
               @click="router.push('/review')"
             >
               <n-icon
-                size="24"
+                size="16"
                 :component="BookOutline"
                 class="text-blue-400"
               />
@@ -199,7 +199,7 @@
               @click="router.push('/wallet')"
             >
               <n-icon
-                size="24"
+                size="16"
                 :component="WalletOutline"
                 class="text-green-400"
               />
@@ -207,7 +207,7 @@
             </n-button>
             <n-button class="h-24 flex flex-col gap-2" dashed>
               <n-icon
-                size="24"
+                size="16"
                 :component="SettingsOutline"
                 class="text-[var(--color-text-secondary)]"
               />
