@@ -4,16 +4,14 @@
       v-if="!isFullscreen"
       bordered
       collapse-mode="width"
-      :collapsed-width="64"
+      :collapsed-width="84"
       :width="240"
       :collapsed="collapsed"
-      show-trigger
-      @collapse="collapsed = true"
-      @expand="collapsed = false"
       class="bg-[var(--color-bg-sidebar)] z-50"
     >
       <div
-        class="h-16 flex items-center justify-center border-b border-[var(--color-border)]"
+        class="h-16 flex items-center justify-center border-b border-[var(--color-border)] cursor-pointer select-none"
+        @click="collapsed = !collapsed"
       >
         <transition name="fade" mode="out-in">
           <div
@@ -67,32 +65,26 @@
       </div>
     </n-layout-sider>
 
-    <n-layout
+    <n-layout-content
       class="bg-[var(--color-bg-body)] h-full"
-      :content-style="{ display: 'flex', flexDirection: 'column', height: '100%' }"
+      :native-scrollbar="false"
+      :content-style="{
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: '100%',
+      }"
     >
-      <n-layout-content
-        class="flex-1 min-h-0 bg-[var(--color-bg-body)] flex flex-col"
-        :content-style="{
-          flex: '1 1 0%',
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100%',
-        }"
-        :native-scrollbar="false"
+      <div
+        class="flex-1 w-full flex flex-col transition-all duration-300"
+        :class="isFullscreen ? 'p-0' : 'p-6'"
       >
-        <div
-          class="flex-1 w-full flex flex-col overflow-hidden transition-all duration-300"
-          :class="isFullscreen ? 'p-0' : 'p-6'"
-        >
-          <router-view v-slot="{ Component }">
-            <transition name="fade" mode="out-in">
-              <component :is="Component" />
-            </transition>
-          </router-view>
-        </div>
-      </n-layout-content>
-    </n-layout>
+        <router-view v-slot="{ Component }">
+          <transition name="fade" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
+      </div>
+    </n-layout-content>
   </n-layout>
 </template>
 
@@ -103,9 +95,9 @@ import {
   NIcon,
   NLayout,
   NLayoutSider,
-  NLayoutContent,
   NMenu,
   NAvatar,
+  NLayoutContent,
 } from "naive-ui";
 import type { MenuOption } from "naive-ui";
 import { useI18n } from "vue-i18n";
@@ -221,7 +213,7 @@ const menuOptions = computed<MenuOption[]>(() => [
 ]);
 
 const userDisplay = computed(() => {
-  return getDisplayName(profile.value, user.value?.email)
+  return getDisplayName(profile.value, user.value?.email);
 });
 
 const avatarUrl = computed(() => getAvatarUrl(profile.value));

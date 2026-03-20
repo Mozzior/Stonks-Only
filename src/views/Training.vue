@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex-1 w-full flex flex-col gap-4 min-h-0"
+    class="w-full flex flex-col gap-4 min-h-0"
     :style="
       isTrainingStarted
         ? {
@@ -12,7 +12,9 @@
             background: 'var(--color-bg-body)',
             overflow: 'hidden',
           }
-        : undefined
+        : {
+            height: 'calc(100vh - 3rem)',
+          }
     "
   >
     <!-- Header: Mode & Info -->
@@ -678,7 +680,7 @@
       </div>
 
       <!-- Right: Order Panel & Positions -->
-      <div class="w-80 flex flex-col gap-4" v-show="!isTrainingStarted">
+      <div class="w-80 flex flex-col min-h-0 gap-4" v-show="!isTrainingStarted">
         <!-- Order Panel -->
         <n-card
           :title="t('training.trade.executeTrade')"
@@ -2618,9 +2620,10 @@ async function handleTrade(side: string) {
 
   tradeRecords.value.unshift({
     id: Date.now().toString() + Math.random().toString(36).substring(2, 7),
-    time: new Date(
-      fullData.value[currentIndex.value].timestamp,
-    ).toLocaleString(),
+    time: (() => {
+      const d = new Date(fullData.value[currentIndex.value].timestamp);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    })(),
     action: side === "BUY" ? "BUY" : "SELL",
     amount: tradeAmount.value,
     price: currentPrice.value,
@@ -2685,9 +2688,10 @@ async function closePosition() {
 
   tradeRecords.value.unshift({
     id: Date.now().toString() + Math.random().toString(36).substring(2, 7),
-    time: new Date(
-      fullData.value[currentIndex.value].timestamp,
-    ).toLocaleString(),
+    time: (() => {
+      const d = new Date(fullData.value[currentIndex.value].timestamp);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    })(),
     action: "CLOSE",
     amount: position.value.amount,
     price: currentPrice.value,

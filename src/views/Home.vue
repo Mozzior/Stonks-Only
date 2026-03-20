@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-6">
+  <div class="space-y-6 pb-6">
     <!-- Welcome Header -->
     <div class="flex items-center justify-between">
       <div>

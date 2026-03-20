@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full max-w-7xl mx-auto space-y-8">
+  <div class="w-full max-w-7xl mx-auto space-y-8 pb-6">
     <!-- Hero Section -->
     <div
       class="flex flex-col items-center justify-center text-center space-y-6 py-12 bg-gradient-to-b from-[var(--color-bg-sidebar)] to-transparent rounded-2xl border border-[var(--color-border)]"
