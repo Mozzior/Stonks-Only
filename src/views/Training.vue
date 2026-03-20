@@ -1,6 +1,6 @@
 <template>
   <div
-    class="h-full flex flex-col gap-4"
+    class="flex-1 w-full flex flex-col gap-4 min-h-0"
     :style="
       isTrainingStarted
         ? {
@@ -231,7 +231,7 @@
 
       <!-- Left: K-Line Chart -->
       <div
-        class="flex-1 bg-[var(--color-bg-card)] flex flex-col overflow-hidden relative transition-all duration-300"
+        class="flex-1 min-h-0 bg-[var(--color-bg-card)] flex flex-col overflow-hidden relative transition-all duration-300"
         :class="
           isTrainingStarted
             ? 'border-none rounded-none w-full h-full'
@@ -526,7 +526,7 @@
         <!-- Floating Order Controls for Training Mode -->
         <div
           v-if="isTrainingStarted && showQuickTrade"
-          class="absolute bottom-6 right-6 z-30 flex flex-col gap-2 bg-[var(--color-bg-card)] p-4 rounded-xl border border-[var(--color-border)] shadow-xl w-64"
+          class="absolute top-1/2 left-16 -translate-y-1/2 z-30 flex flex-col gap-2 bg-[var(--color-bg-card)] p-4 rounded-xl border border-[var(--color-border)] shadow-xl w-64"
         >
           <div class="flex justify-between items-center mb-2">
             <span
@@ -538,21 +538,23 @@
             >
           </div>
 
-          <div class="flex gap-2">
+          <div class="flex flex-col gap-2">
+            <n-tabs type="segment" v-model:value="tradeSide" size="small">
+              <n-tab name="BUY">{{ t("training.trade.buy") }}</n-tab>
+              <n-tab name="SELL">{{ t("training.trade.sell") }}</n-tab>
+            </n-tabs>
             <n-button
-              type="primary"
-              class="flex-1"
+              :type="tradeSide === 'BUY' ? 'primary' : 'error'"
+              class="w-full"
               :disabled="isTrainingWindowEnded"
-              @click="handleTrade('BUY')"
-              >{{ t("training.trade.buyLong") }}</n-button
+              @click="handleTrade(tradeSide)"
             >
-            <n-button
-              type="error"
-              class="flex-1"
-              :disabled="isTrainingWindowEnded"
-              @click="handleTrade('SELL')"
-              >{{ t("training.trade.sellShort") }}</n-button
-            >
+              {{
+                tradeSide === "BUY"
+                  ? t("training.trade.buyLong")
+                  : t("training.trade.sellShort")
+              }}
+            </n-button>
           </div>
 
           <div
@@ -602,6 +604,77 @@
             <span class="text-sm">Loading historical data...</span>
           </div>
         </div>
+
+        <!-- Session Trade Records -->
+        <div
+          class="flex-none h-48 border-t border-[var(--color-border)] bg-[var(--color-bg-card)] overflow-y-auto"
+        >
+          <div
+            class="p-3 font-bold text-sm border-b border-[var(--color-border)] sticky top-0 bg-[var(--color-bg-card)] z-10 flex justify-between items-center"
+          >
+            <span>{{ t("training.history.title", "本场交易记录") }}</span>
+          </div>
+          <n-table
+            size="small"
+            :bordered="false"
+            :single-line="false"
+            class="w-full text-xs"
+          >
+            <thead>
+              <tr>
+                <th>{{ t("training.history.time", "Time") }}</th>
+                <th>{{ t("training.history.action", "Action") }}</th>
+                <th>{{ t("training.history.price", "Price") }}</th>
+                <th>{{ t("training.history.amount", "Amount") }}</th>
+                <th>{{ t("training.history.pl", "P/L") }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="record in tradeRecords" :key="record.id">
+                <td>{{ record.time }}</td>
+                <td>
+                  <n-tag
+                    :type="
+                      record.action === 'BUY'
+                        ? 'success'
+                        : record.action === 'SELL'
+                          ? 'error'
+                          : 'warning'
+                    "
+                    size="small"
+                    class="font-bold"
+                  >
+                    {{ record.action }}
+                  </n-tag>
+                </td>
+                <td>${{ record.price.toFixed(2) }}</td>
+                <td>{{ record.amount }}</td>
+                <td>
+                  <span
+                    v-if="record.pl !== undefined"
+                    :class="
+                      record.pl >= 0
+                        ? 'text-[var(--color-success)]'
+                        : 'text-[var(--color-error)]'
+                    "
+                    class="font-bold"
+                  >
+                    {{ record.pl >= 0 ? "+" : "" }}{{ record.pl.toFixed(2) }}
+                  </span>
+                  <span v-else>-</span>
+                </td>
+              </tr>
+              <tr v-if="tradeRecords.length === 0">
+                <td
+                  colspan="5"
+                  class="text-center text-[var(--color-text-secondary)] py-6 italic"
+                >
+                  {{ t("training.history.noRecords", "暂无交易记录") }}
+                </td>
+              </tr>
+            </tbody>
+          </n-table>
+        </div>
       </div>
 
       <!-- Right: Order Panel & Positions -->
@@ -612,105 +685,65 @@
           :bordered="false"
           class="bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)]"
         >
-          <n-tabs type="segment" animated>
-            <n-tab-pane name="buy" :tab="t('training.trade.buy')">
-              <div class="space-y-4 pt-4">
-                <div class="flex flex-col gap-1">
-                  <span class="text-xs text-[var(--color-text-secondary)]">{{
-                    t("training.trade.orderType")
-                  }}</span>
-                  <n-select
-                    v-model:value="orderType"
-                    :options="orderTypeOptions"
-                    size="small"
-                  />
-                </div>
-                <div class="flex flex-col gap-1">
-                  <span class="text-xs text-[var(--color-text-secondary)]">{{
-                    t("training.trade.amountShares")
-                  }}</span>
-                  <n-input-number
-                    v-model:value="tradeAmount"
-                    :min="100"
-                    :step="100"
-                    class="w-full"
-                  />
-                </div>
-                <div class="grid grid-cols-4 gap-2">
-                  <n-button
-                    v-for="p in [10, 25, 50, 100]"
-                    :key="p"
-                    size="tiny"
-                    ghost
-                    @click="setAmountByPercent(p)"
-                    >{{ p }}%</n-button
-                  >
-                </div>
-                <n-button
-                  type="primary"
-                  block
-                  size="large"
-                  class="font-bold mt-4"
-                  :disabled="isTrainingWindowEnded"
-                  @click="handleTrade('BUY')"
-                >
-                  {{ t("training.trade.buyLong") }}
-                </n-button>
-              </div>
-            </n-tab-pane>
-            <n-tab-pane name="sell" :tab="t('training.trade.sell')">
-              <div class="space-y-4 pt-4">
-                <div class="flex flex-col gap-1">
-                  <span class="text-xs text-[var(--color-text-secondary)]">{{
-                    t("training.trade.orderType")
-                  }}</span>
-                  <n-select
-                    v-model:value="orderType"
-                    :options="orderTypeOptions"
-                    size="small"
-                  />
-                </div>
-                <div class="flex flex-col gap-1">
-                  <span class="text-xs text-[var(--color-text-secondary)]">{{
-                    t("training.trade.amountShares")
-                  }}</span>
-                  <n-input-number
-                    v-model:value="tradeAmount"
-                    :min="100"
-                    :step="100"
-                    class="w-full"
-                  />
-                </div>
-                <div class="grid grid-cols-4 gap-2">
-                  <n-button
-                    v-for="p in [10, 25, 50, 100]"
-                    :key="p"
-                    size="tiny"
-                    ghost
-                    @click="setAmountByPercent(p)"
-                    >{{ p }}%</n-button
-                  >
-                </div>
-                <n-button
-                  type="error"
-                  block
-                  size="large"
-                  class="font-bold mt-4"
-                  :disabled="isTrainingWindowEnded"
-                  @click="handleTrade('SELL')"
-                >
-                  {{ t("training.trade.sellShort") }}
-                </n-button>
-              </div>
-            </n-tab-pane>
+          <n-tabs type="segment" v-model:value="tradeSide" animated>
+            <n-tab name="BUY">{{ t("training.trade.buy") }}</n-tab>
+            <n-tab name="SELL">{{ t("training.trade.sell") }}</n-tab>
           </n-tabs>
+          <div class="space-y-4 pt-4">
+            <div class="flex flex-col gap-1">
+              <span class="text-xs text-[var(--color-text-secondary)]">{{
+                t("training.trade.orderType")
+              }}</span>
+              <n-select
+                v-model:value="orderType"
+                :options="orderTypeOptions"
+                size="small"
+              />
+            </div>
+            <div class="flex flex-col gap-1">
+              <span class="text-xs text-[var(--color-text-secondary)]">{{
+                t("training.trade.amountShares")
+              }}</span>
+              <n-input-number
+                v-model:value="tradeAmount"
+                :min="100"
+                :step="100"
+                class="w-full"
+              />
+            </div>
+            <div class="grid grid-cols-4 gap-2">
+              <n-button
+                v-for="p in [10, 25, 50, 100]"
+                :key="p"
+                size="tiny"
+                ghost
+                @click="setAmountByPercent(p)"
+                >{{ p }}%</n-button
+              >
+            </div>
+            <n-button
+              :type="tradeSide === 'BUY' ? 'primary' : 'error'"
+              block
+              size="large"
+              class="font-bold mt-4"
+              :disabled="isTrainingWindowEnded"
+              @click="handleTrade(tradeSide)"
+            >
+              {{
+                tradeSide === "BUY"
+                  ? t("training.trade.buyLong")
+                  : t("training.trade.sellShort")
+              }}
+            </n-button>
+          </div>
         </n-card>
 
         <!-- Current Position -->
         <n-card
           :title="t('training.trade.openPosition')"
           :bordered="false"
-          class="flex-1 bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)] overflow-hidden"
+          class="flex-1 flex flex-col min-h-0 bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)] overflow-hidden"
+          content-class="flex-1 overflow-y-auto"
         >
           <div v-if="position" class="space-y-4">
             <div class="flex justify-between items-center">
@@ -804,79 +837,6 @@
           </div>
         </n-card>
       </div>
-    </div>
-
-    <!-- Bottom: History / Report -->
-    <div
-      v-if="!isTrainingStarted"
-      class="h-56 bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)] flex flex-col overflow-hidden"
-    >
-      <n-tabs v-model:value="activeTab" type="line" animated>
-        <n-tab-pane name="history" :tab="t('training.history.title')">
-          <div
-            class="flex items-center justify-between px-4 py-2 border-b border-[var(--color-border)] bg-[var(--color-bg-sidebar)]"
-          >
-            <span
-              class="text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-widest"
-            >
-              {{ t("training.history.title") }}
-            </span>
-            <n-button text size="tiny" type="primary">
-              {{ t("training.history.viewFullJournal") }}
-            </n-button>
-          </div>
-          <div class="flex-1 overflow-auto">
-            <n-data-table
-              :columns="historyColumns"
-              :data="tradeHistory"
-              size="small"
-              :bordered="false"
-              :pagination="false"
-              :scroll-x="2200"
-            >
-              <template #empty>
-                <div class="p-4 text-center text-[var(--color-text-secondary)]">
-                  {{ t("training.history.noTrades") }}
-                </div>
-              </template>
-            </n-data-table>
-          </div>
-        </n-tab-pane>
-        <n-tab-pane name="report" :tab="t('training.report.title')">
-          <div class="p-4 grid grid-cols-4 gap-4">
-            <n-statistic
-              v-if="reportStats"
-              :label="t('training.report.winRate')"
-              :value="(reportStats.winRate * 100).toFixed(2) + '%'"
-            />
-            <n-statistic
-              v-if="reportStats"
-              :label="t('training.report.profitFactor')"
-              :value="reportStats.profitFactor?.toFixed(2)"
-            />
-            <n-statistic
-              v-if="reportStats"
-              :label="t('training.report.maxDrawdown')"
-              :value="(reportStats.maxDrawdown * 100).toFixed(2) + '%'"
-            />
-            <n-statistic
-              v-if="reportStats"
-              :label="t('training.report.totalReturnPct')"
-              :value="(reportStats.totalReturnPct * 100).toFixed(2) + '%'"
-            />
-          </div>
-          <div class="px-4 pb-3">
-            <n-button
-              size="tiny"
-              tertiary
-              @click="recalcStats"
-              :disabled="!activeSessionId"
-            >
-              {{ t("training.report.recalc") }}
-            </n-button>
-          </div>
-        </n-tab-pane>
-      </n-tabs>
     </div>
 
     <!-- Help Modal -->
@@ -1012,7 +972,6 @@
 <script setup lang="ts">
 import {
   ref,
-  h,
   onMounted,
   onUnmounted,
   shallowRef,
@@ -1030,12 +989,9 @@ import {
   NButtonGroup,
   NSlider,
   NCard,
-  NTabs,
-  NTabPane,
   NSelect,
   NInputNumber,
   NTag,
-  NDataTable,
   NModal,
   NSpin,
   useMessage,
@@ -1043,6 +999,9 @@ import {
   NPopselect,
   NPopover,
   NSwitch,
+  NTable,
+  NTabs,
+  NTab,
 } from "naive-ui";
 import {
   ChevronDownOutline,
@@ -1085,8 +1044,6 @@ import {
   createTrainingSession,
   executeTrainingOrder,
   settleTrainingSession,
-  getTrainingStats,
-  recalcSessionStats,
   listSessions,
 } from "../services/api/trainingApi";
 import {
@@ -1106,17 +1063,27 @@ const { t, locale } = useI18n();
 const { user, profile, refreshProfile } = useAuth();
 
 // State
+interface TradeRecord {
+  id: string;
+  time: string;
+  action: "BUY" | "SELL" | "CLOSE";
+  amount: number;
+  price: number;
+  pl?: number;
+}
+const tradeRecords = ref<TradeRecord[]>([]);
+
 const isChartLoaded = ref(false);
 const chartRef = ref<HTMLElement | null>(null);
 const isPlaying = ref(false);
 const isTrainingStarted = ref(false);
 const showQuickTrade = ref(false);
 const playSpeed = ref(2);
-const activeTab = ref("history");
 const currentTimeframe = ref("daily");
 const currentChartType = ref<CandleType>("candle_solid");
 const orderType = ref("MARKET");
 const tradeAmount = ref(100);
+const tradeSide = ref<"BUY" | "SELL">("BUY");
 const currentPrice = ref(0);
 const showHelp = ref(false);
 const indicators = ref<string[]>(["MA", "VOL"]);
@@ -1137,7 +1104,6 @@ const sessionTradeSeq = ref(0);
 const sessionInitialBalance = ref(0);
 const sessionRealizedPnl = ref(0);
 const sessionPeakBalance = ref(0);
-const reportStats = ref<any | null>(null);
 const isOnline = ref(
   typeof navigator !== "undefined" ? navigator.onLine : true,
 );
@@ -1267,144 +1233,6 @@ const orderTypeOptions = computed(() => [
 ]);
 
 const position = ref<any>(null);
-
-type PositionSnapshot = {
-  side: "LONG" | "SHORT" | "FLAT" | null;
-  amount: number;
-  entryPrice: number;
-  plAmount?: number;
-};
-
-type TradeHistoryRow = {
-  id: number;
-  seqNo: number;
-  time: string;
-  action: "BUY" | "SELL" | "CLOSE";
-  side: "LONG" | "SHORT" | "FLAT";
-  orderType: string;
-  price: number;
-  amount: number;
-  notional: number;
-  fee: number;
-  beforePosition: PositionSnapshot;
-  afterPosition: PositionSnapshot;
-  realizedPnl: number;
-  floatingPnl: number;
-  status: string;
-};
-
-const tradeHistory = ref<TradeHistoryRow[]>([]);
-
-function formatMoney(value: number) {
-  return `$${Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
-}
-
-function snapshotPosition(input: any): PositionSnapshot {
-  if (!input) return { side: "FLAT", amount: 0, entryPrice: 0, plAmount: 0 };
-  return {
-    side: input.side ?? "FLAT",
-    amount: Number(input.amount ?? 0),
-    entryPrice: Number(input.entryPrice ?? 0),
-    plAmount: Number(input.plAmount ?? 0),
-  };
-}
-
-function formatPositionSnapshot(input: PositionSnapshot) {
-  if (!input || !input.side || input.side === "FLAT" || input.amount <= 0) {
-    return "FLAT";
-  }
-  return `${input.side} ${input.amount}@${Number(input.entryPrice || 0).toFixed(2)}`;
-}
-
-const historyColumns = computed(() => [
-  { title: t("training.history.seq"), key: "seqNo" },
-  { title: t("training.history.time"), key: "time" },
-  {
-    title: t("training.history.action"),
-    key: "action",
-    render(row: TradeHistoryRow) {
-      const color =
-        row.action === "BUY"
-          ? "success"
-          : row.action === "SELL"
-            ? "error"
-            : "warning";
-      return h(
-        NTag,
-        { type: color, size: "tiny", bordered: false },
-        { default: () => row.action },
-      );
-    },
-  },
-  {
-    title: t("training.history.side"),
-    key: "side",
-    render(row: TradeHistoryRow) {
-      const color =
-        row.side === "LONG"
-          ? "success"
-          : row.side === "SHORT"
-            ? "error"
-            : "default";
-      return h(
-        NTag,
-        { type: color, size: "tiny", bordered: false },
-        { default: () => row.side },
-      );
-    },
-  },
-  { title: t("training.history.orderType"), key: "orderType" },
-  {
-    title: t("training.history.price"),
-    key: "price",
-    render: (row: TradeHistoryRow) => formatMoney(row.price),
-  },
-  { title: t("training.history.amount"), key: "amount" },
-  {
-    title: t("training.history.notional"),
-    key: "notional",
-    render: (row: TradeHistoryRow) => formatMoney(row.notional),
-  },
-  {
-    title: t("training.history.fee"),
-    key: "fee",
-    render: (row: TradeHistoryRow) => formatMoney(row.fee),
-  },
-  {
-    title: t("training.history.beforePosition"),
-    key: "beforePosition",
-    render: (row: TradeHistoryRow) =>
-      formatPositionSnapshot(row.beforePosition),
-  },
-  {
-    title: t("training.history.afterPosition"),
-    key: "afterPosition",
-    render: (row: TradeHistoryRow) => formatPositionSnapshot(row.afterPosition),
-  },
-  {
-    title: t("training.history.realizedPnl"),
-    key: "realizedPnl",
-    render: (row: TradeHistoryRow) => formatMoney(row.realizedPnl),
-  },
-  {
-    title: t("training.history.floatingPnl"),
-    key: "floatingPnl",
-    render: (row: TradeHistoryRow) => formatMoney(row.floatingPnl),
-  },
-  {
-    title: t("training.history.status"),
-    key: "status",
-    render: (row: TradeHistoryRow) =>
-      h(
-        NTag,
-        {
-          size: "tiny",
-          ghost: true,
-        },
-        { default: () => row.status },
-      ),
-  },
-]);
 
 // Mock Data Generator
 // Moved to src/utils/mockData.ts
@@ -2697,18 +2525,10 @@ async function persistTradeLog(
   action: "BUY" | "SELL" | "CLOSE",
   amount: number,
   price: number,
-  detail?: {
-    beforePosition?: PositionSnapshot;
-    afterPosition?: PositionSnapshot;
-    realizedPnl?: number;
-    floatingPnl?: number;
-    status?: string;
-  },
 ) {
   if (!user.value) return;
   const klineTimestamp = fullData.value[currentIndex.value]?.timestamp ?? null;
 
-  let tradeData: any = null;
   if (activeSessionId.value) {
     const result = await executeTrainingOrder({
       sessionId: activeSessionId.value,
@@ -2722,47 +2542,12 @@ async function persistTradeLog(
       message.warning(
         t("training.messages.offlineOrderSaved") || "Saved offline",
       );
-    } else {
-      tradeData = result.data as any;
     }
   } else {
     saveOfflineOrder({ action, amount, priceHint: price, klineTimestamp });
     message.warning(
       t("training.messages.offlineOrderSaved") || "Saved offline",
     );
-  }
-
-  const nextSeq = tradeData?.seqNo ?? sessionTradeSeq.value + 1;
-  const tradeTime = tradeData?.tradeTime || new Date().toISOString();
-  const afterPosition =
-    tradeData?.afterPosition || snapshotPosition(position.value);
-  const beforePosition =
-    tradeData?.beforePosition ||
-    detail?.beforePosition ||
-    snapshotPosition(null);
-
-  if (!isTrainingStarted.value) {
-    sessionTradeSeq.value = nextSeq;
-    tradeHistory.value.unshift({
-      id: Date.now(),
-      seqNo: nextSeq,
-      time: new Date(tradeTime).toLocaleTimeString(),
-      action,
-      side:
-        afterPosition.side === null
-          ? "FLAT"
-          : (afterPosition.side as "LONG" | "SHORT" | "FLAT"),
-      orderType: orderType.value,
-      price,
-      amount,
-      notional: tradeData?.notional || Number((amount * price).toFixed(2)),
-      fee: tradeData?.fee || 0,
-      beforePosition,
-      afterPosition,
-      realizedPnl: tradeData?.realizedPnl || 0,
-      floatingPnl: detail?.floatingPnl ?? 0,
-      status: tradeData?.status || "PENDING",
-    });
   }
 }
 
@@ -2805,7 +2590,6 @@ async function handleTrade(side: string) {
     return;
   }
 
-  const beforePosition = snapshotPosition(position.value);
   position.value = {
     side: side === "BUY" ? "LONG" : "SHORT",
     amount: tradeAmount.value,
@@ -2814,7 +2598,6 @@ async function handleTrade(side: string) {
     pl: 0,
     plAmount: 0,
   };
-  const afterPosition = snapshotPosition(position.value);
 
   // Add marker to chart
   if (chartInstance.value) {
@@ -2833,17 +2616,20 @@ async function handleTrade(side: string) {
     }),
   );
 
+  tradeRecords.value.unshift({
+    id: Date.now().toString() + Math.random().toString(36).substring(2, 7),
+    time: new Date(
+      fullData.value[currentIndex.value].timestamp,
+    ).toLocaleString(),
+    action: side === "BUY" ? "BUY" : "SELL",
+    amount: tradeAmount.value,
+    price: currentPrice.value,
+  });
+
   await persistTradeLog(
     side === "BUY" ? "BUY" : "SELL",
     tradeAmount.value,
     currentPrice.value,
-    {
-      beforePosition,
-      afterPosition,
-      realizedPnl: 0,
-      floatingPnl: Number(position.value?.plAmount ?? 0),
-      status: "FILLED",
-    },
   );
 }
 
@@ -2879,7 +2665,6 @@ async function closePosition() {
   }
 
   const side = position.value.side === "LONG" ? "SELL" : "BUY";
-  const beforePosition = snapshotPosition(position.value);
 
   // Add marker to chart
   if (chartInstance.value) {
@@ -2897,13 +2682,19 @@ async function closePosition() {
   const liveBalance = sessionInitialBalance.value + sessionRealizedPnl.value;
   sessionPeakBalance.value = Math.max(sessionPeakBalance.value, liveBalance);
   message.success(t("training.messages.positionClosed", { pl: pl.toFixed(2) }));
-  await persistTradeLog("CLOSE", position.value.amount, currentPrice.value, {
-    beforePosition,
-    afterPosition: snapshotPosition(null),
-    realizedPnl: Number(pl.toFixed(2)),
-    floatingPnl: 0,
-    status: "FILLED",
+
+  tradeRecords.value.unshift({
+    id: Date.now().toString() + Math.random().toString(36).substring(2, 7),
+    time: new Date(
+      fullData.value[currentIndex.value].timestamp,
+    ).toLocaleString(),
+    action: "CLOSE",
+    amount: position.value.amount,
+    price: currentPrice.value,
+    pl: pl,
   });
+
+  await persistTradeLog("CLOSE", position.value.amount, currentPrice.value);
   position.value = null;
 }
 
@@ -2938,20 +2729,6 @@ async function exitTraining() {
     document.exitFullscreen().catch((err) => console.error(err));
   }
   message.info(t("training.messages.sessionEnded"));
-}
-
-async function loadStats() {
-  if (!activeSessionId.value) return;
-  const { data } = await getTrainingStats(activeSessionId.value);
-  if (data) {
-    reportStats.value = data;
-    return;
-  }
-  const recalcRes = await recalcSessionStats(activeSessionId.value);
-  const stats = (recalcRes.data as any)?.stats;
-  if (stats) {
-    reportStats.value = stats;
-  }
 }
 
 async function bootstrapSession() {
@@ -3056,7 +2833,6 @@ async function bootstrapSession() {
       }
       activeSessionId.value = latest.$id;
       isChartLoaded.value = true;
-      await loadStats();
       return;
     }
   } catch (e) {
@@ -3111,11 +2887,11 @@ async function bootstrapSession() {
 async function startTraining() {
   await refreshProfile();
   isTrainingStarted.value = true;
-  tradeHistory.value = [];
   sessionTradeSeq.value = 0;
   sessionInitialBalance.value = accountBalance.value;
   sessionRealizedPnl.value = 0;
   sessionPeakBalance.value = sessionInitialBalance.value;
+  tradeRecords.value = [];
   if (!activeSessionId.value && user.value && currentStock.value) {
     try {
       const sDate = new Date(
@@ -3238,22 +3014,8 @@ async function syncOfflineIfAny() {
     }
     clearOfflineOrders();
     clearOfflineSession();
-    if (!isTrainingStarted.value) {
-      await loadStats();
-    }
     message.success(t("training.messages.synced") || "Synced");
   } catch {}
-}
-
-async function recalcStats() {
-  if (!activeSessionId.value) return;
-  const res = await recalcSessionStats(activeSessionId.value);
-  const stats = (res.data as any)?.stats;
-  if (stats) {
-    reportStats.value = stats;
-    return;
-  }
-  await loadStats();
 }
 </script>
 

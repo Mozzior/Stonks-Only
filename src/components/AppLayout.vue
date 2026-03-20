@@ -67,13 +67,17 @@
       </div>
     </n-layout-sider>
 
-    <n-layout class="bg-[var(--color-bg-body)] h-full flex flex-col">
+    <n-layout
+      class="bg-[var(--color-bg-body)] h-full"
+      :content-style="{ display: 'flex', flexDirection: 'column', height: '100%' }"
+    >
       <n-layout-content
         class="flex-1 min-h-0 bg-[var(--color-bg-body)] flex flex-col"
         :content-style="{
           flex: '1 1 0%',
           display: 'flex',
           flexDirection: 'column',
+          height: '100%',
         }"
         :native-scrollbar="false"
       >
