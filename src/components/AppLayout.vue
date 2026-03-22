@@ -31,11 +31,12 @@
 
       <n-menu
         :collapsed="collapsed"
-        :collapsed-width="64"
+        :collapsed-width="84"
         :collapsed-icon-size="22"
         :options="menuOptions"
         :value="activeKey"
         @update:value="handleUpdateValue"
+        class="w-full"
       />
 
       <div
@@ -89,7 +90,7 @@
 </template>
 
 <script setup lang="ts">
-import { h, ref, computed } from "vue";
+import { h, ref, computed, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import {
   NIcon,
@@ -234,4 +235,26 @@ async function handleUpdateValue(key: string) {
     router.push("/login");
   }
 }
+
+watch(collapsed, () => {
+  setTimeout(() => window.dispatchEvent(new Event("resize")), 0);
+  setTimeout(() => window.dispatchEvent(new Event("resize")), 200);
+  setTimeout(() => window.dispatchEvent(new Event("resize")), 400);
+});
 </script>
+
+<style scoped>
+:deep(.n-menu--collapsed .n-menu-item .n-menu-item-content) {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+:deep(
+  .n-menu--collapsed
+    .n-menu-item
+    .n-menu-item-content
+    .n-menu-item-content__icon
+) {
+  margin-right: 0;
+}
+</style>

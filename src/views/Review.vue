@@ -153,14 +153,12 @@
                 t("review.charts.losingSessions")
               }}</span>
               <span class="text-[var(--color-text-primary)]"
-                >{{ losingSessionsCount }} ({{
-                  (100 - winRate).toFixed(1)
-                }}%)</span
+                >{{ losingSessionsCount }} ({{ losingRate }}%)</span
               >
             </div>
             <n-progress
               type="line"
-              :percentage="100 - winRate"
+              :percentage="losingRate"
               :height="8"
               color="#EF4444"
               :show-indicator="false"
@@ -243,6 +241,11 @@ const winRate = computed(() => {
       1,
     ),
   );
+});
+
+const losingRate = computed(() => {
+  if (completedSessions.value === 0) return 0;
+  return Number((100 - winRate.value).toFixed(1));
 });
 
 const totalPnl = computed(() =>

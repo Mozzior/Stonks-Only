@@ -26,7 +26,9 @@ function getUserProfileRepoConfig() {
     throw new Error("Missing Appwrite config: VITE_APPWRITE_DATABASE_ID");
   }
   if (!userProfileCollectionId) {
-    throw new Error("Missing Appwrite config: VITE_APPWRITE_USER_PROFILE_COLLECTION_ID");
+    throw new Error(
+      "Missing Appwrite config: VITE_APPWRITE_USER_PROFILE_COLLECTION_ID",
+    );
   }
   if (!trainingBalanceLedgerCollectionId) {
     throw new Error(
@@ -53,7 +55,8 @@ function toUserProfile(doc: Models.Document): UserProfile {
     membership_tier:
       (source.membership_tier as UserProfile["membership_tier"]) ?? "free",
     membership_status:
-      (source.membership_status as UserProfile["membership_status"]) ?? "inactive",
+      (source.membership_status as UserProfile["membership_status"]) ??
+      "inactive",
     membership_expires_at:
       (source.membership_expires_at as string | null) ?? null,
     created_at: String(source.created_at ?? doc.$createdAt),
@@ -113,7 +116,7 @@ export async function getOrCreateProfile(
         user_id: userId,
         display_name: defaults?.display_name ?? null,
         avatar_url: defaults?.avatar_url ?? null,
-        training_balance: defaults?.training_balance ?? 100000,
+        training_balance: defaults?.training_balance ?? 10000,
         currency: defaults?.currency ?? "USD",
         membership_tier: defaults?.membership_tier ?? "free",
         membership_status: defaults?.membership_status ?? "inactive",
@@ -247,8 +250,7 @@ export async function listBalanceLedger(
     return ok(
       result.documents.map((doc: Models.Document) => ({
         id: doc.$id,
-        created_at:
-          (doc as AppwriteDocumentData).created_at ?? doc.$createdAt,
+        created_at: (doc as AppwriteDocumentData).created_at ?? doc.$createdAt,
         ...doc,
       })),
     );

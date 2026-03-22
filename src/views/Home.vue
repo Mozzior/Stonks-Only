@@ -139,11 +139,11 @@
     <!-- Main Content Area -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- Recent Sessions (Span 2) -->
-      <div class="lg:col-span-2 space-y-6">
+      <div class="lg:col-span-2 space-y-6 flex flex-col">
         <n-card
           :title="t('home.recentSessions')"
           :bordered="false"
-          class="bg-[var(--color-bg-card)] rounded-xl min-h-[400px]"
+          class="bg-[var(--color-bg-card)] rounded-xl flex-1"
         >
           <template #header-extra>
             <n-button size="small" ghost @click="router.push('/review')">{{

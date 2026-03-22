@@ -120,7 +120,7 @@ export default withHandler(async (context, logger) => {
     ).documents || [];
   const stats = computeStats(
     orders,
-    Number(session.initial_balance || session.total_equity || 100000),
+    Number(session.initial_balance || session.total_equity || 10000),
   );
   if (statsCol) {
     try {

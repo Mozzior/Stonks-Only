@@ -43,7 +43,7 @@ export async function getWalletLedger(limit = 20, cursor?: string) {
     if (!userId) return fail({ message: "Not logged in", code: "UNAUTHORIZED" });
 
     const queries = [
-      Query.equal("user_id", userId),
+      Query.equal("user_id", [userId]),
       Query.limit(limit),
       Query.orderDesc("$createdAt")
     ];
@@ -56,7 +56,7 @@ export async function getWalletLedger(limit = 20, cursor?: string) {
       appwriteConfig.trainingBalanceLedgerCollectionId!,
       queries
     );
-    return ok(response.documents);
+    return ok(response);
   } catch (error) {
     return fail(error);
   }

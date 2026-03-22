@@ -1091,6 +1091,7 @@ const showHelp = ref(false);
 const indicators = ref<string[]>(["MA", "VOL"]);
 const currentDrawingTool = ref<string | null>(null);
 const chartInstance = shallowRef<Chart | null>(null);
+let resizeObserver: ResizeObserver | null = null;
 const isMounted = ref(true);
 const isMagnetMode = ref(false);
 const isDrawingLocked = ref(false);
@@ -1957,6 +1958,10 @@ onMounted(() => {
       chartInstance.value?.resize();
     };
     window.addEventListener("resize", resizeHandler);
+    resizeObserver = new ResizeObserver(() => {
+      chartInstance.value?.resize();
+    });
+    resizeObserver.observe(chartRef.value as Element);
 
     applyBaseStyles();
     applyChartLocale();
@@ -2053,6 +2058,10 @@ onUnmounted(() => {
   if (resizeHandler) {
     window.removeEventListener("resize", resizeHandler);
     resizeHandler = null;
+  }
+  if (resizeObserver) {
+    resizeObserver.disconnect();
+    resizeObserver = null;
   }
 
   window.removeEventListener("keydown", handleKeydown);

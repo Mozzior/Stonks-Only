@@ -29,7 +29,12 @@ export default withHandler(async (context, logger) => {
     `RND-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
   const period = body?.period || "daily";
   const reqStatus = String(body?.status || "").toLowerCase();
-  const status = reqStatus === "completed" ? "completed" : reqStatus === "aborted" ? "aborted" : "running";
+  const status =
+    reqStatus === "completed"
+      ? "completed"
+      : reqStatus === "aborted"
+        ? "aborted"
+        : "running";
   const tsCode = body?.tsCode || symbol;
   const trainStartIdx = Number(body?.trainRange?.startIndex ?? 0);
   const trainEndIdx = Number(body?.trainRange?.endIndex ?? 0);
@@ -41,7 +46,7 @@ export default withHandler(async (context, logger) => {
     body?.endDate ||
     (body?.trainRange && body?.trainRange.endDate) ||
     new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString();
-  const initialBalance = Number(body?.initialBalance ?? 100000);
+  const initialBalance = Number(body?.initialBalance ?? 10000);
   const startPrice = Number(body?.startPrice ?? 0);
   const docId = ID.unique();
   const data = {

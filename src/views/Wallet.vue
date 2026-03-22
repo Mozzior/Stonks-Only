@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-6 pb-6">
+  <div class="space-y-6 pb-6 flex flex-col h-full">
     <!-- Balance Overview -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div
@@ -174,7 +174,8 @@
     <n-card
       :title="t('wallet.history.title')"
       :bordered="false"
-      class="bg-[var(--color-bg-card)] rounded-2xl border border-[var(--color-border)]"
+      class="bg-[var(--color-bg-card)] rounded-2xl border border-[var(--color-border)] flex-1 flex flex-col"
+      content-style="flex: 1; display: flex; flex-direction: column;"
     >
       <template #header-extra>
         <n-radio-group v-model:value="historyFilter" size="small">
@@ -196,6 +197,8 @@
       />
       <n-data-table
         v-else
+        class="flex-1"
+        flex-height
         :columns="historyColumns"
         :data="filteredHistory"
         :pagination="{ pageSize: 10 }"
@@ -207,7 +210,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, h, onMounted } from "vue";
+import { ref, computed, h, onMounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import {
   NCard,
@@ -267,10 +270,11 @@ const historyColumns = computed(() => [
     title: t("wallet.activity.columns.activity"),
     key: "type",
     render(row: any) {
-      let typeText = row.type.replace("_", " ");
-      if (row.type === "RECHARGE") {
+      const norm = String(row.type || "").toUpperCase();
+      let typeText = norm.replace(/_/g, " ");
+      if (norm === "RECHARGE") {
         typeText = t("wallet.activity.recharge");
-      } else if (row.type === "TRADE_PNL") {
+      } else if (norm === "TRADE_PNL") {
         typeText = t("wallet.activity.tradePnl");
       }
 
@@ -320,33 +324,42 @@ const historyColumns = computed(() => [
 ]);
 
 const filteredHistory = computed(() => {
-  if (historyFilter.value === "all") return historyData.value;
-  if (historyFilter.value === "trade")
-    return historyData.value.filter((h) => h.type.startsWith("TRADE"));
-  return historyData.value.filter((h) => !h.type.startsWith("TRADE"));
+  const list = historyData.value;
+  if (historyFilter.value === "all") return list;
+  const isTrade = (x: any) =>
+    String(x?.type || "")
+      .toUpperCase()
+      .startsWith("TRADE");
+  if (historyFilter.value === "trade") return list.filter(isTrade);
+  return list.filter((h) => !isTrade(h));
 });
 
 async function loadHistory() {
-  if (!user.value) {
-    historyData.value = [];
-    return;
-  }
+  if (!user.value) return;
   const { data, error } = await getWalletLedger(100);
   if (error) {
     message.error(error.message);
     return;
   }
+  const list = Array.isArray(data)
+    ? data
+    : Array.isArray((data as any)?.documents)
+      ? (data as any).documents
+      : [];
   historyData.value =
-    data?.map((item: any) => {
+    list.map((item: any) => {
       const trade = item.change_type === "trade_pnl";
-      // Map other types if necessary
       return {
         id: item.$id,
-        type: trade ? "TRADE_PNL" : item.change_type.toUpperCase(),
+        type: trade
+          ? "TRADE_PNL"
+          : item.change_type
+            ? item.change_type.toUpperCase()
+            : "UNKNOWN",
         amount: Number(item.amount),
-        time: new Date(item.created_at).toLocaleString(),
+        time: new Date(item.created_at || item.$createdAt).toLocaleString(),
         status: "COMPLETED",
-        detail: item.note || item.change_type,
+        detail: item.note || item.change_type || "N/A",
       };
     }) ?? [];
 }
@@ -387,5 +400,11 @@ function formatCurrency(value: number) {
 
 onMounted(async () => {
   await loadHistory();
+});
+
+watch(user, async (val) => {
+  if (val) {
+    await loadHistory();
+  }
 });
 </script>
