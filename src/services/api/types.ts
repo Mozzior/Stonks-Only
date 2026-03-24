@@ -29,9 +29,19 @@ export interface MembershipUpgradePayload {
 
 export interface TrainingOrderPayload {
   sessionId: string;
-  action: "BUY" | "SELL" | "CLOSE";
+  action: "LONG" | "SHORT" | "CLOSE";
+  closeSide?: "LONG" | "SHORT";
   amount?: number;
   priceHint?: number;
   klineTimestamp?: number;
+  override?: boolean;
+  cash?: number;
+  position?: number;
+  avgEntryPrice?: number;
+  marketValue?: number;
+  totalEquity?: number;
+  realizedPnl?: number;
+  fee?: number;
+  notional?: number;
+  orderId?: string;
 }
-

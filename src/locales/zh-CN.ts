@@ -589,10 +589,11 @@ export default {
         "通过我们的高级会员计划提升您的交易技能。选择适合您目标的方案。",
     },
     plans: {
-      popular: "热门",
+      popular: "最受欢迎",
       perMonth: "/月",
-      currentPlan: "当前计划",
+      currentPlan: "当前方案",
       upgradeNow: "立即升级",
+      downgrade: "降级",
       upgradeSuccess: "升级成功！",
       upgradeFailed: "升级失败",
       rookie: {

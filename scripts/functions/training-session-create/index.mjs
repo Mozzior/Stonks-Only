@@ -1,5 +1,5 @@
 import { withHandler, ok, fail, parseBody } from "../_shared/response.mjs";
-import { Client, Databases, ID } from "node-appwrite";
+import { Client, Databases, ID, Query } from "node-appwrite";
 
 export default withHandler(async (context, logger) => {
   const { req } = context;
@@ -46,7 +46,24 @@ export default withHandler(async (context, logger) => {
     body?.endDate ||
     (body?.trainRange && body?.trainRange.endDate) ||
     new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString();
-  const initialBalance = Number(body?.initialBalance ?? 10000);
+  
+  // 获取用户当前的 training_balance
+  let userBalance = 10000;
+  try {
+    const userProfileList = await databases.listDocuments(databaseId, "user_profile", [
+      Query.equal("user_id", userId)
+    ]);
+    if (userProfileList.documents.length > 0) {
+      const profile = userProfileList.documents[0];
+      if (typeof profile.training_balance === "number") {
+        userBalance = profile.training_balance;
+      }
+    }
+  } catch (err) {
+    logger.error("Failed to fetch user_profile for balance", err);
+  }
+
+  const initialBalance = Number(body?.initialBalance ?? userBalance);
   const startPrice = Number(body?.startPrice ?? 0);
   const docId = ID.unique();
   const data = {

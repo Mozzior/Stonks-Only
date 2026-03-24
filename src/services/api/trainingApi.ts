@@ -134,6 +134,37 @@ export async function listSessions(limit: number = 20, cursor?: string) {
   }
 }
 
+export async function getLatestActiveSession() {
+  try {
+    const userId = await getUserId();
+    if (!userId)
+      return fail({ message: "Not logged in", code: "UNAUTHORIZED" });
+    const statuses = [
+      "active",
+      "running",
+      "initialized",
+      "pending",
+      "in_progress",
+      "not_started",
+    ];
+    const queries = [
+      Query.equal("user_id", userId),
+      Query.equal("status", statuses),
+      Query.orderDesc("updated_at"),
+      Query.limit(1),
+    ];
+    const response = await appwrite.databases.listDocuments(
+      appwriteConfig.databaseId!,
+      appwriteConfig.trainingSessionCollectionId!,
+      queries,
+    );
+    const doc = response.total > 0 ? response.documents[0] : null;
+    return ok(doc);
+  } catch (error) {
+    return fail(error);
+  }
+}
+
 export async function getTrainingStats(sessionId: string) {
   try {
     if (!appwriteConfig.trainingStatsCollectionId) {
@@ -172,4 +203,20 @@ export async function saveSessionProgress(
   } catch (error) {
     return fail(error);
   }
+}
+
+export function snapshotSessionDaily(
+  sessionId: string,
+  currentDateIso: string,
+  markPrice?: number,
+) {
+  return executeFunction<
+    { sessionId: string; reason: string; currentDate?: string; markPrice?: number },
+    Record<string, unknown>
+  >(trainingSettlementFunctionId, {
+    sessionId,
+    reason: "daily",
+    currentDate: currentDateIso,
+    markPrice,
+  });
 }

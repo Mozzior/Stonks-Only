@@ -87,11 +87,34 @@ export default withHandler(async (context, logger) => {
   const reason = body.reason || "daily";
   const markPrice = Number(body.markPrice ?? 0);
   const currentDate = body.currentDate || new Date().toISOString();
+  
+  const orders =
+    (
+      await databases.listDocuments(db, ordersCol, [
+        Query.equal("session_id", sessionId),
+      ])
+    ).documents || [];
+    
+  const stats = computeStats(
+    orders,
+    Number(session.initial_balance || session.total_equity || 10000),
+  );
+
   let updates = {};
   if (reason === "completed" || reason === "aborted") {
-    updates = { status: reason, updated_at: new Date().toISOString() };
+    updates = { 
+      status: reason, 
+      updated_at: currentDate,
+      ending_balance: Number(session.cash || 0),
+      realized_pnl: stats.totalReturn,
+      return_pct: Number((stats.totalReturnPct * 100).toFixed(4))
+    };
   } else if (reason === "recalc") {
-    updates = {};
+    updates = {
+      ending_balance: Number(session.cash || 0),
+      realized_pnl: stats.totalReturn,
+      return_pct: Number((stats.totalReturnPct * 100).toFixed(4))
+    };
   } else {
     const marketValue = Number(
       (
@@ -106,22 +129,44 @@ export default withHandler(async (context, logger) => {
       current_date: currentDate,
       market_value: marketValue,
       total_equity: totalEquity,
-      updated_at: new Date().toISOString(),
+      updated_at: currentDate,
     };
   }
   if (Object.keys(updates).length > 0) {
     await databases.updateDocument(db, sessionsCol, sessionId, updates);
   }
-  const orders =
-    (
-      await databases.listDocuments(db, ordersCol, [
-        Query.equal("session_id", sessionId),
-      ])
-    ).documents || [];
-  const stats = computeStats(
-    orders,
-    Number(session.initial_balance || session.total_equity || 10000),
-  );
+
+  // Create ledger entry for completed session PnL
+  if (reason === "completed") {
+    try {
+      const ledgerData = {
+        user_id: userId,
+        session_id: sessionId,
+        amount: stats.totalReturn,
+        balance_after: Number(session.cash || 0),
+        change_type: "trade_pnl",
+        created_at: currentDate,
+      };
+      // We use a deterministic order_id to prevent duplicates on recalc
+      const uniqueId = `pnl_${sessionId}`;
+      ledgerData.source_id = uniqueId;
+      ledgerData.order_id = uniqueId;
+
+      await databases.createDocument(
+        db,
+        "training_balance_ledger",
+        ID.unique(),
+        ledgerData
+      );
+    } catch (err) {
+      // If it's a duplicate (e.g. error code 409), we can ignore or update
+      if (err.code === 409) {
+        logger.info(`Ledger entry for session ${sessionId} already exists.`);
+      } else {
+        logger.error("Failed to create ledger entry", err);
+      }
+    }
+  }
   if (statsCol) {
     try {
       await databases.getDocument(db, statsCol, sessionId);

@@ -232,7 +232,11 @@ import {
   InformationCircleOutline,
 } from "@vicons/ionicons5";
 import { useAuth } from "../composables/useAuth";
-import { getWalletLedger, rechargeWallet } from "../services/api/walletApi";
+import {
+  getWalletLedger,
+  rechargeWallet,
+  getWalletBalance,
+} from "../services/api/walletApi";
 
 const { t } = useI18n();
 const message = useMessage();
@@ -242,9 +246,11 @@ const rechargeAmount = ref(100);
 const recharging = ref(false);
 
 const historyData = ref<any[]>([]);
+const walletBalance = ref<number>(0);
+const walletCurrency = ref<string>("USD");
 
 const totalAssets = computed(() =>
-  Number(profile.value?.training_balance ?? 0),
+  Number(walletBalance.value || profile.value?.training_balance || 0),
 );
 
 const todayPnl = computed(() =>
@@ -359,7 +365,12 @@ async function loadHistory() {
         amount: Number(item.amount),
         time: new Date(item.created_at || item.$createdAt).toLocaleString(),
         status: "COMPLETED",
-        detail: item.note || item.change_type || "N/A",
+        detail:
+          item.note ||
+          item.change_type ||
+          (item.balance_after
+            ? `${t("wallet.activity.balanceAfter")}: ${Number(item.balance_after).toLocaleString()}`
+            : "N/A"),
       };
     }) ?? [];
 }
@@ -384,6 +395,11 @@ async function handleRecharge() {
     }
 
     await refreshProfile();
+    const balRes = await getWalletBalance();
+    if (balRes.data) {
+      walletBalance.value = Number(balRes.data.balance || 0);
+      walletCurrency.value = String(balRes.data.currency || "USD");
+    }
     await loadHistory();
     message.success(t("wallet.recharge.success", { amount }));
   } finally {
@@ -399,11 +415,21 @@ function formatCurrency(value: number) {
 }
 
 onMounted(async () => {
+  const balRes = await getWalletBalance();
+  if (balRes.data) {
+    walletBalance.value = Number(balRes.data.balance || 0);
+    walletCurrency.value = String(balRes.data.currency || "USD");
+  }
   await loadHistory();
 });
 
 watch(user, async (val) => {
   if (val) {
+    const balRes = await getWalletBalance();
+    if (balRes.data) {
+      walletBalance.value = Number(balRes.data.balance || 0);
+      walletCurrency.value = String(balRes.data.currency || "USD");
+    }
     await loadHistory();
   }
 });

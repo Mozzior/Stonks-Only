@@ -599,10 +599,11 @@ export default {
         "Level up your trading skills with our premium membership plans. Choose the one that fits your goals.",
     },
     plans: {
-      popular: "POPULAR",
+      popular: "Popular",
       perMonth: "/month",
       currentPlan: "Current Plan",
       upgradeNow: "Upgrade Now",
+      downgrade: "Downgrade",
       upgradeSuccess: "Upgrade successful!",
       upgradeFailed: "Failed to upgrade",
       rookie: {

@@ -1,1517 +1,1710 @@
 {
-  "projectId": "69b6db430036547797c4",
-  "projectName": "Stonks Only",
-  "settings": {
-    "services": {
-      "account": true,
-      "avatars": true,
-      "databases": true,
-      "locale": true,
-      "health": true,
-      "storage": true,
-      "teams": true,
-      "users": true,
-      "sites": true,
-      "functions": true,
-      "graphql": true,
-      "messaging": true
+    "projectId": "69b6db430036547797c4",
+    "projectName": "Stonks Only",
+    "settings": {
+        "services": {
+            "account": true,
+            "avatars": true,
+            "databases": true,
+            "locale": true,
+            "health": true,
+            "storage": true,
+            "teams": true,
+            "users": true,
+            "sites": true,
+            "functions": true,
+            "graphql": true,
+            "messaging": true
+        },
+        "auth": {
+            "methods": {
+                "jwt": true,
+                "phone": true,
+                "invites": true,
+                "anonymous": true,
+                "email-otp": true,
+                "magic-url": true,
+                "email-password": true
+            },
+            "security": {
+                "duration": 31536000,
+                "limit": 0,
+                "sessionsLimit": 10,
+                "passwordHistory": 0,
+                "passwordDictionary": false,
+                "personalDataCheck": false,
+                "sessionAlerts": false,
+                "mockNumbers": []
+            }
+        }
     },
-    "auth": {
-      "methods": {
-        "jwt": true,
-        "phone": true,
-        "invites": true,
-        "anonymous": true,
-        "email-otp": true,
-        "magic-url": true,
-        "email-password": true
-      },
-      "security": {
-        "duration": 31536000,
-        "limit": 0,
-        "sessionsLimit": 10,
-        "passwordHistory": 0,
-        "passwordDictionary": false,
-        "personalDataCheck": false,
-        "sessionAlerts": false,
-        "mockNumbers": []
-      }
-    }
-  },
-  "tablesDB": [
-    {
-      "$id": "69b6ef38003ab4914297",
-      "name": "DATABASE",
-      "enabled": true
-    }
-  ],
-  "tables": [
-    {
-      "$id": "training_balance_ledger",
-      "$permissions": ["read(\"users\")"],
-      "databaseId": "69b6ef38003ab4914297",
-      "name": "TRAINING_BALANCE_LEDGER",
-      "enabled": true,
-      "rowSecurity": true,
-      "columns": [
+    "tablesDB": [
         {
-          "key": "user_id",
-          "type": "string",
-          "required": true,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "session_id",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "amount",
-          "type": "double",
-          "required": true,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "balance_after",
-          "type": "double",
-          "required": true,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "note",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 512,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "source_id",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "order_id",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "change_type",
-          "type": "string",
-          "required": true,
-          "array": false,
-          "size": 32,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "currency",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 8,
-          "default": "USD",
-          "encrypt": false
-        },
-        {
-          "key": "created_at",
-          "type": "datetime",
-          "required": false,
-          "array": false,
-          "default": null,
-          "format": ""
+            "$id": "69b6ef38003ab4914297",
+            "name": "DATABASE",
+            "enabled": true
         }
-      ],
-      "indexes": [
+    ],
+    "tables": [
         {
-          "key": "idx_balance_ledger_user_id",
-          "type": "key",
-          "status": "available",
-          "columns": ["user_id"],
-          "orders": []
+            "$id": "training_balance_ledger",
+            "$permissions": [
+                "read(\"users\")"
+            ],
+            "databaseId": "69b6ef38003ab4914297",
+            "name": "TRAINING_BALANCE_LEDGER",
+            "enabled": true,
+            "rowSecurity": true,
+            "columns": [
+                {
+                    "key": "user_id",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "session_id",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "amount",
+                    "type": "double",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "balance_after",
+                    "type": "double",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "note",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 512,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "source_id",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "order_id",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "change_type",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 32,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "currency",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 8,
+                    "default": "USD",
+                    "encrypt": false
+                },
+                {
+                    "key": "created_at",
+                    "type": "datetime",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "idx_balance_ledger_user_id",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "user_id"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "idx_balance_ledger_created",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "$createdAt"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "user_created_desc",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "user_id",
+                        "$createdAt"
+                    ],
+                    "orders": [
+                        "ASC",
+                        "DESC"
+                    ]
+                },
+                {
+                    "key": "session_idx",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "session_id"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                },
+                {
+                    "key": "user_type_created",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "user_id",
+                        "change_type",
+                        "$createdAt"
+                    ],
+                    "orders": [
+                        "ASC",
+                        "ASC",
+                        "DESC"
+                    ]
+                },
+                {
+                    "key": "order_idx_unique",
+                    "type": "unique",
+                    "status": "available",
+                    "columns": [
+                        "order_id"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                }
+            ]
         },
         {
-          "key": "idx_balance_ledger_created",
-          "type": "key",
-          "status": "available",
-          "columns": ["$createdAt"],
-          "orders": []
+            "$id": "training_session",
+            "$permissions": [
+                "read(\"users\")"
+            ],
+            "databaseId": "69b6ef38003ab4914297",
+            "name": "TRAINING_SESSION",
+            "enabled": true,
+            "rowSecurity": true,
+            "columns": [
+                {
+                    "key": "user_id",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "ts_code",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "symbol",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "period",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 32,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "train_start_idx",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807
+                },
+                {
+                    "key": "train_end_idx",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807
+                },
+                {
+                    "key": "train_start_date",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "train_end_date",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "initial_balance",
+                    "type": "double",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "meta",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 100000,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "ended_at",
+                    "type": "datetime",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                },
+                {
+                    "key": "status",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "format": "enum",
+                    "elements": [
+                        "running",
+                        "completed",
+                        "aborted"
+                    ]
+                },
+                {
+                    "key": "ending_balance",
+                    "type": "double",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "realized_pnl",
+                    "type": "double",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "return_pct",
+                    "type": "double",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "max_drawdown",
+                    "type": "double",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "started_at",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "source_id",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "start_price",
+                    "type": "double",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "current_date",
+                    "type": "datetime",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                },
+                {
+                    "key": "cash",
+                    "type": "double",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "position",
+                    "type": "double",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "positions",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "size": 10000
+                },
+                {
+                    "key": "market_value",
+                    "type": "double",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "total_equity",
+                    "type": "double",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "created_at",
+                    "type": "datetime",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                },
+                {
+                    "key": "updated_at",
+                    "type": "datetime",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "idx_training_session_user_id",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "user_id"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "idx_training_session_started_at",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "started_at"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "user_started_desc",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "user_id",
+                        "started_at"
+                    ],
+                    "orders": [
+                        "ASC",
+                        "DESC"
+                    ]
+                },
+                {
+                    "key": "user_status_idx",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "user_id",
+                        "status"
+                    ],
+                    "orders": [
+                        "ASC",
+                        "ASC"
+                    ]
+                },
+                {
+                    "key": "symbol_period_idx",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "symbol",
+                        "period"
+                    ],
+                    "orders": [
+                        "ASC",
+                        "ASC"
+                    ]
+                }
+            ]
         },
         {
-          "key": "user_created_desc",
-          "type": "key",
-          "status": "available",
-          "columns": ["user_id", "$createdAt"],
-          "orders": ["ASC", "DESC"]
+            "$id": "training_trade_log",
+            "$permissions": [
+                "read(\"users\")"
+            ],
+            "databaseId": "69b6ef38003ab4914297",
+            "name": "TRAINING_TRADE_LOG",
+            "enabled": true,
+            "rowSecurity": true,
+            "columns": [
+                {
+                    "key": "session_id",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "user_id",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "seq_no",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807
+                },
+                {
+                    "key": "action",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": "enum",
+                    "elements": [
+                        "LONG",
+                        "SHORT",
+                        "CLOSE"
+                    ]
+                },
+                {
+                    "key": "side",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": "enum",
+                    "elements": [
+                        "LONG",
+                        "SHORT"
+                    ]
+                },
+                {
+                    "key": "price",
+                    "type": "double",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "amount",
+                    "type": "double",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "fee",
+                    "type": "double",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "trade_time",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                },
+                {
+                    "key": "kline_timestamp",
+                    "type": "integer",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807
+                },
+                {
+                    "key": "position_after",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 100000,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "extra",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 100000,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "source_id",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "idx_trade_log_session_id",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "session_id"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "idx_trade_log_seq_no",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "seq_no"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "session_seq_unique",
+                    "type": "unique",
+                    "status": "available",
+                    "columns": [
+                        "session_id",
+                        "seq_no"
+                    ],
+                    "orders": [
+                        "ASC",
+                        "ASC"
+                    ]
+                },
+                {
+                    "key": "user_trade_time_desc",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "user_id",
+                        "trade_time"
+                    ],
+                    "orders": [
+                        "ASC",
+                        "DESC"
+                    ]
+                },
+                {
+                    "key": "session_trade_time_idx",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "session_id",
+                        "trade_time"
+                    ],
+                    "orders": [
+                        "ASC",
+                        "ASC"
+                    ]
+                }
+            ]
         },
         {
-          "key": "session_idx",
-          "type": "key",
-          "status": "available",
-          "columns": ["session_id"],
-          "orders": ["ASC"]
+            "$id": "training_stats",
+            "$permissions": [
+                "read(\"users\")"
+            ],
+            "databaseId": "69b6ef38003ab4914297",
+            "name": "TRAINING_STATS",
+            "enabled": true,
+            "rowSecurity": true,
+            "columns": [
+                {
+                    "key": "session_id",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "totalReturn",
+                    "type": "double",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "totalReturnPct",
+                    "type": "double",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "maxDrawdown",
+                    "type": "double",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "winRate",
+                    "type": "double",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "profitFactor",
+                    "type": "double",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "tradeCount",
+                    "type": "integer",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "min": 0,
+                    "max": 9223372036854775807
+                },
+                {
+                    "key": "avgTradeReturn",
+                    "type": "double",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "sharpeRatio",
+                    "type": "double",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "created_at",
+                    "type": "datetime",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                },
+                {
+                    "key": "updated_at",
+                    "type": "datetime",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "session_id_unique",
+                    "type": "unique",
+                    "status": "available",
+                    "columns": [
+                        "session_id"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                },
+                {
+                    "key": "updated_at_idx",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "updated_at"
+                    ],
+                    "orders": [
+                        "DESC"
+                    ]
+                }
+            ]
         },
         {
-          "key": "user_type_created",
-          "type": "key",
-          "status": "available",
-          "columns": ["user_id", "change_type", "$createdAt"],
-          "orders": ["ASC", "ASC", "DESC"]
+            "$id": "stock_info",
+            "$permissions": [
+                "read(\"any\")"
+            ],
+            "databaseId": "69b6ef38003ab4914297",
+            "name": "STOCK_INFO",
+            "enabled": true,
+            "rowSecurity": false,
+            "columns": [
+                {
+                    "key": "ts_code",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "symbol",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "name",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 128,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "area",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "industry",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "fullname",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "enname",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "cnspell",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "market",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "exchange",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "list_date",
+                    "type": "datetime",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                },
+                {
+                    "key": "controller_name",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "controller_type",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "idx_stock_info_symbol",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "symbol"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "idx_stock_info_ts_code",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "ts_code"
+                    ],
+                    "orders": []
+                }
+            ]
         },
         {
-          "key": "order_idx_unique",
-          "type": "unique",
-          "status": "available",
-          "columns": ["order_id"],
-          "orders": ["ASC"]
+            "$id": "user_profile",
+            "$permissions": [
+                "create(\"users\")",
+                "read(\"users\")",
+                "update(\"users\")"
+            ],
+            "databaseId": "69b6ef38003ab4914297",
+            "name": "USER_PROFILE",
+            "enabled": true,
+            "rowSecurity": true,
+            "columns": [
+                {
+                    "key": "display_name",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "avatar_url",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 128,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "training_balance",
+                    "type": "double",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "min": 0,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "currency",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "membership_tier",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "default": "free",
+                    "format": "enum",
+                    "elements": [
+                        "free",
+                        "pro",
+                        "vip"
+                    ]
+                },
+                {
+                    "key": "membership_status",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "default": "inactive",
+                    "format": "enum",
+                    "elements": [
+                        "inactive",
+                        "active",
+                        "expired"
+                    ]
+                },
+                {
+                    "key": "membership_expires_at",
+                    "type": "datetime",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                },
+                {
+                    "key": "user_id",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "avatar_file_id",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "timezone",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "risk_level",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 16,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "updated_at",
+                    "type": "datetime",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "user_id_unique",
+                    "type": "unique",
+                    "status": "available",
+                    "columns": [
+                        "user_id"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                },
+                {
+                    "key": "membership_expires_idx",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "membership_expires_at"
+                    ],
+                    "orders": [
+                        "DESC"
+                    ]
+                },
+                {
+                    "key": "updated_at_idx",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "updated_at"
+                    ],
+                    "orders": [
+                        "DESC"
+                    ]
+                }
+            ]
+        },
+        {
+            "$id": "stock_kline",
+            "$permissions": [
+                "read(\"any\")"
+            ],
+            "databaseId": "69b6ef38003ab4914297",
+            "name": "STOCK_KLINE",
+            "enabled": true,
+            "rowSecurity": false,
+            "columns": [
+                {
+                    "key": "ts_code",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 16,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "period",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 16,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "trade_date",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 16,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "open",
+                    "type": "double",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "close",
+                    "type": "double",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "high",
+                    "type": "double",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "low",
+                    "type": "double",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "volume",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807
+                },
+                {
+                    "key": "amount",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807
+                },
+                {
+                    "key": "amplitude",
+                    "type": "double",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "pct_change",
+                    "type": "double",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "price_change",
+                    "type": "double",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "turnover_rate",
+                    "type": "double",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "index_code_period_date",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "ts_code",
+                        "period",
+                        "trade_date"
+                    ],
+                    "orders": [
+                        "ASC",
+                        "ASC",
+                        "ASC"
+                    ]
+                },
+                {
+                    "key": "index_code_period",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "ts_code",
+                        "period"
+                    ],
+                    "orders": [
+                        "ASC",
+                        "ASC"
+                    ]
+                }
+            ]
+        },
+        {
+            "$id": "membership_plans",
+            "$permissions": [
+                "read(\"any\")"
+            ],
+            "databaseId": "69b6ef38003ab4914297",
+            "name": "MEMBERSHIP_PLANS",
+            "enabled": true,
+            "rowSecurity": false,
+            "columns": [
+                {
+                    "key": "plan_id",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "name",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "price",
+                    "type": "double",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "duration_days",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807
+                },
+                {
+                    "key": "benefits",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 4096,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "sort_order",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": 0,
+                    "max": 9223372036854775807
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "plan_id_unique",
+                    "type": "unique",
+                    "status": "available",
+                    "columns": [
+                        "plan_id"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                }
+            ]
+        },
+        {
+            "$id": "membership_orders",
+            "$permissions": [],
+            "databaseId": "69b6ef38003ab4914297",
+            "name": "MEMBERSHIP_ORDERS",
+            "enabled": true,
+            "rowSecurity": true,
+            "columns": [
+                {
+                    "key": "order_id",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "user_id",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "plan_id",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "amount",
+                    "type": "double",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": -1.7976931348623157e+308,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "status",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 32,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "provider",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 32,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "provider_txn_id",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 128,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "expires_at",
+                    "type": "datetime",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "order_id_unique",
+                    "type": "unique",
+                    "status": "available",
+                    "columns": [
+                        "order_id"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                },
+                {
+                    "key": "user_created_desc",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "user_id",
+                        "$createdAt"
+                    ],
+                    "orders": [
+                        "ASC",
+                        "DESC"
+                    ]
+                },
+                {
+                    "key": "provider_txn_unique",
+                    "type": "unique",
+                    "status": "available",
+                    "columns": [
+                        "provider_txn_id"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                }
+            ]
+        },
+        {
+            "$id": "user_achievements",
+            "$permissions": [],
+            "databaseId": "69b6ef38003ab4914297",
+            "name": "USER_ACHIEVENMENTS",
+            "enabled": true,
+            "rowSecurity": true,
+            "columns": [
+                {
+                    "key": "user_id",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "achievement_code",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "progress",
+                    "type": "double",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "min": 0,
+                    "max": 1.7976931348623157e+308
+                },
+                {
+                    "key": "unlocked_at",
+                    "type": "datetime",
+                    "required": false,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                },
+                {
+                    "key": "meta",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 4096,
+                    "default": null,
+                    "encrypt": false
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "user_achievement_unique",
+                    "type": "unique",
+                    "status": "available",
+                    "columns": [
+                        "user_id",
+                        "achievement_code"
+                    ],
+                    "orders": [
+                        "ASC",
+                        "ASC"
+                    ]
+                },
+                {
+                    "key": "user_progress_idx",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "user_id",
+                        "progress"
+                    ],
+                    "orders": [
+                        "ASC",
+                        "DESC"
+                    ]
+                }
+            ]
+        },
+        {
+            "$id": "review_snapshots",
+            "$permissions": [],
+            "databaseId": "69b6ef38003ab4914297",
+            "name": "REVIEW_SNAPSHOPS",
+            "enabled": true,
+            "rowSecurity": true,
+            "columns": [
+                {
+                    "key": "user_id",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 64,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "range_key",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 32,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "kpi_json",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 4096,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "equity_curve_json",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 16384,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "generated_at",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "default": null,
+                    "format": ""
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "user_range_unique",
+                    "type": "unique",
+                    "status": "available",
+                    "columns": [
+                        "user_id",
+                        "range_key"
+                    ],
+                    "orders": [
+                        "ASC",
+                        "ASC"
+                    ]
+                },
+                {
+                    "key": "generated_at_idx",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "generated_at"
+                    ],
+                    "orders": [
+                        "DESC"
+                    ]
+                }
+            ]
         }
-      ]
-    },
-    {
-      "$id": "training_session",
-      "$permissions": ["read(\"users\")"],
-      "databaseId": "69b6ef38003ab4914297",
-      "name": "TRAINING_SESSION",
-      "enabled": true,
-      "rowSecurity": true,
-      "columns": [
+    ],
+    "buckets": [
         {
-          "key": "user_id",
-          "type": "string",
-          "required": true,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "ts_code",
-          "type": "string",
-          "required": true,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "symbol",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "period",
-          "type": "string",
-          "required": true,
-          "array": false,
-          "size": 32,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "train_start_idx",
-          "type": "integer",
-          "required": true,
-          "array": false,
-          "default": null,
-          "min": -9223372036854775808,
-          "max": 9223372036854775807
-        },
-        {
-          "key": "train_end_idx",
-          "type": "integer",
-          "required": true,
-          "array": false,
-          "default": null,
-          "min": -9223372036854775808,
-          "max": 9223372036854775807
-        },
-        {
-          "key": "train_start_date",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "train_end_date",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "initial_balance",
-          "type": "double",
-          "required": true,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "meta",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 100000,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "ended_at",
-          "type": "datetime",
-          "required": false,
-          "array": false,
-          "default": null,
-          "format": ""
-        },
-        {
-          "key": "status",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "default": null,
-          "format": "enum",
-          "elements": ["running", "completed", "aborted"]
-        },
-        {
-          "key": "ending_balance",
-          "type": "double",
-          "required": false,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "realized_pnl",
-          "type": "double",
-          "required": false,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "return_pct",
-          "type": "double",
-          "required": false,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "max_drawdown",
-          "type": "double",
-          "required": false,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "started_at",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "source_id",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "start_price",
-          "type": "double",
-          "required": false,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "current_date",
-          "type": "datetime",
-          "required": false,
-          "array": false,
-          "default": null,
-          "format": ""
-        },
-        {
-          "key": "cash",
-          "type": "double",
-          "required": false,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "position",
-          "type": "double",
-          "required": false,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "market_value",
-          "type": "double",
-          "required": false,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "total_equity",
-          "type": "double",
-          "required": false,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "created_at",
-          "type": "datetime",
-          "required": false,
-          "array": false,
-          "default": null,
-          "format": ""
-        },
-        {
-          "key": "updated_at",
-          "type": "datetime",
-          "required": false,
-          "array": false,
-          "default": null,
-          "format": ""
+            "$id": "69b6e98200070e53c426",
+            "$permissions": [
+                "create(\"any\")",
+                "read(\"any\")",
+                "update(\"any\")"
+            ],
+            "fileSecurity": false,
+            "name": "avatar",
+            "enabled": true,
+            "maximumFileSize": 30000000,
+            "allowedFileExtensions": [],
+            "compression": "none",
+            "encryption": true,
+            "antivirus": true
         }
-      ],
-      "indexes": [
-        {
-          "key": "idx_training_session_user_id",
-          "type": "key",
-          "status": "available",
-          "columns": ["user_id"],
-          "orders": []
-        },
-        {
-          "key": "idx_training_session_started_at",
-          "type": "key",
-          "status": "available",
-          "columns": ["started_at"],
-          "orders": []
-        },
-        {
-          "key": "user_started_desc",
-          "type": "key",
-          "status": "available",
-          "columns": ["user_id", "started_at"],
-          "orders": ["ASC", "DESC"]
-        },
-        {
-          "key": "user_status_idx",
-          "type": "key",
-          "status": "available",
-          "columns": ["user_id", "status"],
-          "orders": ["ASC", "ASC"]
-        },
-        {
-          "key": "symbol_period_idx",
-          "type": "key",
-          "status": "available",
-          "columns": ["symbol", "period"],
-          "orders": ["ASC", "ASC"]
-        }
-      ]
-    },
-    {
-      "$id": "training_trade_log",
-      "$permissions": ["read(\"users\")"],
-      "databaseId": "69b6ef38003ab4914297",
-      "name": "TRAINING_TRADE_LOG",
-      "enabled": true,
-      "rowSecurity": true,
-      "columns": [
-        {
-          "key": "session_id",
-          "type": "string",
-          "required": true,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "user_id",
-          "type": "string",
-          "required": true,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "seq_no",
-          "type": "integer",
-          "required": true,
-          "array": false,
-          "default": null,
-          "min": -9223372036854775808,
-          "max": 9223372036854775807
-        },
-        {
-          "key": "action",
-          "type": "string",
-          "required": true,
-          "array": false,
-          "default": null,
-          "format": "enum",
-          "elements": ["BUY", "SELL", "CLOSE"]
-        },
-        {
-          "key": "side",
-          "type": "string",
-          "required": true,
-          "array": false,
-          "default": null,
-          "format": "enum",
-          "elements": ["LONG", "SHORT"]
-        },
-        {
-          "key": "price",
-          "type": "double",
-          "required": true,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "amount",
-          "type": "double",
-          "required": true,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "fee",
-          "type": "double",
-          "required": false,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "trade_time",
-          "type": "datetime",
-          "required": true,
-          "array": false,
-          "default": null,
-          "format": ""
-        },
-        {
-          "key": "kline_timestamp",
-          "type": "integer",
-          "required": false,
-          "array": false,
-          "default": null,
-          "min": -9223372036854775808,
-          "max": 9223372036854775807
-        },
-        {
-          "key": "position_after",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 100000,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "extra",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 100000,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "source_id",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        }
-      ],
-      "indexes": [
-        {
-          "key": "idx_trade_log_session_id",
-          "type": "key",
-          "status": "available",
-          "columns": ["session_id"],
-          "orders": []
-        },
-        {
-          "key": "idx_trade_log_seq_no",
-          "type": "key",
-          "status": "available",
-          "columns": ["seq_no"],
-          "orders": []
-        },
-        {
-          "key": "session_seq_unique",
-          "type": "unique",
-          "status": "available",
-          "columns": ["session_id", "seq_no"],
-          "orders": ["ASC", "ASC"]
-        },
-        {
-          "key": "user_trade_time_desc",
-          "type": "key",
-          "status": "available",
-          "columns": ["user_id", "trade_time"],
-          "orders": ["ASC", "DESC"]
-        },
-        {
-          "key": "session_trade_time_idx",
-          "type": "key",
-          "status": "available",
-          "columns": ["session_id", "trade_time"],
-          "orders": ["ASC", "ASC"]
-        }
-      ]
-    },
-    {
-      "$id": "training_stats",
-      "$permissions": ["read(\"users\")"],
-      "databaseId": "69b6ef38003ab4914297",
-      "name": "TRAINING_STATS",
-      "enabled": true,
-      "rowSecurity": true,
-      "columns": [
-        {
-          "key": "session_id",
-          "type": "string",
-          "required": true,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "totalReturn",
-          "type": "double",
-          "required": false,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "totalReturnPct",
-          "type": "double",
-          "required": false,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "maxDrawdown",
-          "type": "double",
-          "required": false,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "winRate",
-          "type": "double",
-          "required": false,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "profitFactor",
-          "type": "double",
-          "required": false,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "tradeCount",
-          "type": "integer",
-          "required": false,
-          "array": false,
-          "default": null,
-          "min": 0,
-          "max": 9223372036854775807
-        },
-        {
-          "key": "avgTradeReturn",
-          "type": "double",
-          "required": false,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "sharpeRatio",
-          "type": "double",
-          "required": false,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "created_at",
-          "type": "datetime",
-          "required": false,
-          "array": false,
-          "default": null,
-          "format": ""
-        },
-        {
-          "key": "updated_at",
-          "type": "datetime",
-          "required": false,
-          "array": false,
-          "default": null,
-          "format": ""
-        }
-      ],
-      "indexes": [
-        {
-          "key": "session_id_unique",
-          "type": "unique",
-          "status": "available",
-          "columns": ["session_id"],
-          "orders": ["ASC"]
-        },
-        {
-          "key": "updated_at_idx",
-          "type": "key",
-          "status": "available",
-          "columns": ["updated_at"],
-          "orders": ["DESC"]
-        }
-      ]
-    },
-    {
-      "$id": "stock_info",
-      "$permissions": ["read(\"any\")"],
-      "databaseId": "69b6ef38003ab4914297",
-      "name": "STOCK_INFO",
-      "enabled": true,
-      "rowSecurity": false,
-      "columns": [
-        {
-          "key": "ts_code",
-          "type": "string",
-          "required": true,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "symbol",
-          "type": "string",
-          "required": true,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "name",
-          "type": "string",
-          "required": true,
-          "array": false,
-          "size": 128,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "area",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "industry",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "fullname",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "enname",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "cnspell",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "market",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "exchange",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "list_date",
-          "type": "datetime",
-          "required": false,
-          "array": false,
-          "default": null,
-          "format": ""
-        },
-        {
-          "key": "controller_name",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "controller_type",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        }
-      ],
-      "indexes": [
-        {
-          "key": "idx_stock_info_symbol",
-          "type": "key",
-          "status": "available",
-          "columns": ["symbol"],
-          "orders": []
-        },
-        {
-          "key": "idx_stock_info_ts_code",
-          "type": "key",
-          "status": "available",
-          "columns": ["ts_code"],
-          "orders": []
-        }
-      ]
-    },
-    {
-      "$id": "user_profile",
-      "$permissions": [
-        "create(\"users\")",
-        "read(\"users\")",
-        "update(\"users\")"
-      ],
-      "databaseId": "69b6ef38003ab4914297",
-      "name": "USER_PROFILE",
-      "enabled": true,
-      "rowSecurity": true,
-      "columns": [
-        {
-          "key": "display_name",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "avatar_url",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 128,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "training_balance",
-          "type": "double",
-          "required": false,
-          "array": false,
-          "default": null,
-          "min": 0,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "currency",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "membership_tier",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "default": "free",
-          "format": "enum",
-          "elements": ["free", "pro", "vip"]
-        },
-        {
-          "key": "membership_status",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "default": "inactive",
-          "format": "enum",
-          "elements": ["inactive", "active", "expired"]
-        },
-        {
-          "key": "membership_expires_at",
-          "type": "datetime",
-          "required": false,
-          "array": false,
-          "default": null,
-          "format": ""
-        },
-        {
-          "key": "user_id",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "avatar_file_id",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "timezone",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "risk_level",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 16,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "updated_at",
-          "type": "datetime",
-          "required": false,
-          "array": false,
-          "default": null,
-          "format": ""
-        }
-      ],
-      "indexes": [
-        {
-          "key": "user_id_unique",
-          "type": "unique",
-          "status": "available",
-          "columns": ["user_id"],
-          "orders": ["ASC"]
-        },
-        {
-          "key": "membership_expires_idx",
-          "type": "key",
-          "status": "available",
-          "columns": ["membership_expires_at"],
-          "orders": ["DESC"]
-        },
-        {
-          "key": "updated_at_idx",
-          "type": "key",
-          "status": "available",
-          "columns": ["updated_at"],
-          "orders": ["DESC"]
-        }
-      ]
-    },
-    {
-      "$id": "stock_kline",
-      "$permissions": ["read(\"any\")"],
-      "databaseId": "69b6ef38003ab4914297",
-      "name": "STOCK_KLINE",
-      "enabled": true,
-      "rowSecurity": false,
-      "columns": [
-        {
-          "key": "ts_code",
-          "type": "string",
-          "required": true,
-          "array": false,
-          "size": 16,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "period",
-          "type": "string",
-          "required": true,
-          "array": false,
-          "size": 16,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "trade_date",
-          "type": "string",
-          "required": true,
-          "array": false,
-          "size": 16,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "open",
-          "type": "double",
-          "required": true,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "close",
-          "type": "double",
-          "required": true,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "high",
-          "type": "double",
-          "required": true,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "low",
-          "type": "double",
-          "required": true,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "volume",
-          "type": "integer",
-          "required": true,
-          "array": false,
-          "default": null,
-          "min": -9223372036854775808,
-          "max": 9223372036854775807
-        },
-        {
-          "key": "amount",
-          "type": "integer",
-          "required": true,
-          "array": false,
-          "default": null,
-          "min": -9223372036854775808,
-          "max": 9223372036854775807
-        },
-        {
-          "key": "amplitude",
-          "type": "double",
-          "required": true,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "pct_change",
-          "type": "double",
-          "required": true,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "price_change",
-          "type": "double",
-          "required": true,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "turnover_rate",
-          "type": "double",
-          "required": true,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        }
-      ],
-      "indexes": [
-        {
-          "key": "index_code_period_date",
-          "type": "key",
-          "status": "available",
-          "columns": ["ts_code", "period", "trade_date"],
-          "orders": ["ASC", "ASC", "ASC"]
-        },
-        {
-          "key": "index_code_period",
-          "type": "key",
-          "status": "available",
-          "columns": ["ts_code", "period"],
-          "orders": ["ASC", "ASC"]
-        }
-      ]
-    },
-    {
-      "$id": "membership_plans",
-      "$permissions": ["read(\"any\")"],
-      "databaseId": "69b6ef38003ab4914297",
-      "name": "MEMBERSHIP_PLANS",
-      "enabled": true,
-      "rowSecurity": false,
-      "columns": [
-        {
-          "key": "plan_id",
-          "type": "string",
-          "required": true,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "name",
-          "type": "string",
-          "required": true,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "price",
-          "type": "double",
-          "required": true,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "duration_days",
-          "type": "integer",
-          "required": true,
-          "array": false,
-          "default": null,
-          "min": -9223372036854775808,
-          "max": 9223372036854775807
-        },
-        {
-          "key": "benefits",
-          "type": "string",
-          "required": true,
-          "array": false,
-          "size": 4096,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "sort_order",
-          "type": "integer",
-          "required": true,
-          "array": false,
-          "default": null,
-          "min": 0,
-          "max": 9223372036854775807
-        }
-      ],
-      "indexes": [
-        {
-          "key": "plan_id_unique",
-          "type": "unique",
-          "status": "available",
-          "columns": ["plan_id"],
-          "orders": ["ASC"]
-        }
-      ]
-    },
-    {
-      "$id": "membership_orders",
-      "$permissions": [],
-      "databaseId": "69b6ef38003ab4914297",
-      "name": "MEMBERSHIP_ORDERS",
-      "enabled": true,
-      "rowSecurity": true,
-      "columns": [
-        {
-          "key": "order_id",
-          "type": "string",
-          "required": true,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "user_id",
-          "type": "string",
-          "required": true,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "plan_id",
-          "type": "string",
-          "required": true,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "amount",
-          "type": "double",
-          "required": true,
-          "array": false,
-          "default": null,
-          "min": -1.7976931348623157e308,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "status",
-          "type": "string",
-          "required": true,
-          "array": false,
-          "size": 32,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "provider",
-          "type": "string",
-          "required": true,
-          "array": false,
-          "size": 32,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "provider_txn_id",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 128,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "expires_at",
-          "type": "datetime",
-          "required": false,
-          "array": false,
-          "default": null,
-          "format": ""
-        }
-      ],
-      "indexes": [
-        {
-          "key": "order_id_unique",
-          "type": "unique",
-          "status": "available",
-          "columns": ["order_id"],
-          "orders": ["ASC"]
-        },
-        {
-          "key": "user_created_desc",
-          "type": "key",
-          "status": "available",
-          "columns": ["user_id", "$createdAt"],
-          "orders": ["ASC", "DESC"]
-        },
-        {
-          "key": "provider_txn_unique",
-          "type": "unique",
-          "status": "available",
-          "columns": ["provider_txn_id"],
-          "orders": ["ASC"]
-        }
-      ]
-    },
-    {
-      "$id": "user_achievements",
-      "$permissions": [],
-      "databaseId": "69b6ef38003ab4914297",
-      "name": "USER_ACHIEVENMENTS",
-      "enabled": true,
-      "rowSecurity": true,
-      "columns": [
-        {
-          "key": "user_id",
-          "type": "string",
-          "required": true,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "achievement_code",
-          "type": "string",
-          "required": true,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "progress",
-          "type": "double",
-          "required": true,
-          "array": false,
-          "default": null,
-          "min": 0,
-          "max": 1.7976931348623157e308
-        },
-        {
-          "key": "unlocked_at",
-          "type": "datetime",
-          "required": false,
-          "array": false,
-          "default": null,
-          "format": ""
-        },
-        {
-          "key": "meta",
-          "type": "string",
-          "required": false,
-          "array": false,
-          "size": 4096,
-          "default": null,
-          "encrypt": false
-        }
-      ],
-      "indexes": [
-        {
-          "key": "user_achievement_unique",
-          "type": "unique",
-          "status": "available",
-          "columns": ["user_id", "achievement_code"],
-          "orders": ["ASC", "ASC"]
-        },
-        {
-          "key": "user_progress_idx",
-          "type": "key",
-          "status": "available",
-          "columns": ["user_id", "progress"],
-          "orders": ["ASC", "DESC"]
-        }
-      ]
-    },
-    {
-      "$id": "review_snapshots",
-      "$permissions": [],
-      "databaseId": "69b6ef38003ab4914297",
-      "name": "REVIEW_SNAPSHOPS",
-      "enabled": true,
-      "rowSecurity": true,
-      "columns": [
-        {
-          "key": "user_id",
-          "type": "string",
-          "required": true,
-          "array": false,
-          "size": 64,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "range_key",
-          "type": "string",
-          "required": true,
-          "array": false,
-          "size": 32,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "kpi_json",
-          "type": "string",
-          "required": true,
-          "array": false,
-          "size": 4096,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "equity_curve_json",
-          "type": "string",
-          "required": true,
-          "array": false,
-          "size": 16384,
-          "default": null,
-          "encrypt": false
-        },
-        {
-          "key": "generated_at",
-          "type": "datetime",
-          "required": true,
-          "array": false,
-          "default": null,
-          "format": ""
-        }
-      ],
-      "indexes": [
-        {
-          "key": "user_range_unique",
-          "type": "unique",
-          "status": "available",
-          "columns": ["user_id", "range_key"],
-          "orders": ["ASC", "ASC"]
-        },
-        {
-          "key": "generated_at_idx",
-          "type": "key",
-          "status": "available",
-          "columns": ["generated_at"],
-          "orders": ["DESC"]
-        }
-      ]
-    }
-  ],
-  "buckets": [
-    {
-      "$id": "69b6e98200070e53c426",
-      "$permissions": ["create(\"any\")", "read(\"any\")", "update(\"any\")"],
-      "fileSecurity": false,
-      "name": "avatar",
-      "enabled": true,
-      "maximumFileSize": 30000000,
-      "allowedFileExtensions": [],
-      "compression": "none",
-      "encryption": true,
-      "antivirus": true
-    }
-  ],
-  "teams": [],
-  "topics": []
+    ],
+    "teams": [],
+    "topics": []
 }

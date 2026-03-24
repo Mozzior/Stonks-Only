@@ -47,8 +47,8 @@
             </div>
 
             <n-button
-              :type="plan.current ? 'default' : 'primary'"
-              :disabled="plan.current"
+              :type="plan.current ? 'default' : (plan.rank < currentRank ? 'tertiary' : 'primary')"
+              :disabled="plan.current || plan.rank < currentRank"
               :loading="isUpgrading === plan.id"
               block
               class="mb-6 font-bold"
@@ -57,7 +57,9 @@
               {{
                 plan.current
                   ? t("membership.plans.currentPlan")
-                  : t("membership.plans.upgradeNow")
+                  : plan.rank < currentRank
+                    ? t("membership.plans.downgrade", "Downgrade")
+                    : t("membership.plans.upgradeNow")
               }}
             </n-button>
 
@@ -183,6 +185,14 @@ const currentTier = computed(() =>
   mapLegacyTier(profile.value?.membership_tier),
 );
 
+const tierRanks: Record<string, number> = {
+  free: 0,
+  pro: 1,
+  vip: 2,
+};
+
+const currentRank = computed(() => tierRanks[currentTier.value] ?? 0);
+
 const handleUpgrade = async (plan: any) => {
   if (plan.current) return;
   isUpgrading.value = plan.id;
@@ -213,6 +223,7 @@ const handleUpgrade = async (plan: any) => {
 const plans = computed(() => [
   {
     id: "free",
+    rank: 0,
     name: t("membership.plans.rookie.name"),
     price: "0",
     description: t("membership.plans.rookie.desc"),
@@ -227,6 +238,7 @@ const plans = computed(() => [
   },
   {
     id: "pro",
+    rank: 1,
     name: t("membership.plans.pro.name"),
     price: "29",
     description: t("membership.plans.pro.desc"),
@@ -242,6 +254,7 @@ const plans = computed(() => [
   },
   {
     id: "vip",
+    rank: 2,
     name: t("membership.plans.elite.name"),
     price: "99",
     description: t("membership.plans.elite.desc"),

@@ -61,7 +61,7 @@
           >
           <span class="text-lg font-bold text-[var(--color-brand-primary)]"
             >${{
-              accountBalance.toLocaleString(undefined, {
+              displayBalance.toLocaleString(undefined, {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })
@@ -542,19 +542,44 @@
 
           <div class="flex flex-col gap-2">
             <n-tabs type="segment" v-model:value="tradeSide" size="small">
-              <n-tab name="BUY">{{ t("training.trade.buy") }}</n-tab>
-              <n-tab name="SELL">{{ t("training.trade.sell") }}</n-tab>
+              <n-tab name="LONG">{{ t("training.trade.long", "做多") }}</n-tab>
+              <n-tab name="SHORT">{{
+                t("training.trade.short", "做空")
+              }}</n-tab>
             </n-tabs>
+            <div class="flex flex-col gap-1">
+              <span class="text-xs text-[var(--color-text-secondary)]">{{
+                t("training.trade.amountShares")
+              }}</span>
+              <n-input-number
+                v-model:value="tradeAmount"
+                :min="1"
+                :step="1"
+                class="w-full"
+              />
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+              <n-button size="tiny" ghost @click="setAmountByPercent(25)">{{
+                t("training.trade.quarterPosition", "1/4仓")
+              }}</n-button>
+              <n-button size="tiny" ghost @click="setAmountByPercent(50)">{{
+                t("training.trade.halfPosition", "1/2仓")
+              }}</n-button>
+              <n-button size="tiny" ghost @click="setAmountByPercent(100)">{{
+                t("training.trade.fullPosition", "全仓")
+              }}</n-button>
+            </div>
             <n-button
-              :type="tradeSide === 'BUY' ? 'primary' : 'error'"
+              :type="tradeSide === 'LONG' ? 'primary' : 'error'"
               class="w-full"
               :disabled="isTrainingWindowEnded"
+              :loading="isTrading"
               @click="handleTrade(tradeSide)"
             >
               {{
-                tradeSide === "BUY"
-                  ? t("training.trade.buyLong")
-                  : t("training.trade.sellShort")
+                tradeSide === "LONG"
+                  ? t("training.trade.buyLong", "做多开仓")
+                  : t("training.trade.sellShort", "做空开仓")
               }}
             </n-button>
           </div>
@@ -563,32 +588,83 @@
             class="flex items-center justify-between mt-2 pt-2 border-t border-[var(--color-border)]"
           >
             <span class="text-xs text-[var(--color-text-secondary)]"
-              >{{ t("training.trade.position") }}:</span
+              >浮动盈亏:</span
             >
             <span
-              v-if="position"
+              v-if="tradeStore.positions.value.length > 0"
               :class="
-                position.pl >= 0
+                unrealizedPnl >= 0
                   ? 'text-[var(--color-success)]'
                   : 'text-[var(--color-error)]'
               "
               class="font-bold text-sm"
             >
-              {{ position.pl >= 0 ? "+" : "" }}{{ position.pl }}%
+              {{ unrealizedPnl >= 0 ? "+" : "" }}${{ unrealizedPnl.toFixed(2) }}
             </span>
             <span v-else class="text-xs text-[var(--color-text-secondary)]"
               >None</span
             >
           </div>
+          <div v-if="positions.length > 0" class="mt-2 space-y-2">
+            <div class="text-xs text-[var(--color-text-secondary)]">持仓</div>
+            <div
+              v-for="pos in positions"
+              :key="pos.id"
+              class="flex items-center justify-between text-xs p-2 rounded border border-[var(--color-border)]"
+            >
+              <div class="flex items-center gap-2">
+                <n-tag
+                  :type="pos.side === 'LONG' ? 'success' : 'error'"
+                  size="small"
+                  class="font-bold"
+                >
+                  {{ pos.side }}
+                </n-tag>
+                <span
+                  >{{ pos.amount }} 股 @ ${{ pos.entryPrice.toFixed(2) }}</span
+                >
+              </div>
+              <div class="flex items-center gap-2">
+                <span
+                  :class="
+                    (pos.side === 'LONG'
+                      ? currentPrice - pos.entryPrice
+                      : pos.entryPrice - currentPrice) *
+                      pos.amount >=
+                    0
+                      ? 'text-[var(--color-success)]'
+                      : 'text-[var(--color-error)]'
+                  "
+                  class="font-bold"
+                >
+                  ${{
+                    (
+                      (pos.side === "LONG"
+                        ? currentPrice - pos.entryPrice
+                        : pos.entryPrice - currentPrice) * pos.amount
+                    ).toFixed(2)
+                  }}
+                </span>
+                <n-button
+                  size="tiny"
+                  tertiary
+                  @click="closePosition(pos.id, pos.amount)"
+                  :disabled="isTrainingWindowEnded"
+                  :loading="isTrading"
+                  >平仓</n-button
+                >
+              </div>
+            </div>
+          </div>
 
           <n-button
-            v-if="position"
+            v-if="tradeStore.positions.value.length > 0"
             size="tiny"
             type="warning"
             ghost
             class="mt-1"
             :disabled="isTrainingWindowEnded"
-            @click="closePosition"
+            @click="closeAllPositions"
             >{{ t("training.trade.closeAll") }}</n-button
           >
         </div>
@@ -637,31 +713,38 @@
                 <td>
                   <n-tag
                     :type="
-                      record.action === 'BUY'
+                      record.action === 'LONG'
                         ? 'success'
-                        : record.action === 'SELL'
+                        : record.action === 'SHORT'
                           ? 'error'
                           : 'warning'
                     "
                     size="small"
                     class="font-bold"
                   >
-                    {{ record.action }}
+                    {{
+                      record.action === "LONG"
+                        ? t("training.trade.long", "做多")
+                        : record.action === "SHORT"
+                          ? t("training.trade.short", "做空")
+                          : t("training.trade.close", "平仓")
+                    }}
                   </n-tag>
                 </td>
                 <td>${{ record.price.toFixed(2) }}</td>
                 <td>{{ record.amount }}</td>
                 <td>
                   <span
-                    v-if="record.pl !== undefined"
+                    v-if="record.realizedPnl !== undefined"
                     :class="
-                      record.pl >= 0
+                      record.realizedPnl >= 0
                         ? 'text-[var(--color-success)]'
                         : 'text-[var(--color-error)]'
                     "
                     class="font-bold"
                   >
-                    {{ record.pl >= 0 ? "+" : "" }}{{ record.pl.toFixed(2) }}
+                    {{ record.realizedPnl >= 0 ? "+" : ""
+                    }}{{ record.realizedPnl.toFixed(2) }}
                   </span>
                   <span v-else>-</span>
                 </td>
@@ -688,53 +771,45 @@
           class="bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)]"
         >
           <n-tabs type="segment" v-model:value="tradeSide" animated>
-            <n-tab name="BUY">{{ t("training.trade.buy") }}</n-tab>
-            <n-tab name="SELL">{{ t("training.trade.sell") }}</n-tab>
+            <n-tab name="LONG">{{ t("training.trade.long", "做多") }}</n-tab>
+            <n-tab name="SHORT">{{ t("training.trade.short", "做空") }}</n-tab>
           </n-tabs>
           <div class="space-y-4 pt-4">
-            <div class="flex flex-col gap-1">
-              <span class="text-xs text-[var(--color-text-secondary)]">{{
-                t("training.trade.orderType")
-              }}</span>
-              <n-select
-                v-model:value="orderType"
-                :options="orderTypeOptions"
-                size="small"
-              />
-            </div>
             <div class="flex flex-col gap-1">
               <span class="text-xs text-[var(--color-text-secondary)]">{{
                 t("training.trade.amountShares")
               }}</span>
               <n-input-number
                 v-model:value="tradeAmount"
-                :min="100"
-                :step="100"
+                :min="1"
+                :step="1"
                 class="w-full"
               />
             </div>
-            <div class="grid grid-cols-4 gap-2">
-              <n-button
-                v-for="p in [10, 25, 50, 100]"
-                :key="p"
-                size="tiny"
-                ghost
-                @click="setAmountByPercent(p)"
-                >{{ p }}%</n-button
-              >
+            <div class="grid grid-cols-3 gap-2">
+              <n-button size="tiny" ghost @click="setAmountByPercent(25)">{{
+                t("training.trade.quarterPosition", "1/4仓")
+              }}</n-button>
+              <n-button size="tiny" ghost @click="setAmountByPercent(50)">{{
+                t("training.trade.halfPosition", "1/2仓")
+              }}</n-button>
+              <n-button size="tiny" ghost @click="setAmountByPercent(100)">{{
+                t("training.trade.fullPosition", "全仓")
+              }}</n-button>
             </div>
             <n-button
-              :type="tradeSide === 'BUY' ? 'primary' : 'error'"
+              :type="tradeSide === 'LONG' ? 'primary' : 'error'"
               block
               size="large"
               class="font-bold mt-4"
               :disabled="isTrainingWindowEnded"
+              :loading="isTrading"
               @click="handleTrade(tradeSide)"
             >
               {{
-                tradeSide === "BUY"
-                  ? t("training.trade.buyLong")
-                  : t("training.trade.sellShort")
+                tradeSide === "LONG"
+                  ? t("training.trade.buyLong", "做多开仓")
+                  : t("training.trade.sellShort", "做空开仓")
               }}
             </n-button>
           </div>
@@ -747,84 +822,132 @@
           class="flex-1 flex flex-col min-h-0 bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)] overflow-hidden"
           content-class="flex-1 overflow-y-auto"
         >
-          <div v-if="position" class="space-y-4">
-            <div class="flex justify-between items-center">
-              <n-tag
-                :type="position.side === 'LONG' ? 'success' : 'error'"
-                size="small"
-                class="font-bold"
-              >
-                {{ position.side }}
-              </n-tag>
-              <span class="text-xs text-[var(--color-text-secondary)]"
-                >{{ position.amount }} Shares</span
-              >
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-              <div class="flex flex-col">
-                <span class="text-xs text-[var(--color-text-secondary)]">{{
-                  t("training.trade.avgEntry")
-                }}</span>
-                <span
-                  class="text-sm font-medium text-[var(--color-text-primary)]"
-                  >${{ position.entryPrice }}</span
-                >
-              </div>
-              <div class="flex flex-col items-end">
-                <span class="text-xs text-[var(--color-text-secondary)]">{{
-                  t("training.trade.marketPrice")
-                }}</span>
-                <span
-                  class="text-sm font-medium text-[var(--color-text-primary)]"
-                  >${{ currentPrice }}</span
-                >
-              </div>
-            </div>
-
+          <div v-if="positions.length > 0" class="space-y-4">
+            <!-- Global Account Summary -->
             <div
-              class="p-3 rounded-lg bg-[var(--color-bg-sidebar)] border border-[var(--color-border)]"
+              class="p-3 rounded-lg bg-[var(--color-bg-sidebar)] border border-[var(--color-border)] mb-4"
             >
               <div class="flex justify-between items-center mb-1">
-                <span class="text-xs text-[var(--color-text-secondary)]">{{
-                  t("training.trade.unrealizedPL")
-                }}</span>
-                <span
-                  :class="
-                    position.pl >= 0
-                      ? 'text-[var(--color-success)]'
-                      : 'text-[var(--color-error)]'
-                  "
-                  class="text-lg font-bold"
+                <span class="text-xs text-[var(--color-text-secondary)]"
+                  >总资产 (Equity)</span
                 >
-                  {{ position.pl >= 0 ? "+" : "" }}{{ position.pl }}%
-                </span>
+                <span class="text-lg font-bold"
+                  >${{ sessionEquity.toFixed(2) }}</span
+                >
               </div>
               <div
                 class="flex justify-between text-[10px] text-[var(--color-text-secondary)]"
               >
+                <span>可用资金: ${{ accountBalance.toFixed(2) }}</span>
                 <span
-                  >{{ t("training.trade.value") }}: ${{
-                    (position.amount * currentPrice).toFixed(2)
-                  }}</span
+                  >浮动盈亏:
+                  <span
+                    :class="
+                      unrealizedPnl >= 0
+                        ? 'text-[var(--color-success)]'
+                        : 'text-[var(--color-error)]'
+                    "
+                    >{{ unrealizedPnl >= 0 ? "+" : ""
+                    }}{{ unrealizedPnl.toFixed(2) }}</span
+                  ></span
                 >
+              </div>
+              <div
+                class="flex justify-between text-[10px] text-[var(--color-text-secondary)] mt-1"
+              >
+                <span>占用保证金: ${{ usedMargin.toFixed(2) }}</span>
+              </div>
+            </div>
+
+            <!-- Position List -->
+            <div
+              v-for="pos in positions"
+              :key="pos.id"
+              class="p-3 rounded-lg border border-[var(--color-border)]"
+            >
+              <div class="flex justify-between items-center mb-2">
+                <div class="flex items-center gap-2">
+                  <n-tag
+                    :type="pos.side === 'LONG' ? 'success' : 'error'"
+                    size="small"
+                    class="font-bold"
+                  >
+                    {{ pos.side }}
+                  </n-tag>
+                  <span class="text-sm font-medium"
+                    >{{ pos.amount }} Shares</span
+                  >
+                </div>
                 <span
-                  >{{ t("training.trade.pl") }}: ${{
-                    position.plAmount.toFixed(2)
-                  }}</span
+                  :class="
+                    (pos.side === 'LONG'
+                      ? currentPrice - pos.entryPrice
+                      : pos.entryPrice - currentPrice) *
+                      pos.amount >=
+                    0
+                      ? 'text-[var(--color-success)]'
+                      : 'text-[var(--color-error)]'
+                  "
+                  class="font-bold"
+                >
+                  ${{
+                    (
+                      (pos.side === "LONG"
+                        ? currentPrice - pos.entryPrice
+                        : pos.entryPrice - currentPrice) * pos.amount
+                    ).toFixed(2)
+                  }}
+                </span>
+              </div>
+
+              <div
+                class="flex justify-between text-xs text-[var(--color-text-secondary)] mb-3"
+              >
+                <span>开仓: ${{ pos.entryPrice.toFixed(2) }}</span>
+                <span>当前: ${{ currentPrice.toFixed(2) }}</span>
+              </div>
+
+              <div class="flex gap-2">
+                <n-button
+                  size="tiny"
+                  tertiary
+                  @click="handlePartialClose(pos.id, 50)"
+                  :disabled="isTrainingWindowEnded"
+                  >平半仓</n-button
+                >
+                <n-button
+                  size="tiny"
+                  type="warning"
+                  ghost
+                  class="flex-1"
+                  @click="closePosition(pos.id, pos.amount)"
+                  :disabled="isTrainingWindowEnded"
+                  :loading="isTrading"
+                  >平仓</n-button
+                >
+                <n-button
+                  size="tiny"
+                  type="primary"
+                  ghost
+                  class="flex-1"
+                  @click="reversePosition(pos.id)"
+                  :disabled="isTrainingWindowEnded"
+                  >反手</n-button
                 >
               </div>
             </div>
 
             <n-button
               block
-              type="warning"
+              type="error"
               ghost
               size="small"
               :disabled="isTrainingWindowEnded"
-              @click="closePosition"
-              >{{ t("training.trade.closePosition") }}</n-button
+              @click="closeAllPositions"
+              class="mt-4"
             >
+              一键全平
+            </n-button>
           </div>
           <div
             v-else
@@ -991,7 +1114,6 @@ import {
   NButtonGroup,
   NSlider,
   NCard,
-  NSelect,
   NInputNumber,
   NTag,
   NModal,
@@ -1042,11 +1164,14 @@ import type { KLineData, Period, OverlayCreate, CandleType } from "klinecharts";
 import { useTheme } from "../composables/useTheme";
 import { useLayoutControl } from "../composables/useLayoutControl";
 import { useAuth } from "../composables/useAuth";
+import { useTrainingStore } from "../composables/useTrainingStore";
 import {
   createTrainingSession,
   executeTrainingOrder,
   settleTrainingSession,
+  getTrainingSession,
   listSessions,
+  getTrainingTrades,
 } from "../services/api/trainingApi";
 import {
   fetchRandomStock,
@@ -1056,6 +1181,7 @@ import {
   listStockKlineByAny,
 } from "../services/marketRepo";
 import { saveSessionProgress } from "../services/api/trainingApi";
+import { ID } from "../utils/appwrite";
 
 const router = useRouter();
 const message = useMessage();
@@ -1065,15 +1191,15 @@ const { t, locale } = useI18n();
 const { user, profile, refreshProfile } = useAuth();
 
 // State
-interface TradeRecord {
-  id: string;
-  time: string;
-  action: "BUY" | "SELL" | "CLOSE";
-  amount: number;
-  price: number;
-  pl?: number;
-}
-const tradeRecords = ref<TradeRecord[]>([]);
+const tradeStore = useTrainingStore();
+const {
+  positions,
+  tradeRecords,
+  currentPrice: storePrice,
+  equity: sessionEquity,
+  usedMargin,
+  unrealizedPnl,
+} = tradeStore;
 
 const isChartLoaded = ref(false);
 const chartRef = ref<HTMLElement | null>(null);
@@ -1083,10 +1209,12 @@ const showQuickTrade = ref(false);
 const playSpeed = ref(2);
 const currentTimeframe = ref("daily");
 const currentChartType = ref<CandleType>("candle_solid");
-const orderType = ref("MARKET");
 const tradeAmount = ref(100);
-const tradeSide = ref<"BUY" | "SELL">("BUY");
+const tradeSide = ref<"LONG" | "SHORT">("LONG");
 const currentPrice = ref(0);
+watch(currentPrice, (v) => {
+  storePrice.value = v;
+});
 const showHelp = ref(false);
 const indicators = ref<string[]>(["MA", "VOL"]);
 const currentDrawingTool = ref<string | null>(null);
@@ -1107,14 +1235,12 @@ const sessionTradeSeq = ref(0);
 const sessionInitialBalance = ref(0);
 const sessionRealizedPnl = ref(0);
 const sessionPeakBalance = ref(0);
-const isOnline = ref(
-  typeof navigator !== "undefined" ? navigator.onLine : true,
-);
-const OFFLINE_SESSION_KEY = "so_training_offline_session";
-const OFFLINE_ORDERS_KEY = "so_training_offline_orders";
+const isFetchingLogs = ref(false);
+const isTrading = ref(false);
 const accountBalance = computed(() =>
   Number(profile.value?.training_balance ?? 0),
 );
+const displayBalance = computed(() => accountBalance.value);
 
 const currentStock = ref<any>(null);
 const currentStockName = computed(() =>
@@ -1230,12 +1356,7 @@ const drawingTools = computed(() => [
   },
 ]);
 
-const orderTypeOptions = computed(() => [
-  { label: t("training.trade.marketOrder"), value: "MARKET" },
-  { label: t("training.trade.limitOrder"), value: "LIMIT" },
-]);
-
-const position = ref<any>(null);
+const autoSettled = ref(false);
 
 // Mock Data Generator
 // Moved to src/utils/mockData.ts
@@ -1918,6 +2039,51 @@ onMounted(() => {
   });
 
   registerOverlay({
+    name: "closeMarker",
+    totalStep: 1,
+    needDefaultPointFigure: false,
+    needDefaultXAxisFigure: false,
+    needDefaultYAxisFigure: false,
+    createPointFigures: ({ coordinates }) => {
+      if (coordinates.length > 0) {
+        const x = coordinates[0].x;
+        const y = coordinates[0].y;
+        const color = "#3B82F6";
+        return [
+          {
+            type: "circle",
+            attrs: { x, y, r: 6 },
+            styles: { style: "stroke", color },
+            ignoreEvent: true,
+          },
+          {
+            type: "text",
+            attrs: {
+              x,
+              y: y - 16,
+              text: "X",
+              baseline: "bottom",
+              align: "center",
+            },
+            styles: {
+              color: "#FFFFFF",
+              backgroundColor: color,
+              paddingLeft: 4,
+              paddingRight: 4,
+              paddingTop: 2,
+              paddingBottom: 2,
+              borderRadius: 2,
+              size: 10,
+            },
+            ignoreEvent: true,
+          },
+        ];
+      }
+      return [];
+    },
+  });
+
+  registerOverlay({
     name: "text",
     totalStep: 1,
     needDefaultPointFigure: false,
@@ -2037,11 +2203,10 @@ onMounted(() => {
     // Removed duplicate listener logic
   }
   window.addEventListener("online", () => {
-    isOnline.value = true;
-    syncOfflineIfAny();
+    bootstrapSession();
   });
   window.addEventListener("offline", () => {
-    isOnline.value = false;
+    //
   });
 });
 
@@ -2065,7 +2230,7 @@ onUnmounted(() => {
   }
 
   window.removeEventListener("keydown", handleKeydown);
-  window.removeEventListener("online", syncOfflineIfAny as any);
+  window.removeEventListener("online", () => {});
   window.removeEventListener("offline", () => {});
 
   if (chartInstance.value) {
@@ -2108,23 +2273,23 @@ function handleKeydown(e: KeyboardEvent) {
 
   // Buy/Long: 'B'
   if (key === "b" && showQuickTrade.value) {
-    handleTrade("BUY");
+    handleTrade("LONG");
     return;
   }
 
   // Sell/Short: 'S'
   if (key === "s" && showQuickTrade.value) {
-    handleTrade("SELL");
+    handleTrade("SHORT");
     return;
   }
 
   // Close Position: 'C' or 'Escape'
   if (
     (key === "c" || key === "escape") &&
-    position.value &&
+    tradeStore.positions.value.length > 0 &&
     showQuickTrade.value
   ) {
-    closePosition();
+    closeAllPositions();
     return;
   }
 
@@ -2185,16 +2350,18 @@ function updateChart() {
     scheduleProgressSave();
   }
 
-  // Update position P/L if active
-  if (position.value) {
-    const diff = currentPrice.value - position.value.entryPrice;
-    const plPerShare = position.value.side === "LONG" ? diff : -diff;
-    position.value.plAmount = plPerShare * position.value.amount;
-    position.value.pl =
-      (position.value.plAmount /
-        (position.value.entryPrice * position.value.amount)) *
-      100;
-    position.value.pl = Number(position.value.pl.toFixed(2));
+  if (isTrainingWindowEnded.value && !autoSettled.value) {
+    autoSettled.value = true;
+    (async () => {
+      try {
+        if (tradeStore.positions.value.length > 0) {
+          await closeAllPositions();
+        }
+        await finalizeSession("completed");
+        await refreshSessionSnapshot();
+        message.success(t("training.messages.sessionEnded") || "Session ended");
+      } catch {}
+    })();
   }
 }
 
@@ -2526,40 +2693,193 @@ function updateChartSettings() {
 
 function setAmountByPercent(p: number) {
   const baseBalance = isTrainingStarted.value
-    ? sessionInitialBalance.value + sessionRealizedPnl.value
+    ? tradeStore.balance.value
     : accountBalance.value;
-  tradeAmount.value =
-    Math.floor((baseBalance * (p / 100)) / currentPrice.value / 100) * 100;
+  const tentative = Math.floor((baseBalance * (p / 100)) / currentPrice.value);
+  tradeAmount.value = tentative > 1 ? tentative : 1;
+}
+
+async function refreshSessionSnapshot() {
+  if (!activeSessionId.value) return;
+  const { data } = await getTrainingSession(activeSessionId.value);
+  if (data) {
+    tradeStore.balance.value = Number((data as any).cash || 0);
+    // Parse positions from snapshot
+    if ((data as any).positions) {
+      try {
+        const parsed = JSON.parse((data as any).positions);
+        if (Array.isArray(parsed)) {
+          tradeStore.positions.value = parsed.map(p => ({
+            ...p,
+            entryTime: p.entryTime || Date.now()
+          }));
+        }
+      } catch (e) {}
+    } else if ((data as any).position) {
+      // Legacy fallback
+      const oldPos = Number((data as any).position);
+      if (oldPos !== 0) {
+        tradeStore.positions.value = [{
+          id: `legacy-${Date.now()}`,
+          side: oldPos > 0 ? "LONG" : "SHORT",
+          amount: Math.abs(oldPos),
+          entryPrice: Number((data as any).avg_entry_price || 0),
+          entryTime: Date.now()
+        }];
+      }
+    }
+    await refreshProfile();
+  }
+}
+
+async function loadTradeLogs() {
+  if (!activeSessionId.value) {
+    tradeStore.tradeRecords.value = [];
+    tradeStore.positions.value = [];
+    return;
+  }
+  if (isFetchingLogs.value) return;
+  isFetchingLogs.value = true;
+  try {
+    const res = await getTrainingTrades(activeSessionId.value, 200);
+    if (res.data) {
+      const docs = res.data as any[];
+      const mapped = docs.map((d) => {
+        let ex: any = {};
+        try {
+          ex =
+            typeof d.extra === "string" ? JSON.parse(d.extra) : d.extra || {};
+        } catch {
+          ex = {};
+        }
+        return {
+          id: d.$id,
+          time: d.trade_time,
+          action: d.action,
+          amount: Number(d.amount || 0),
+          price: Number(d.price || 0),
+          realizedPnl:
+            ex && typeof ex.realized_pnl === "number"
+              ? Number(ex.realized_pnl)
+              : undefined,
+          fee: Number(d.fee || 0),
+        };
+      });
+      tradeStore.tradeRecords.value = mapped;
+      if (docs.length > 0) {
+        const latest = docs[0];
+        let posAfter: any = null;
+        try {
+          posAfter =
+            typeof latest.position_after === "string"
+              ? JSON.parse(latest.position_after)
+              : latest.position_after;
+        } catch {
+          posAfter = null;
+        }
+        
+        if (Array.isArray(posAfter)) {
+          tradeStore.positions.value = posAfter
+            .filter((p: any) => p.amount > 0)
+            .map((p: any) => ({
+              id: p.id || `server-${p.side}-${latest.$id}`,
+              side: p.side,
+              amount: p.amount,
+              entryPrice: p.entryPrice,
+              entryTime: new Date(latest.trade_time).getTime(),
+            }));
+        } else if (
+          posAfter &&
+          typeof posAfter.amount === "number" &&
+          posAfter.amount !== 0 &&
+          (posAfter.side === "LONG" || posAfter.side === "SHORT")
+        ) {
+          tradeStore.positions.value = [
+            {
+              id: `server-${latest.$id}`,
+              side: posAfter.side,
+              amount: Math.abs(posAfter.amount),
+              entryPrice: Number(posAfter.entryPrice || 0),
+              entryTime: new Date(latest.trade_time).getTime(),
+            },
+          ];
+        } else {
+          tradeStore.positions.value = [];
+        }
+      } else {
+        tradeStore.positions.value = [];
+      }
+    }
+  } finally {
+    isFetchingLogs.value = false;
+  }
 }
 
 async function persistTradeLog(
-  action: "BUY" | "SELL" | "CLOSE",
+  action: "LONG" | "SHORT" | "CLOSE",
   amount: number,
   price: number,
-) {
-  if (!user.value) return;
+  orderId: string,
+  closeSide?: "LONG" | "SHORT"
+): Promise<boolean> {
+  if (!user.value) return false;
   const klineTimestamp = fullData.value[currentIndex.value]?.timestamp ?? null;
 
   if (activeSessionId.value) {
     const result = await executeTrainingOrder({
       sessionId: activeSessionId.value,
-      action: action as "BUY" | "SELL" | "CLOSE",
+      action,
       amount,
       priceHint: price,
       klineTimestamp,
+      orderId,
+      closeSide,
     });
     if (result.error || !result.data) {
-      saveOfflineOrder({ action, amount, priceHint: price, klineTimestamp });
-      message.warning(
-        t("training.messages.offlineOrderSaved") || "Saved offline",
-      );
+      throw new Error(result.error?.message || "Trade execution failed");
     }
-  } else {
-    saveOfflineOrder({ action, amount, priceHint: price, klineTimestamp });
-    message.warning(
-      t("training.messages.offlineOrderSaved") || "Saved offline",
-    );
+    
+    const data = result.data as any;
+    
+    // 严格使用后端计算出的 cash
+    tradeStore.balance.value = data.cash;
+    if (profile.value && data.trainingBalance !== undefined) {
+      profile.value.training_balance = data.trainingBalance;
+    } else if (profile.value) {
+      profile.value.training_balance = data.cash;
+    }
+    
+    // 更新持仓状态 (Hedging mode: afterPosition is now an array)
+    if (Array.isArray(data.afterPosition)) {
+      tradeStore.positions.value = data.afterPosition
+        .filter((p: any) => p.amount > 0)
+        .map((p: any) => ({
+          id: p.id || `server-${p.side}-${data.seqNo}`,
+          side: p.side,
+          amount: p.amount,
+          entryPrice: p.entryPrice,
+          entryTime: klineTimestamp || Date.now(),
+        }));
+    } else {
+      // Fallback for older format
+      tradeStore.positions.value = [];
+    }
+
+    // 避免 Appwrite 索引延迟导致获取不到最新记录，手动构造 TradeRecord 并推入最前方
+    tradeStore.tradeRecords.value.unshift({
+      id: orderId,
+      time: data.tradeTime || new Date().toISOString(),
+      action: action === "LONG" || action === "SHORT" ? action : "CLOSE",
+      side: action === "CLOSE" ? closeSide : action,
+      amount: amount,
+      price: price,
+      fee: data.fee,
+      realizedPnl: data.realizedPnl !== undefined ? data.realizedPnl : undefined,
+    });
+
+    return true;
   }
+  return false;
 }
 
 async function finalizeSession(status: "completed" | "aborted") {
@@ -2574,10 +2894,8 @@ async function finalizeSession(status: "completed" | "aborted") {
     return;
   }
 
-  const data = result.data as any;
-
-  if (user.value && profile.value) {
-    profile.value = { ...profile.value, training_balance: data.endingBalance };
+  if (user.value) {
+    await refreshProfile();
   }
 
   activeSessionId.value = null;
@@ -2588,127 +2906,118 @@ async function handleTrade(side: string) {
     message.warning(t("training.messages.trainingEndedViewOnly"));
     return;
   }
-
-  if (position.value) {
-    message.error(
-      t("training.messages.alreadyHavePosition", { side: position.value.side }),
-    );
-    return;
-  }
-
   if (!activeSessionId.value) {
     message.warning(t("training.messages.sessionNotInitialized"));
     return;
   }
+  if (isTrading.value) return;
 
-  position.value = {
-    side: side === "BUY" ? "LONG" : "SHORT",
-    amount: tradeAmount.value,
-    entryPrice: currentPrice.value,
-    entryTime: fullData.value[currentIndex.value].timestamp, // Record entry time for T+1 check
-    pl: 0,
-    plAmount: 0,
-  };
-
-  // Add marker to chart
-  if (chartInstance.value) {
-    const timestamp = fullData.value[currentIndex.value].timestamp;
-    chartInstance.value.createOverlay({
-      name: "tradeMarker",
-      extendData: { type: side, price: currentPrice.value },
-      points: [{ timestamp: timestamp, value: currentPrice.value }],
-    });
+  const amt = Number(tradeAmount.value || 0);
+  if (amt <= 0) {
+    message.error(t("training.messages.invalidAmount") || "Invalid amount");
+    return;
   }
 
-  message.success(
-    t("training.messages.orderFilled", {
-      side,
-      price: currentPrice.value.toFixed(2),
-    }),
-  );
+  isTrading.value = true;
+  const timestamp = fullData.value[currentIndex.value].timestamp;
+  try {
+    const posSide = side === "LONG" ? "LONG" : "SHORT";
+    const orderId = ID.unique();
+    
+    // 执行后端同步，成功后会自动更新本地 tradeRecords 和 balance
+    await persistTradeLog(
+      posSide as "LONG" | "SHORT",
+      amt,
+      currentPrice.value,
+      orderId,
+    );
 
-  tradeRecords.value.unshift({
-    id: Date.now().toString() + Math.random().toString(36).substring(2, 7),
-    time: (() => {
-      const d = new Date(fullData.value[currentIndex.value].timestamp);
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    })(),
-    action: side === "BUY" ? "BUY" : "SELL",
-    amount: tradeAmount.value,
-    price: currentPrice.value,
-  });
+    if (chartInstance.value) {
+      chartInstance.value.createOverlay({
+        name: "tradeMarker",
+        extendData: { type: side, price: currentPrice.value },
+        points: [{ timestamp: timestamp, value: currentPrice.value }],
+      });
+    }
 
-  await persistTradeLog(
-    side === "BUY" ? "BUY" : "SELL",
-    tradeAmount.value,
-    currentPrice.value,
-  );
+    message.success(
+      t("training.messages.orderFilled", {
+        side,
+        price: currentPrice.value.toFixed(2),
+      }),
+    );
+  } catch (e: any) {
+    message.error(e.message || "Failed to open position");
+  } finally {
+    isTrading.value = false;
+  }
 }
 
-async function closePosition() {
-  if (!position.value) return;
+async function closePosition(id: string, amount: number) {
   if (isTrainingWindowEnded.value) {
     message.warning(t("training.messages.trainingEndedViewOnly"));
     return;
   }
+  if (isTrading.value) return;
 
-  // T+1 Rule Check
-  // In simulation, we check if the current candle timestamp is greater than entry timestamp
-  // Assuming daily candles, next index is next day.
-  // For intraday, we might need to check the date part of timestamp.
-  // Let's implement a simple check: must be at least next candle for now,
-  // or check date difference if timestamps are available.
+  const pos = tradeStore.positions.value.find((p) => p.id === id);
+  if (!pos) return;
 
-  const currentTimestamp = fullData.value[currentIndex.value].timestamp;
-  const entryTimestamp = position.value.entryTime;
+  isTrading.value = true;
+  const timestamp = fullData.value[currentIndex.value].timestamp;
+  
+  try {
+    const orderId = ID.unique();
+    
+    // In Hedging mode, we always use CLOSE and explicitly specify which side we are closing
+    await persistTradeLog(
+      "CLOSE",
+      amount,
+      currentPrice.value,
+      orderId,
+      pos.side as "LONG" | "SHORT"
+    );
 
-  // Convert timestamps to dates to check if it's the same day
-  const currentDate = new Date(currentTimestamp);
-  const entryDate = new Date(entryTimestamp);
+    if (chartInstance.value) {
+      chartInstance.value.createOverlay({
+        name: "closeMarker",
+        extendData: { type: "CLOSE", price: currentPrice.value },
+        points: [{ timestamp: timestamp, value: currentPrice.value }],
+      });
+    }
 
-  const isSameDay =
-    currentDate.getFullYear() === entryDate.getFullYear() &&
-    currentDate.getMonth() === entryDate.getMonth() &&
-    currentDate.getDate() === entryDate.getDate();
-
-  if (isSameDay) {
-    message.warning(t("training.messages.tPlusOneWarning"));
-    return;
+    message.success(
+      t("training.messages.positionClosed", { pl: (tradeStore.tradeRecords.value[0]?.realizedPnl || 0).toFixed(2) }),
+    );
+  } catch (e: any) {
+    message.error(e.message || "Failed to close position");
+  } finally {
+    isTrading.value = false;
   }
+}
 
-  const side = position.value.side === "LONG" ? "SELL" : "BUY";
-
-  // Add marker to chart
-  if (chartInstance.value) {
-    const timestamp = fullData.value[currentIndex.value].timestamp;
-    const type = side === "BUY" ? "BUY" : "SELL"; // Closing SHORT is BUY, Closing LONG is SELL
-    chartInstance.value.createOverlay({
-      name: "tradeMarker",
-      extendData: { type: type, price: currentPrice.value },
-      points: [{ timestamp: timestamp, value: currentPrice.value }],
-    });
+async function handlePartialClose(id: string, percent: number) {
+  const pos = tradeStore.positions.value.find((p) => p.id === id);
+  if (!pos) return;
+  const amountToClose = Math.floor(pos.amount * (percent / 100));
+  if (amountToClose > 0) {
+    await closePosition(id, amountToClose);
   }
+}
 
-  const pl = position.value.plAmount;
-  sessionRealizedPnl.value = Number((sessionRealizedPnl.value + pl).toFixed(2));
-  const liveBalance = sessionInitialBalance.value + sessionRealizedPnl.value;
-  sessionPeakBalance.value = Math.max(sessionPeakBalance.value, liveBalance);
-  message.success(t("training.messages.positionClosed", { pl: pl.toFixed(2) }));
+async function closeAllPositions() {
+  const posList = [...tradeStore.positions.value];
+  for (const p of posList) {
+    await closePosition(p.id, p.amount);
+  }
+}
 
-  tradeRecords.value.unshift({
-    id: Date.now().toString() + Math.random().toString(36).substring(2, 7),
-    time: (() => {
-      const d = new Date(fullData.value[currentIndex.value].timestamp);
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    })(),
-    action: "CLOSE",
-    amount: position.value.amount,
-    price: currentPrice.value,
-    pl: pl,
-  });
-
-  await persistTradeLog("CLOSE", position.value.amount, currentPrice.value);
-  position.value = null;
+async function reversePosition(id: string) {
+  const pos = tradeStore.positions.value.find((p) => p.id === id);
+  if (!pos) return;
+  const amount = pos.amount;
+  await closePosition(id, amount);
+  await handleTrade(pos.side === "LONG" ? "SHORT" : "LONG");
 }
 
 async function exitTraining() {
@@ -2787,6 +3096,8 @@ async function bootstrapSession() {
         );
         isChartLoaded.value = true;
         activeSessionId.value = latest.$id;
+        await refreshSessionSnapshot();
+        await loadTradeLogs();
         return;
       }
       const format = (data: any[]) =>
@@ -2845,19 +3156,13 @@ async function bootstrapSession() {
         await ensureChartSized();
       }
       activeSessionId.value = latest.$id;
+      await refreshSessionSnapshot();
+      await loadTradeLogs();
       isChartLoaded.value = true;
       return;
     }
   } catch (e) {
-    const offline = loadOfflineSession();
-    if (offline) {
-      currentStock.value = { symbol: offline.symbol, name: offline.symbol };
-      await startNewRandomTraining();
-      activeSessionId.value = null;
-      isChartLoaded.value = true;
-      message.warning(t("training.messages.offlineMode") || "Offline mode");
-      return;
-    }
+    await startNewRandomTraining();
   }
   await startNewRandomTraining();
   const sDate = new Date(
@@ -2886,14 +3191,7 @@ async function bootstrapSession() {
     });
     activeSessionId.value = (data?.sessionId as string) ?? null;
   } catch {
-    saveOfflineSession({
-      symbol: currentStock.value?.symbol ?? "",
-      startDate: sDate,
-      endDate: eDate,
-      startPrice: dailyData.value[trainingStartIndex.value].close,
-    });
     activeSessionId.value = null;
-    message.warning(t("training.messages.offlineMode") || "Offline mode");
   }
 }
 
@@ -2904,7 +3202,10 @@ async function startTraining() {
   sessionInitialBalance.value = accountBalance.value;
   sessionRealizedPnl.value = 0;
   sessionPeakBalance.value = sessionInitialBalance.value;
-  tradeRecords.value = [];
+  tradeStore.init(accountBalance.value);
+  if (activeSessionId.value) {
+    await loadTradeLogs();
+  }
   if (!activeSessionId.value && user.value && currentStock.value) {
     try {
       const sDate = new Date(
@@ -2930,8 +3231,11 @@ async function startTraining() {
         endDate: eDate,
         startPrice: dailyData.value[trainingStartIndex.value].close,
       });
-      if (!error && data?.sessionId)
+      if (!error && data?.sessionId) {
         activeSessionId.value = data.sessionId as string;
+        await refreshSessionSnapshot();
+        await loadTradeLogs();
+      }
     } catch {}
   }
   setFullscreen(true);
@@ -2970,66 +3274,6 @@ function cancelText() {
 }
 
 // resetSession removed per requirement: training can be moved only after completion
-
-function saveOfflineSession(payload: any) {
-  localStorage.setItem(OFFLINE_SESSION_KEY, JSON.stringify(payload));
-}
-function loadOfflineSession(): any | null {
-  try {
-    const v = localStorage.getItem(OFFLINE_SESSION_KEY);
-    return v ? JSON.parse(v) : null;
-  } catch {
-    return null;
-  }
-}
-function clearOfflineSession() {
-  localStorage.removeItem(OFFLINE_SESSION_KEY);
-}
-function saveOfflineOrder(order: any) {
-  try {
-    const arr = loadOfflineOrders();
-    arr.push(order);
-    localStorage.setItem(OFFLINE_ORDERS_KEY, JSON.stringify(arr));
-  } catch {}
-}
-function loadOfflineOrders(): any[] {
-  try {
-    const v = localStorage.getItem(OFFLINE_ORDERS_KEY);
-    return v ? JSON.parse(v) : [];
-  } catch {
-    return [];
-  }
-}
-function clearOfflineOrders() {
-  localStorage.removeItem(OFFLINE_ORDERS_KEY);
-}
-async function syncOfflineIfAny() {
-  const offline = loadOfflineSession();
-  const orders = loadOfflineOrders();
-  if (!isOnline.value || (!offline && orders.length === 0)) return;
-  try {
-    let sid = activeSessionId.value;
-    if (!sid && offline) {
-      const { data } = await createTrainingSession({
-        symbol: offline.symbol,
-        period: "daily",
-        startDate: offline.startDate,
-        endDate: offline.endDate,
-        startPrice: offline.startPrice,
-      });
-      sid = (data?.sessionId as string) ?? null;
-      activeSessionId.value = sid;
-    }
-    if (sid && orders.length > 0) {
-      for (const o of orders) {
-        await executeTrainingOrder({ ...o, sessionId: sid });
-      }
-    }
-    clearOfflineOrders();
-    clearOfflineSession();
-    message.success(t("training.messages.synced") || "Synced");
-  } catch {}
-}
 </script>
 
 <style scoped>

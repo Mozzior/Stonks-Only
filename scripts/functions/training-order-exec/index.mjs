@@ -28,12 +28,26 @@ export default withHandler(async (context, logger) => {
   }
   const sessionId = body.sessionId;
   if (!sessionId) return fail(400, "BAD_REQUEST", "Missing sessionId");
-  const action = body.action || body.orderSide;
-  if (!action) return fail(400, "BAD_REQUEST", "Missing action");
+  const actionRaw = body.action || body.orderSide;
+  if (!actionRaw) return fail(400, "BAD_REQUEST", "Missing action");
+  const actionUpper = String(actionRaw).toUpperCase();
+  const isClose = actionUpper === "CLOSE";
+  const actionDir =
+    actionUpper === "LONG"
+      ? "LONG"
+      : actionUpper === "SHORT"
+        ? "SHORT"
+        : actionUpper === "BUY"
+          ? "LONG"
+          : actionUpper === "SELL"
+            ? "SHORT"
+            : "UNKNOWN";
+  if (actionDir === "UNKNOWN" && !isClose)
+    return fail(400, "BAD_REQUEST", "Invalid action");
   const orderType = (body.orderType || body.type || "MARKET").toUpperCase();
   const volume = Number(body.amount ?? body.volume ?? 0);
   const price = Number(body.priceHint ?? body.price ?? 0);
-  const feeRate = Number(body.feeRate ?? 0.001);
+  const feeRate = Number(body.feeRate ?? 0);
   const executedAt = body.klineTimestamp
     ? new Date(body.klineTimestamp).toISOString()
     : body.timestamp
@@ -46,14 +60,31 @@ export default withHandler(async (context, logger) => {
   const stockKlineCol =
     process.env.VITE_APPWRITE_STOCK_KLINE_COLLECTION_ID || "stock_kline";
   let cash = Number(session.cash || 0);
-  let position = Number(session.position || 0);
-  const isClose = String(action).toUpperCase() === "CLOSE";
-  const side =
-    String(action).toUpperCase() === "SELL"
-      ? "SELL"
-      : String(action).toUpperCase() === "BUY"
-        ? "BUY"
-        : "CLOSE";
+  
+  // Parse positions array from session
+  let positions = [];
+  try {
+    if (session.positions) {
+      positions = JSON.parse(session.positions);
+    } else {
+      // Legacy fallback
+      const oldPos = Number(session.position || 0);
+      if (oldPos !== 0) {
+        positions.push({
+          id: ID.unique(),
+          side: oldPos > 0 ? "LONG" : "SHORT",
+          amount: Math.abs(oldPos),
+          entryPrice: Number(session.avg_entry_price || 0)
+        });
+      }
+    }
+  } catch (e) {
+    logger.error("Failed to parse positions", e);
+  }
+
+  const closeSide = body.closeSide; // Optional parameter for CLOSE action
+
+  const sideForCalc = isClose ? "CLOSE" : actionDir === "LONG" ? "BUY" : "SELL";
   if (!isClose && (!volume || !price))
     return fail(400, "BAD_REQUEST", "Missing volume or price");
   if (stockKlineCol) {
@@ -96,67 +127,132 @@ export default withHandler(async (context, logger) => {
       }
     } catch {}
   }
-  const dupCheck = await databases.listDocuments(db, ordersCol, [
-    Query.equal("session_id", sessionId),
-    Query.equal("action", isClose ? "CLOSE" : side),
-    Query.equal("price", price),
-    Query.equal("amount", isClose ? Number(session.position || 0) : volume),
-    Query.equal("trade_time", executedAt),
-    Query.limit(1),
-  ]);
-  if (dupCheck.total > 0) {
-    return fail(400, "DUPLICATE_ORDER", "Duplicate order");
-  }
-  const fee = Number((price * volume * feeRate).toFixed(2));
+
+const fee =
+    body.fee !== undefined
+      ? Number(body.fee)
+      : Number((price * volume * feeRate).toFixed(2));
   let notional = Number((price * volume).toFixed(2));
   let realizedPnl = 0;
-  if (side === "BUY") {
-    const cost = notional + fee;
-    if (cash < cost)
-      return fail(400, "INSUFFICIENT_FUNDS", "Insufficient cash");
-    position += volume;
-    cash = Number((cash - cost).toFixed(2));
-  } else if (side === "SELL") {
-    if (position < volume)
-      return fail(400, "INSUFFICIENT_POSITION", "Insufficient position");
-    position -= volume;
-    cash = Number((cash + notional - fee).toFixed(2));
-  } else if (isClose) {
-    if (position === 0) return fail(400, "NO_POSITION", "No position to close");
-    const closeVolume = position;
-    notional = Number((price * closeVolume).toFixed(2));
-    realizedPnl = 0;
-    const avgEntryPrice = Number(session.avg_entry_price || 0);
-    if (avgEntryPrice > 0) {
-      realizedPnl =
-        side === "CLOSE"
-          ? Number(((price - avgEntryPrice) * closeVolume).toFixed(2))
-          : 0;
+
+  if (body.override) {
+    cash = Number(body.cash ?? cash);
+    if (body.positions) {
+      positions = body.positions;
     }
-    cash = Number((cash + notional - fee).toFixed(2));
-    position = 0;
+    notional = Number(body.notional ?? notional);
+    realizedPnl = Number(body.realizedPnl ?? 0);
+  } else {
+    if (isClose) {
+      if (!closeSide) return fail(400, "BAD_REQUEST", "Missing closeSide for CLOSE action");
+      
+      const posIndex = positions.findIndex(p => p.side === closeSide);
+      if (posIndex === -1) return fail(400, "NO_POSITION", `No ${closeSide} position to close`);
+      
+      const pos = positions[posIndex];
+      const closeVol = Math.min(pos.amount, volume);
+      const closeFee = Number((closeVol * price * feeRate).toFixed(2));
+      
+      const pnl = closeSide === "LONG" 
+        ? (price - pos.entryPrice) * closeVol 
+        : (pos.entryPrice - price) * closeVol;
+        
+      realizedPnl = Number(pnl.toFixed(2));
+      const marginReleased = closeVol * pos.entryPrice;
+      
+      cash = Number((cash + marginReleased + pnl - closeFee).toFixed(2));
+      notional = Number((closeVol * price).toFixed(2));
+      body.fee = closeFee;
+      
+      pos.amount -= closeVol;
+      if (pos.amount <= 0) {
+        positions.splice(posIndex, 1);
+      }
+    } else if (actionDir === "LONG") {
+      const costForOpen = volume * price;
+      const openFee = volume * price * feeRate;
+      const totalCashNeeded = costForOpen + openFee;
+
+      if (cash < totalCashNeeded) {
+        return fail(400, "INSUFFICIENT_FUNDS", "Insufficient cash");
+      }
+
+      cash = Number((cash - totalCashNeeded).toFixed(2));
+      
+      const existingPos = positions.find(p => p.side === "LONG");
+      if (existingPos) {
+        existingPos.entryPrice = Number(((existingPos.amount * existingPos.entryPrice + volume * price) / (existingPos.amount + volume)).toFixed(4));
+        existingPos.amount += volume;
+      } else {
+        positions.push({
+          id: ID.unique(),
+          side: "LONG",
+          amount: volume,
+          entryPrice: price
+        });
+      }
+    } else if (actionDir === "SHORT") {
+      const costForOpen = volume * price;
+      const openFee = volume * price * feeRate;
+      const totalCashNeeded = costForOpen + openFee;
+
+      if (cash < totalCashNeeded) {
+        return fail(400, "INSUFFICIENT_FUNDS", "Insufficient cash");
+      }
+
+      cash = Number((cash - totalCashNeeded).toFixed(2));
+      
+      const existingPos = positions.find(p => p.side === "SHORT");
+      if (existingPos) {
+        existingPos.entryPrice = Number(((existingPos.amount * existingPos.entryPrice + volume * price) / (existingPos.amount + volume)).toFixed(4));
+        existingPos.amount += volume;
+      } else {
+        positions.push({
+          id: ID.unique(),
+          side: "SHORT",
+          amount: volume,
+          entryPrice: price
+        });
+      }
+    }
   }
-  const marketValue = Number((position * price).toFixed(2));
-  const totalEquity = Number((cash + marketValue).toFixed(2));
+
+  const finalFee = body.fee !== undefined ? Number(body.fee) : fee;
+
+  let totalMarketValue = 0;
+  for (const p of positions) {
+    const pnl = p.side === "LONG" 
+      ? (price - p.entryPrice) * p.amount 
+      : (p.entryPrice - price) * p.amount;
+    const margin = p.amount * p.entryPrice;
+    totalMarketValue += margin + pnl;
+  }
+
+  const marketValue = body.override
+    ? Number(body.marketValue ?? 0)
+    : Number(totalMarketValue.toFixed(2));
+    
+  const totalEquity = body.override
+    ? Number(body.totalEquity ?? 0)
+    : Number((cash + marketValue).toFixed(2));
+    
   const countList = await databases.listDocuments(db, ordersCol, [
     Query.equal("session_id", sessionId),
   ]);
   const seqNo = (countList?.total || countList?.documents?.length || 0) + 1;
-  const orderId = ID.unique();
-  const afterPosition = {
-    side: position > 0 ? "LONG" : position < 0 ? "SHORT" : "FLAT",
-    amount: position,
-    entryPrice: Number(session.avg_entry_price || session.start_price || 0),
-  };
-  const sideEnum = afterPosition.side === "SHORT" ? "SHORT" : "LONG";
+  const orderId = body.orderId || ID.unique();
+  
+  // Create a snapshot of positions for the log
+  const afterPosition = [...positions];
+  const sideEnum = actionDir === "SHORT" ? "SHORT" : "LONG";
   const extra = {
     net_amount: isClose
       ? notional - fee
-      : side === "BUY"
+      : sideForCalc === "BUY"
         ? -(notional + fee)
         : notional - fee,
     remaining_balance: cash,
-    remaining_position: position,
+    remaining_positions: JSON.stringify(positions),
     realized_pnl: realizedPnl,
     order_type: orderType,
   };
@@ -164,30 +260,118 @@ export default withHandler(async (context, logger) => {
     session_id: sessionId,
     user_id: userId,
     seq_no: seqNo,
-    action: isClose ? "CLOSE" : side,
+    action: isClose ? "CLOSE" : actionDir,
     side: sideEnum,
     price,
-    amount: isClose ? Number(session.position || 0) : volume,
+    amount: volume,
     fee,
     trade_time: executedAt,
     kline_timestamp: body.klineTimestamp ?? null,
     position_after: JSON.stringify(afterPosition),
     extra: JSON.stringify(extra),
   };
-  await databases.createDocument(db, ordersCol, orderId, orderData);
+
+  try {
+    await databases.createDocument(db, ordersCol, orderId, orderData);
+  } catch (err) {
+    if (err.code === 409) {
+      // Document already exists, meaning this is a duplicate retry.
+      // We can just proceed and return success because it's already recorded.
+    } else {
+      throw err;
+    }
+  }
+  
+  // Calculate legacy position for backward compatibility
+  let legacyPosition = 0;
+  let legacyAvgPrice = 0;
+  if (positions.length > 0) {
+    const longPos = positions.find(p => p.side === "LONG");
+    const shortPos = positions.find(p => p.side === "SHORT");
+    
+    if (longPos) {
+      legacyPosition += longPos.amount;
+      legacyAvgPrice = longPos.entryPrice;
+    }
+    if (shortPos) {
+      legacyPosition -= shortPos.amount;
+      legacyAvgPrice = shortPos.entryPrice;
+    }
+  }
+  
   const updated = await databases.updateDocument(db, sessionsCol, sessionId, {
     cash,
-    position,
+    positions: JSON.stringify(positions),
+    position: legacyPosition,
     market_value: marketValue,
     total_equity: totalEquity,
     updated_at: new Date().toISOString(),
   });
-  const beforePosition = {
-    side:
-      session.position > 0 ? "LONG" : session.position < 0 ? "SHORT" : "FLAT",
-    amount: Number(session.position || 0),
-    entryPrice: Number(session.avg_entry_price || session.start_price || 0),
-  };
+
+  const oldCash = Number(session.cash || 0);
+  const cashChange = Number((cash - oldCash).toFixed(2));
+  
+  let newTrainingBalance = cash;
+  if (cashChange !== 0) {
+    try {
+      const userProfileList = await databases.listDocuments(db, "user_profile", [
+        Query.equal("user_id", userId)
+      ]);
+      
+      if (userProfileList.documents.length > 0) {
+        const userProfile = userProfileList.documents[0];
+        const currentProfileBalance = Number(userProfile.training_balance || 0);
+        newTrainingBalance = Number((currentProfileBalance + cashChange).toFixed(2));
+
+        await databases.updateDocument(db, "user_profile", userProfile.$id, {
+          training_balance: newTrainingBalance
+        });
+      }
+
+      const ledgerData = {
+        user_id: userId,
+        session_id: sessionId,
+        amount: cashChange,
+        balance_after: newTrainingBalance,
+        change_type: "trade",
+        source_id: orderId,
+        order_id: orderId,
+        created_at: new Date().toISOString(),
+      };
+      
+      await databases.createDocument(
+        db,
+        "training_balance_ledger",
+        ID.unique(),
+        ledgerData
+      );
+    } catch (err) {
+      logger.error("Failed to update user_profile or ledger", err);
+    }
+  } else {
+    try {
+      const userProfileList = await databases.listDocuments(db, "user_profile", [
+        Query.equal("user_id", userId)
+      ]);
+      if (userProfileList.documents.length > 0) {
+        newTrainingBalance = Number(userProfileList.documents[0].training_balance || 0);
+      }
+    } catch (e) {}
+  }
+
+  const beforePosition = [];
+  try {
+    if (session.positions) {
+      beforePosition.push(...JSON.parse(session.positions));
+    } else if (session.position) {
+      beforePosition.push({
+        side: session.position > 0 ? "LONG" : "SHORT",
+        amount: Math.abs(Number(session.position)),
+        entryPrice: Number(session.avg_entry_price || session.start_price || 0)
+      });
+    }
+  } catch (e) {}
+
   return ok({
     seqNo,
     tradeTime: executedAt,
@@ -196,6 +380,10 @@ export default withHandler(async (context, logger) => {
     beforePosition,
     afterPosition,
     realizedPnl,
+    cash,
+    trainingBalance: newTrainingBalance,
+    marketValue,
+    totalEquity,
     status: "FILLED",
   });
 });

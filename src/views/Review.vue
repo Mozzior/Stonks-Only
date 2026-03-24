@@ -113,13 +113,18 @@
           class="w-full h-full bg-gradient-to-t from-[var(--color-brand-primary)]/5 to-transparent rounded-lg flex items-end relative overflow-hidden"
         >
           <!-- Placeholder for Chart - In a real app, use a charting lib -->
+          <div v-if="performanceCurvePoints" class="absolute inset-0 p-4 pb-0">
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="w-full h-full">
+              <!-- Base line at 0 PnL -->
+              <line x1="0" :y1="zeroLineY" x2="100" :y2="zeroLineY" stroke="var(--color-border)" stroke-width="1" stroke-dasharray="2,2" vector-effect="non-scaling-stroke" />
+              <polyline :points="performanceCurvePoints" fill="none" stroke="var(--color-brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+            </svg>
+          </div>
           <div
+            v-else
             class="absolute inset-0 flex items-center justify-center text-[var(--color-text-secondary)]"
           >
-            <span v-if="sessions.length > 0"
-              >Chart Visualization Placeholder</span
-            >
-            <span v-else>No data available</span>
+            <span>No data available</span>
           </div>
         </div>
       </n-card>
@@ -198,10 +203,13 @@ import {
 } from "naive-ui";
 import { useAuth } from "../composables/useAuth";
 import { listSessions } from "../services/api/trainingApi";
+import { getReviewKpi, getReviewEquityCurve } from "../services/api/reviewApi";
 
 const { t } = useI18n();
 const { user } = useAuth();
 const sessions = ref<any[]>([]);
+const kpi = ref<{ winRate: number } | null>(null);
+const equityCurve = ref<{ date: string; value: number }[] | null>(null);
 
 const timeRange = ref("30d");
 const timeRangeOptions = computed(() => [
@@ -213,9 +221,19 @@ const timeRangeOptions = computed(() => [
 
 onMounted(async () => {
   if (!user.value) return;
-  const { data } = await listSessions(100);
-  if (data) {
-    sessions.value = data.documents;
+  const [sessionsRes, kpiRes, curveRes] = await Promise.all([
+    listSessions(500),
+    getReviewKpi(timeRange.value as any),
+    getReviewEquityCurve(timeRange.value as any, "day"),
+  ]);
+  if (sessionsRes.data) {
+    sessions.value = sessionsRes.data.documents;
+  }
+  if (kpiRes.data) {
+    kpi.value = { winRate: Number(kpiRes.data.winRate || 0) };
+  }
+  if (curveRes.data) {
+    equityCurve.value = curveRes.data.data || [];
   }
 });
 
@@ -235,12 +253,8 @@ const losingSessionsCount = computed(
 );
 
 const winRate = computed(() => {
-  if (completedSessions.value === 0) return 0;
-  return Number(
-    ((profitableSessionsCount.value / completedSessions.value) * 100).toFixed(
-      1,
-    ),
-  );
+  const v = kpi.value?.winRate ?? 0;
+  return Number(v.toFixed(1));
 });
 
 const losingRate = computed(() => {
@@ -260,6 +274,53 @@ const avgReturn = computed(() => {
     .filter((s) => s.status === "completed")
     .reduce((sum, s) => sum + Number(s.return_pct || 0), 0);
   return totalRet / completedSessions.value;
+});
+
+const chartDataInfo = computed(() => {
+  const points = equityCurve.value;
+  if (points && points.length > 0) {
+    const values = [0, ...points.map((p) => Number(p.value || 0))];
+    const minPnl = Math.min(...values);
+    const maxPnl = Math.max(...values);
+    const range = maxPnl - minPnl || 1;
+    return { pnlList: values, minPnl, range };
+  }
+  const completed = sessions.value.filter((s) => s.status === "completed");
+  const sorted = [...completed].sort(
+    (a, b) =>
+      new Date(a.$createdAt).getTime() - new Date(b.$createdAt).getTime(),
+  );
+  if (sorted.length === 0) return null;
+  let currentPnl = 0;
+  const pnlList = [0];
+  sorted.forEach((s) => {
+    currentPnl += Number(s.realized_pnl || 0);
+    pnlList.push(currentPnl);
+  });
+  const minPnl = Math.min(...pnlList);
+  const maxPnl = Math.max(...pnlList);
+  const range = maxPnl - minPnl || 1;
+  return { pnlList, minPnl, range };
+});
+
+const performanceCurvePoints = computed(() => {
+  const info = chartDataInfo.value;
+  if (!info) return "";
+  const { pnlList, minPnl, range } = info;
+  
+  const xStep = 100 / (pnlList.length - 1 || 1);
+  return pnlList.map((pnl, i) => {
+    const x = i * xStep;
+    const y = 100 - ((pnl - minPnl) / range) * 100;
+    return `${x},${y}`;
+  }).join(" ");
+});
+
+const zeroLineY = computed(() => {
+  const info = chartDataInfo.value;
+  if (!info) return 50;
+  const { minPnl, range } = info;
+  return 100 - ((0 - minPnl) / range) * 100;
 });
 
 const sessionTableData = computed(() => {
