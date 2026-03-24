@@ -605,26 +605,33 @@
               >None</span
             >
           </div>
-          <div v-if="positions.length > 0" class="mt-2 space-y-2">
-            <div class="text-xs text-[var(--color-text-secondary)]">持仓</div>
+          <div
+            v-if="positions.filter((p) => p.side === tradeSide).length > 0"
+            class="mt-2 space-y-2"
+          >
+            <div class="text-xs text-[var(--color-text-secondary)]">
+              当前持仓 ({{ tradeSide }})
+            </div>
             <div
-              v-for="pos in positions"
+              v-for="pos in positions.filter((p) => p.side === tradeSide)"
               :key="pos.id"
-              class="flex items-center justify-between text-xs p-2 rounded border border-[var(--color-border)]"
+              class="flex flex-col gap-2 text-xs p-2 rounded border border-[var(--color-border)]"
             >
-              <div class="flex items-center gap-2">
-                <n-tag
-                  :type="pos.side === 'LONG' ? 'success' : 'error'"
-                  size="small"
-                  class="font-bold"
-                >
-                  {{ pos.side }}
-                </n-tag>
-                <span
-                  >{{ pos.amount }} 股 @ ${{ pos.entryPrice.toFixed(2) }}</span
-                >
-              </div>
-              <div class="flex items-center gap-2">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <n-tag
+                    :type="pos.side === 'LONG' ? 'success' : 'error'"
+                    size="small"
+                    class="font-bold"
+                  >
+                    {{ pos.side }}
+                  </n-tag>
+                  <span
+                    >{{ pos.amount }} 股 @ ${{
+                      pos.entryPrice.toFixed(2)
+                    }}</span
+                  >
+                </div>
                 <span
                   :class="
                     (pos.side === 'LONG'
@@ -645,28 +652,41 @@
                     ).toFixed(2)
                   }}
                 </span>
-                <n-button
+              </div>
+              <div class="w-full">
+                <n-button-group
                   size="tiny"
-                  tertiary
-                  @click="closePosition(pos.id, pos.amount)"
-                  :disabled="isTrainingWindowEnded"
-                  :loading="isTrading"
-                  >平仓</n-button
+                  class="compact-trade-group flex w-full"
                 >
+                  <n-button
+                    tertiary
+                    class="flex-1"
+                    @click="handlePartialClose(pos.id, 25)"
+                    :disabled="isTrainingWindowEnded"
+                    :loading="isTrading"
+                    >1/4</n-button
+                  >
+                  <n-button
+                    tertiary
+                    class="flex-1"
+                    @click="handlePartialClose(pos.id, 50)"
+                    :disabled="isTrainingWindowEnded"
+                    :loading="isTrading"
+                    >1/2</n-button
+                  >
+                  <n-button
+                    tertiary
+                    type="warning"
+                    class="flex-1"
+                    @click="closePosition(pos.id, pos.amount)"
+                    :disabled="isTrainingWindowEnded"
+                    :loading="isTrading"
+                    >全仓</n-button
+                  >
+                </n-button-group>
               </div>
             </div>
           </div>
-
-          <n-button
-            v-if="tradeStore.positions.value.length > 0"
-            size="tiny"
-            type="warning"
-            ghost
-            class="mt-1"
-            :disabled="isTrainingWindowEnded"
-            @click="closeAllPositions"
-            >{{ t("training.trade.closeAll") }}</n-button
-          >
         </div>
 
         <!-- Chart Container -->
@@ -709,7 +729,7 @@
             </thead>
             <tbody>
               <tr v-for="record in tradeRecords" :key="record.id">
-                <td>{{ record.time }}</td>
+                <td>{{ formatDate(record.time) }}</td>
                 <td>
                   <n-tag
                     :type="
@@ -822,7 +842,10 @@
           class="flex-1 flex flex-col min-h-0 bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)] overflow-hidden"
           content-class="flex-1 overflow-y-auto"
         >
-          <div v-if="positions.length > 0" class="space-y-4">
+          <div
+            v-if="positions.filter((p) => p.side === tradeSide).length > 0"
+            class="space-y-4"
+          >
             <!-- Global Account Summary -->
             <div
               class="p-3 rounded-lg bg-[var(--color-bg-sidebar)] border border-[var(--color-border)] mb-4"
@@ -861,7 +884,7 @@
 
             <!-- Position List -->
             <div
-              v-for="pos in positions"
+              v-for="pos in positions.filter((p) => p.side === tradeSide)"
               :key="pos.id"
               class="p-3 rounded-lg border border-[var(--color-border)]"
             >
@@ -907,24 +930,35 @@
                 <span>当前: ${{ currentPrice.toFixed(2) }}</span>
               </div>
 
-              <div class="flex gap-2">
+              <n-button-group size="tiny" class="w-full mt-2">
                 <n-button
-                  size="tiny"
                   tertiary
-                  @click="handlePartialClose(pos.id, 50)"
+                  class="flex-1"
+                  @click="handlePartialClose(pos.id, 25)"
                   :disabled="isTrainingWindowEnded"
-                  >平半仓</n-button
+                  :loading="isTrading"
+                  >1/4</n-button
                 >
                 <n-button
-                  size="tiny"
+                  tertiary
+                  class="flex-1"
+                  @click="handlePartialClose(pos.id, 50)"
+                  :disabled="isTrainingWindowEnded"
+                  :loading="isTrading"
+                  >1/2</n-button
+                >
+                <n-button
+                  tertiary
                   type="warning"
-                  ghost
                   class="flex-1"
                   @click="closePosition(pos.id, pos.amount)"
                   :disabled="isTrainingWindowEnded"
                   :loading="isTrading"
-                  >平仓</n-button
+                  >全仓</n-button
                 >
+              </n-button-group>
+
+              <div class="flex gap-2 mt-2">
                 <n-button
                   size="tiny"
                   type="primary"
@@ -932,22 +966,11 @@
                   class="flex-1"
                   @click="reversePosition(pos.id)"
                   :disabled="isTrainingWindowEnded"
-                  >反手</n-button
+                  :loading="isTrading"
+                  >一键反手</n-button
                 >
               </div>
             </div>
-
-            <n-button
-              block
-              type="error"
-              ghost
-              size="small"
-              :disabled="isTrainingWindowEnded"
-              @click="closeAllPositions"
-              class="mt-4"
-            >
-              一键全平
-            </n-button>
           </div>
           <div
             v-else
@@ -1393,8 +1416,10 @@ const trainingEndDateText = computed(() => {
   return data ? formatDate(data.timestamp) : "--";
 });
 
-function formatDate(timestamp: number) {
-  return new Date(timestamp).toISOString().slice(0, 10);
+function formatDate(dateInput: number | string) {
+  if (!dateInput) return "";
+  const d = new Date(dateInput);
+  return d.toISOString().slice(0, 10);
 }
 
 registerLocale("zh-CN", {
@@ -2283,16 +2308,6 @@ function handleKeydown(e: KeyboardEvent) {
     return;
   }
 
-  // Close Position: 'C' or 'Escape'
-  if (
-    (key === "c" || key === "escape") &&
-    tradeStore.positions.value.length > 0 &&
-    showQuickTrade.value
-  ) {
-    closeAllPositions();
-    return;
-  }
-
   // Drawing Tools Shortcuts
   // L: Trend Line
   if (key === "l") {
@@ -2355,7 +2370,10 @@ function updateChart() {
     (async () => {
       try {
         if (tradeStore.positions.value.length > 0) {
-          await closeAllPositions();
+          const posList = [...tradeStore.positions.value];
+          for (const p of posList) {
+            await closePosition(p.id, p.amount);
+          }
         }
         await finalizeSession("completed");
         await refreshSessionSnapshot();
@@ -2709,9 +2727,9 @@ async function refreshSessionSnapshot() {
       try {
         const parsed = JSON.parse((data as any).positions);
         if (Array.isArray(parsed)) {
-          tradeStore.positions.value = parsed.map(p => ({
+          tradeStore.positions.value = parsed.map((p) => ({
             ...p,
-            entryTime: p.entryTime || Date.now()
+            entryTime: p.entryTime || Date.now(),
           }));
         }
       } catch (e) {}
@@ -2719,13 +2737,15 @@ async function refreshSessionSnapshot() {
       // Legacy fallback
       const oldPos = Number((data as any).position);
       if (oldPos !== 0) {
-        tradeStore.positions.value = [{
-          id: `legacy-${Date.now()}`,
-          side: oldPos > 0 ? "LONG" : "SHORT",
-          amount: Math.abs(oldPos),
-          entryPrice: Number((data as any).avg_entry_price || 0),
-          entryTime: Date.now()
-        }];
+        tradeStore.positions.value = [
+          {
+            id: `legacy-${Date.now()}`,
+            side: oldPos > 0 ? "LONG" : "SHORT",
+            amount: Math.abs(oldPos),
+            entryPrice: Number((data as any).avg_entry_price || 0),
+            entryTime: Date.now(),
+          },
+        ];
       }
     }
     await refreshProfile();
@@ -2733,7 +2753,8 @@ async function refreshSessionSnapshot() {
 }
 
 async function loadTradeLogs() {
-  if (!activeSessionId.value) {
+  const currentSessionId = activeSessionId.value;
+  if (!currentSessionId) {
     tradeStore.tradeRecords.value = [];
     tradeStore.positions.value = [];
     return;
@@ -2741,7 +2762,10 @@ async function loadTradeLogs() {
   if (isFetchingLogs.value) return;
   isFetchingLogs.value = true;
   try {
-    const res = await getTrainingTrades(activeSessionId.value, 200);
+    const res = await getTrainingTrades(currentSessionId, 200);
+    // 确保在网络请求返回时，当前会话未发生改变
+    if (currentSessionId !== activeSessionId.value) return;
+
     if (res.data) {
       const docs = res.data as any[];
       const mapped = docs.map((d) => {
@@ -2777,7 +2801,7 @@ async function loadTradeLogs() {
         } catch {
           posAfter = null;
         }
-        
+
         if (Array.isArray(posAfter)) {
           tradeStore.positions.value = posAfter
             .filter((p: any) => p.amount > 0)
@@ -2820,7 +2844,7 @@ async function persistTradeLog(
   amount: number,
   price: number,
   orderId: string,
-  closeSide?: "LONG" | "SHORT"
+  closeSide?: "LONG" | "SHORT",
 ): Promise<boolean> {
   if (!user.value) return false;
   const klineTimestamp = fullData.value[currentIndex.value]?.timestamp ?? null;
@@ -2838,9 +2862,9 @@ async function persistTradeLog(
     if (result.error || !result.data) {
       throw new Error(result.error?.message || "Trade execution failed");
     }
-    
+
     const data = result.data as any;
-    
+
     // 严格使用后端计算出的 cash
     tradeStore.balance.value = data.cash;
     if (profile.value && data.trainingBalance !== undefined) {
@@ -2848,7 +2872,7 @@ async function persistTradeLog(
     } else if (profile.value) {
       profile.value.training_balance = data.cash;
     }
-    
+
     // 更新持仓状态 (Hedging mode: afterPosition is now an array)
     if (Array.isArray(data.afterPosition)) {
       tradeStore.positions.value = data.afterPosition
@@ -2874,7 +2898,8 @@ async function persistTradeLog(
       amount: amount,
       price: price,
       fee: data.fee,
-      realizedPnl: data.realizedPnl !== undefined ? data.realizedPnl : undefined,
+      realizedPnl:
+        data.realizedPnl !== undefined ? data.realizedPnl : undefined,
     });
 
     return true;
@@ -2891,14 +2916,16 @@ async function finalizeSession(status: "completed" | "aborted") {
     message.error(
       t("training.messages.sessionSaveFailed") || "Session settle failed",
     );
-    return;
   }
 
   if (user.value) {
     await refreshProfile();
   }
 
+  // Always clear activeSessionId and trade store even if settle fails
+  // to prevent old data bleeding into new sessions
   activeSessionId.value = null;
+  tradeStore.init(accountBalance.value);
 }
 
 async function handleTrade(side: string) {
@@ -2923,7 +2950,7 @@ async function handleTrade(side: string) {
   try {
     const posSide = side === "LONG" ? "LONG" : "SHORT";
     const orderId = ID.unique();
-    
+
     // 执行后端同步，成功后会自动更新本地 tradeRecords 和 balance
     await persistTradeLog(
       posSide as "LONG" | "SHORT",
@@ -2965,17 +2992,17 @@ async function closePosition(id: string, amount: number) {
 
   isTrading.value = true;
   const timestamp = fullData.value[currentIndex.value].timestamp;
-  
+
   try {
     const orderId = ID.unique();
-    
+
     // In Hedging mode, we always use CLOSE and explicitly specify which side we are closing
     await persistTradeLog(
       "CLOSE",
       amount,
       currentPrice.value,
       orderId,
-      pos.side as "LONG" | "SHORT"
+      pos.side as "LONG" | "SHORT",
     );
 
     if (chartInstance.value) {
@@ -2987,7 +3014,9 @@ async function closePosition(id: string, amount: number) {
     }
 
     message.success(
-      t("training.messages.positionClosed", { pl: (tradeStore.tradeRecords.value[0]?.realizedPnl || 0).toFixed(2) }),
+      t("training.messages.positionClosed", {
+        pl: (tradeStore.tradeRecords.value[0]?.realizedPnl || 0).toFixed(2),
+      }),
     );
   } catch (e: any) {
     message.error(e.message || "Failed to close position");
@@ -2999,16 +3028,20 @@ async function closePosition(id: string, amount: number) {
 async function handlePartialClose(id: string, percent: number) {
   const pos = tradeStore.positions.value.find((p) => p.id === id);
   if (!pos) return;
-  const amountToClose = Math.floor(pos.amount * (percent / 100));
+
+  let amountToClose = Math.floor(pos.amount * (percent / 100));
+
+  // If the calculated amount is 0 but the position amount is > 0 and percent is > 0,
+  // we should close at least 1 share to ensure partial close works for small positions.
+  // Unless it's a 100% close, then we just take the full amount.
+  if (percent === 100) {
+    amountToClose = pos.amount;
+  } else if (amountToClose === 0 && pos.amount > 0) {
+    amountToClose = 1;
+  }
+
   if (amountToClose > 0) {
     await closePosition(id, amountToClose);
-  }
-}
-
-async function closeAllPositions() {
-  const posList = [...tradeStore.positions.value];
-  for (const p of posList) {
-    await closePosition(p.id, p.amount);
   }
 }
 
@@ -3234,6 +3267,9 @@ async function startTraining() {
       if (!error && data?.sessionId) {
         activeSessionId.value = data.sessionId as string;
         await refreshSessionSnapshot();
+        // Clear old logs explicitly before potentially loading new ones
+        tradeStore.tradeRecords.value = [];
+        tradeStore.positions.value = [];
         await loadTradeLogs();
       }
     } catch {}
@@ -3280,5 +3316,10 @@ function cancelText() {
 #chart-container {
   width: 100%;
   height: 100%;
+}
+.compact-trade-group :deep(.n-button) {
+  padding: 0 6px;
+  font-weight: 500;
+  font-size: 11px;
 }
 </style>

@@ -126,13 +126,6 @@ export function useTrainingStore() {
     return openPosition(newSide, originalAmount, price, time);
   }
 
-  function closeAll(price: number, time: number) {
-    const posList = [...positions.value];
-    for (const p of posList) {
-      closePosition(p.id, p.amount, price, time);
-    }
-  }
-
   return {
     balance,
     positions,
@@ -149,6 +142,5 @@ export function useTrainingStore() {
     openPosition,
     closePosition,
     reversePosition,
-    closeAll,
   };
 }
