@@ -24,7 +24,7 @@
           {{ t("about.hero.title") }}
         </h1>
         <p class="text-[var(--color-text-secondary)]">
-          {{ t("about.hero.version", { version: "0.0.1" }) }}
+          {{ t("about.hero.version", { version: appVersion }) }}
         </p>
       </div>
 
@@ -206,6 +206,8 @@ import {
   ShieldCheckmarkOutline,
   InformationCircleOutline,
 } from "@vicons/ionicons5";
+import packageJson from "../../package.json";
 
 const { t } = useI18n();
+const appVersion = packageJson.version;
 </script>

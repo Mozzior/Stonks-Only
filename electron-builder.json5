@@ -13,7 +13,7 @@
   },
   mac: {
     icon: "public/app-icon.png",
-    target: ["dmg"],
+    target: ["dmg", "zip"],
     artifactName: "${productName}-Mac-${version}-Installer.${ext}",
   },
   publish: [
