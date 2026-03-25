@@ -60,15 +60,25 @@ export async function getLeaderboard(
           queries,
         );
         const sessions = sessionsRes.documents || [];
-        const pnlList = sessions.map((s: any) => Number(s.realized_pnl || 0));
-        const wins = pnlList.filter((x: number) => x > 0).length;
-        const total = pnlList.length;
-        const totalPnl = pnlList.reduce((a: number, b: number) => a + b, 0);
+        const perSessionReturns: number[] = sessions.map((s: any) => {
+          const r = Number(s.return_pct);
+          if (Number.isFinite(r)) return r;
+          const pnl = Number(s.realized_pnl || 0);
+          const ib = Number(s.initial_balance || 0);
+          if (ib > 0) return (pnl / ib) * 100;
+          return (pnl / 10000) * 100;
+        });
+        const total = perSessionReturns.length;
+        const wins = perSessionReturns.filter((x) => x > 0).length;
         const winRate = total ? Number(((wins / total) * 100).toFixed(2)) : 0;
-        const baseCapital = 10000;
-        const returnPct = baseCapital
-          ? Number(((totalPnl / baseCapital) * 100).toFixed(2))
-          : 0;
+        const avgReturn =
+          total > 0
+            ? Number(
+                (perSessionReturns.reduce((a, b) => a + b, 0) / total).toFixed(
+                  2,
+                ),
+              )
+            : 0;
 
         const userName =
           p.display_name ||
@@ -83,11 +93,6 @@ export async function getLeaderboard(
 
         const level = Number(p.level || 1);
 
-        // 对于非总榜，当统计窗口内无数据则丢弃该用户，不进入榜单
-        if (range !== "all" && total === 0) {
-          return null;
-        }
-
         return {
           userId: p.user_id,
           user: userName,
@@ -95,14 +100,15 @@ export async function getLeaderboard(
           level: Number.isFinite(level) && level > 0 ? level : 1,
           winRate,
           trades: total,
-          pl: returnPct,
+          pl: avgReturn,
         } as LeaderboardEntry;
       }),
     );
 
     const sorted = entries
       .filter((e): e is LeaderboardEntry => e !== null)
-      .sort((a, b) => b.pl - a.pl);
+      .sort((a, b) => b.pl - a.pl)
+      .slice(0, 50);
     return ok(sorted);
   } catch (error) {
     return fail(error);
