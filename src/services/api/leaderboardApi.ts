@@ -44,15 +44,15 @@ export async function getLeaderboard(
     const from = getFromDate(range);
     const profiles = profileRes.documents;
 
-    const entries: (LeaderboardEntry | null)[] = await Promise.all(
+    const stats = await Promise.all(
       profiles.map(async (p: any) => {
         const queries = [
           Query.equal("user_id", p.user_id),
           Query.equal("status", "completed"),
           Query.limit(500),
-          Query.orderDesc("started_at"),
+          Query.orderDesc("$createdAt"),
         ];
-        if (from) queries.push(Query.greaterThanEqual("started_at", from));
+        if (from) queries.push(Query.greaterThanEqual("$createdAt", from));
 
         const sessionsRes = await appwrite.databases.listDocuments(
           appwriteConfig.databaseId!,
@@ -69,16 +69,10 @@ export async function getLeaderboard(
           return (pnl / 10000) * 100;
         });
         const total = perSessionReturns.length;
+        const sum = perSessionReturns.reduce((a, b) => a + b, 0);
+        const avgReturn = total > 0 ? sum / total : 0;
         const wins = perSessionReturns.filter((x) => x > 0).length;
         const winRate = total ? Number(((wins / total) * 100).toFixed(2)) : 0;
-        const avgReturn =
-          total > 0
-            ? Number(
-                (perSessionReturns.reduce((a, b) => a + b, 0) / total).toFixed(
-                  2,
-                ),
-              )
-            : 0;
 
         const userName =
           p.display_name ||
@@ -90,25 +84,47 @@ export async function getLeaderboard(
           p.avatar_url ||
           p.photo_url ||
           `https://i.pravatar.cc/150?u=${encodeURIComponent(p.user_id || userName)}`;
-
         const level = Number(p.level || 1);
 
         return {
           userId: p.user_id,
-          user: userName,
+          userName,
           avatar,
           level: Number.isFinite(level) && level > 0 ? level : 1,
+          n: total,
+          sum,
+          avgReturn,
           winRate,
-          trades: total,
-          pl: avgReturn,
-        } as LeaderboardEntry;
+        };
       }),
     );
 
-    const sorted = entries
-      .filter((e): e is LeaderboardEntry => e !== null)
-      .sort((a, b) => b.pl - a.pl)
-      .slice(0, 50);
+    const league = stats.reduce(
+      (acc, s) => {
+        acc.count += s.n;
+        acc.sum += s.sum;
+        return acc;
+      },
+      { count: 0, sum: 0 },
+    );
+    const C = league.count > 0 ? league.sum / league.count : 0;
+    const m = 20;
+
+    const entries: LeaderboardEntry[] = stats.map((s) => {
+      const n = s.n;
+      const score = n > 0 ? (n / (n + m)) * s.avgReturn + (m / (n + m)) * C : 0;
+      return {
+        userId: s.userId,
+        user: s.userName,
+        avatar: s.avatar,
+        level: s.level,
+        winRate: s.winRate,
+        trades: n,
+        pl: Number(score.toFixed(2)),
+      };
+    });
+
+    const sorted = entries.sort((a, b) => b.pl - a.pl).slice(0, 50);
     return ok(sorted);
   } catch (error) {
     return fail(error);

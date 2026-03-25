@@ -309,7 +309,7 @@ const avgReturn = computed(() => {
   const totalRet = sessions.value
     .filter((s) => s.status === "completed")
     .reduce((sum, s) => sum + Number(s.return_pct || 0), 0);
-  return totalRet / completedSessions.value;
+  return Number((totalRet / completedSessions.value).toFixed(2));
 });
 
 const chartDataInfo = computed(() => {
