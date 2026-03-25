@@ -44,3 +44,15 @@ contextBridge.exposeInMainWorld("db", {
     getAll: () => ipcRenderer.invoke("storage:getAll"),
   },
 });
+
+contextBridge.exposeInMainWorld("updater", {
+  check: () => ipcRenderer.invoke("updater:check"),
+  download: () => ipcRenderer.invoke("updater:download"),
+  quitAndInstall: () => ipcRenderer.invoke("updater:quitAndInstall"),
+  onUpdateEvent: (callback: (event: any, info: any) => void) => {
+    ipcRenderer.on("updater:event", callback);
+  },
+  offUpdateEvent: (callback: (event: any, info: any) => void) => {
+    ipcRenderer.off("updater:event", callback);
+  }
+});

@@ -777,4 +777,17 @@ export default {
     resetDefaults: "恢复默认",
     saveChanges: "保存更改",
   },
+  updater: {
+    checkUpdate: "检查更新",
+    checking: "正在检查更新...",
+    updateAvailable: "发现新版本",
+    newVersion: "新版本: {version}",
+    releaseNotes: "更新日志",
+    downloadUpdate: "立即下载",
+    downloading: "下载中...",
+    downloadComplete: "下载完成",
+    restartToInstall: "重启并安装",
+    upToDate: "当前已是最新版本",
+    updateError: "更新失败: {error}"
+  }
 };

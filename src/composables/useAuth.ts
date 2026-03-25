@@ -1,5 +1,5 @@
 import { ref } from "vue";
-import type { Models } from "appwrite";
+import type { Models, OAuthProvider } from "appwrite";
 import { appwrite, ID } from "../utils/appwrite";
 import { fail, ok } from "../utils/backendError";
 import type { UserProfile } from "../types/training";
@@ -23,7 +23,7 @@ const ensureProfile = async (currentUser: AuthUser | null) => {
   if (fullNameValue.length > 0) {
     payload.display_name = fullNameValue;
   }
-  
+
   const result = await patchProfileMe(payload);
   if (result.error) {
     profile.value = null;
@@ -74,6 +74,30 @@ export function useAuth() {
       user.value = signedUser;
       await ensureProfile(signedUser);
       return ok({ session: signedSession, user: signedUser });
+    } catch (error) {
+      return fail(error);
+    }
+  };
+
+  const signInWithProvider = async (
+    provider: OAuthProvider,
+    successUrl?: string,
+    failureUrl?: string,
+    scopes?: string[],
+  ) => {
+    try {
+      const success = successUrl || `${window.location.origin}/#/`;
+      const failure =
+        failureUrl || `${window.location.origin}/#/login?oauth=error`;
+      // This will redirect the browser to the provider; on return,
+      // syncSession() at startup will populate user/session/profile.
+      await appwrite.account.createOAuth2Session(
+        provider,
+        success,
+        failure,
+        scopes,
+      );
+      return ok(null);
     } catch (error) {
       return fail(error);
     }
@@ -162,6 +186,7 @@ export function useAuth() {
     refreshProfile,
     syncSession,
     signIn,
+    signInWithProvider,
     signUp,
     signOut,
     resetPasswordForEmail,

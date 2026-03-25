@@ -16,6 +16,14 @@
     target: ["dmg"],
     artifactName: "${productName}-Mac-${version}-Installer.${ext}",
   },
+  publish: [
+    {
+      provider: "github",
+      owner: "Mozzior",
+      repo: "Stonks-Only",
+      private: true,
+    },
+  ],
   win: {
     icon: "public/app-icon.png",
     target: [

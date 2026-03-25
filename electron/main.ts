@@ -4,6 +4,7 @@ import path from "node:path";
 import fs from "node:fs";
 import dotenv from "dotenv";
 import { DBManager } from "./database/manager";
+import { autoUpdater } from "electron-updater";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -119,6 +120,51 @@ app.whenReady().then(() => {
   ipcMain.handle("storage:get", (_, key) => DBManager.getItem(key));
   ipcMain.handle("storage:delete", (_, key) => DBManager.deleteItem(key));
   ipcMain.handle("storage:getAll", () => DBManager.getAllItems());
+
+  // Auto Updater Setup
+  autoUpdater.autoDownload = false;
+
+  // 对于私有仓库，在生产环境中，需要确保有权限访问
+  // 这里我们从环境变量或主进程配置中读取 GH_TOKEN
+  // 警告: 将 Token 打包进客户端是不安全的。如果您的应用是公开分发给外部用户的，
+  // 建议将更新文件存放在您自己的服务器（使用 provider: 'generic'）或将仓库设为 Public。
+  // 如果仅供内部使用，可以在打包时将环境变量注入，或者让用户登录后从您的后端获取。
+  const ghToken = process.env.GH_TOKEN;
+  if (ghToken) {
+    autoUpdater.addAuthHeader(`Bearer ${ghToken}`);
+  }
+
+  autoUpdater.on("checking-for-update", () => {
+    win?.webContents.send("updater:event", { type: "checking-for-update" });
+  });
+  autoUpdater.on("update-available", (info) => {
+    win?.webContents.send("updater:event", { type: "update-available", info });
+  });
+  autoUpdater.on("update-not-available", (info) => {
+    win?.webContents.send("updater:event", {
+      type: "update-not-available",
+      info,
+    });
+  });
+  autoUpdater.on("error", (err) => {
+    win?.webContents.send("updater:event", {
+      type: "error",
+      error: err?.message || "Update error",
+    });
+  });
+  autoUpdater.on("download-progress", (progressObj) => {
+    win?.webContents.send("updater:event", {
+      type: "download-progress",
+      progress: progressObj,
+    });
+  });
+  autoUpdater.on("update-downloaded", (info) => {
+    win?.webContents.send("updater:event", { type: "update-downloaded", info });
+  });
+
+  ipcMain.handle("updater:check", () => autoUpdater.checkForUpdates());
+  ipcMain.handle("updater:download", () => autoUpdater.downloadUpdate());
+  ipcMain.handle("updater:quitAndInstall", () => autoUpdater.quitAndInstall());
 
   createWindow();
 });

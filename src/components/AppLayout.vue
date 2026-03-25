@@ -87,10 +87,12 @@
       </div>
     </n-layout-content>
   </n-layout>
+  <UpdateNotifier />
 </template>
 
 <script setup lang="ts">
 import { h, ref, computed, watch } from "vue";
+import UpdateNotifier from "./UpdateNotifier.vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import {
   NIcon,

@@ -787,4 +787,17 @@ export default {
     resetDefaults: "Reset to Default",
     saveChanges: "Save Changes",
   },
+  updater: {
+    checkUpdate: "Check for Updates",
+    checking: "Checking for updates...",
+    updateAvailable: "Update Available",
+    newVersion: "New Version: {version}",
+    releaseNotes: "Release Notes",
+    downloadUpdate: "Download Now",
+    downloading: "Downloading...",
+    downloadComplete: "Download Complete",
+    restartToInstall: "Restart & Install",
+    upToDate: "You are up to date",
+    updateError: "Update Failed: {error}"
+  }
 };

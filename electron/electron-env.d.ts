@@ -51,4 +51,11 @@ interface Window {
       getAll: () => Promise<Record<string, any>>;
     };
   };
+  updater: {
+    check: () => Promise<void>;
+    download: () => Promise<void>;
+    quitAndInstall: () => Promise<void>;
+    onUpdateEvent: (callback: (event: any, info: any) => void) => void;
+    offUpdateEvent: (callback: (event: any, info: any) => void) => void;
+  };
 }

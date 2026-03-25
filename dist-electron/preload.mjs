@@ -36,3 +36,14 @@ electron.contextBridge.exposeInMainWorld("db", {
     getAll: () => electron.ipcRenderer.invoke("storage:getAll")
   }
 });
+electron.contextBridge.exposeInMainWorld("updater", {
+  check: () => electron.ipcRenderer.invoke("updater:check"),
+  download: () => electron.ipcRenderer.invoke("updater:download"),
+  quitAndInstall: () => electron.ipcRenderer.invoke("updater:quitAndInstall"),
+  onUpdateEvent: (callback) => {
+    electron.ipcRenderer.on("updater:event", callback);
+  },
+  offUpdateEvent: (callback) => {
+    electron.ipcRenderer.off("updater:event", callback);
+  }
+});

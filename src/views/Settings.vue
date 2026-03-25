@@ -139,6 +139,22 @@
               />
             </n-form-item>
           </section>
+
+          <n-divider />
+
+          <!-- Updates -->
+          <section class="space-y-4">
+            <h3
+              class="text-lg font-bold text-[var(--color-text-primary)] flex items-center gap-2"
+            >
+              <n-icon :component="CloudDownloadOutline" /> {{ t("updater.checkUpdate") }}
+            </h3>
+            <div class="flex items-center gap-4">
+              <n-button type="primary" @click="handleCheckUpdate" :loading="isCheckingUpdate">
+                {{ t("updater.checkUpdate") }}
+              </n-button>
+            </div>
+          </section>
         </div>
       </n-tab-pane>
 
@@ -300,6 +316,7 @@ import {
   NotificationsOutline,
   NewspaperOutline,
   TrophyOutline,
+  CloudDownloadOutline,
 } from "@vicons/ionicons5";
 import { useTheme } from "../composables/useTheme";
 import { useLanguage } from "../composables/useLanguage";
@@ -314,6 +331,24 @@ const candleOptions = computed(() => [
 ]);
 
 // General
+const isCheckingUpdate = ref(false);
+const handleCheckUpdate = async () => {
+  if (window.updater) {
+    isCheckingUpdate.value = true;
+    try {
+      await window.updater.check();
+      message.success(t("updater.checking"));
+    } catch (error: any) {
+      message.error(t("updater.updateError", { error: error.message }));
+    } finally {
+      setTimeout(() => {
+        isCheckingUpdate.value = false;
+      }, 2000);
+    }
+  } else {
+    message.warning("Updater is not available in this environment.");
+  }
+};
 
 // Trading
 const oneClickTrading = ref(false);
