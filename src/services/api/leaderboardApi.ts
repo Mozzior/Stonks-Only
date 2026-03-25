@@ -1,0 +1,110 @@
+import { appwrite, appwriteConfig, Query } from "../../utils/appwrite";
+import { ok, fail } from "../../utils/backendError";
+
+export interface LeaderboardEntry {
+  userId: string;
+  user: string;
+  avatar?: string;
+  level: number;
+  winRate: number;
+  trades: number;
+  pl: number;
+}
+
+function getFromDate(range: "daily" | "weekly" | "monthly" | "all") {
+  const now = new Date();
+  if (range === "daily") {
+    const d = new Date(now);
+    d.setDate(now.getDate() - 1);
+    return d.toISOString();
+  }
+  if (range === "weekly") {
+    const d = new Date(now);
+    d.setDate(now.getDate() - 7);
+    return d.toISOString();
+  }
+  if (range === "monthly") {
+    const d = new Date(now);
+    d.setMonth(now.getMonth() - 1);
+    return d.toISOString();
+  }
+  return null;
+}
+
+export async function getLeaderboard(
+  range: "daily" | "weekly" | "monthly" | "all" = "all",
+) {
+  try {
+    const profileRes = await appwrite.databases.listDocuments(
+      appwriteConfig.databaseId!,
+      appwriteConfig.userProfileCollectionId!,
+      [Query.limit(100)],
+    );
+
+    const from = getFromDate(range);
+    const profiles = profileRes.documents;
+
+    const entries: (LeaderboardEntry | null)[] = await Promise.all(
+      profiles.map(async (p: any) => {
+        const queries = [
+          Query.equal("user_id", p.user_id),
+          Query.equal("status", "completed"),
+          Query.limit(500),
+          Query.orderDesc("started_at"),
+        ];
+        if (from) queries.push(Query.greaterThanEqual("started_at", from));
+
+        const sessionsRes = await appwrite.databases.listDocuments(
+          appwriteConfig.databaseId!,
+          appwriteConfig.trainingSessionCollectionId!,
+          queries,
+        );
+        const sessions = sessionsRes.documents || [];
+        const pnlList = sessions.map((s: any) => Number(s.realized_pnl || 0));
+        const wins = pnlList.filter((x: number) => x > 0).length;
+        const total = pnlList.length;
+        const totalPnl = pnlList.reduce((a: number, b: number) => a + b, 0);
+        const winRate = total ? Number(((wins / total) * 100).toFixed(2)) : 0;
+        const baseCapital = 10000;
+        const returnPct = baseCapital
+          ? Number(((totalPnl / baseCapital) * 100).toFixed(2))
+          : 0;
+
+        const userName =
+          p.display_name ||
+          p.nickname ||
+          p.handle ||
+          p.user_id?.slice(0, 6) ||
+          "Trader";
+        const avatar =
+          p.avatar_url ||
+          p.photo_url ||
+          `https://i.pravatar.cc/150?u=${encodeURIComponent(p.user_id || userName)}`;
+
+        const level = Number(p.level || 1);
+
+        // 对于非总榜，当统计窗口内无数据则丢弃该用户，不进入榜单
+        if (range !== "all" && total === 0) {
+          return null;
+        }
+
+        return {
+          userId: p.user_id,
+          user: userName,
+          avatar,
+          level: Number.isFinite(level) && level > 0 ? level : 1,
+          winRate,
+          trades: total,
+          pl: returnPct,
+        } as LeaderboardEntry;
+      }),
+    );
+
+    const sorted = entries
+      .filter((e): e is LeaderboardEntry => e !== null)
+      .sort((a, b) => b.pl - a.pl);
+    return ok(sorted);
+  } catch (error) {
+    return fail(error);
+  }
+}

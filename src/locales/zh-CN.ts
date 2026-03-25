@@ -573,6 +573,7 @@ export default {
         activity: "活动",
         amount: "金额",
         status: "状态",
+        detail: "明细",
       },
       all: "全部",
       trades: "交易",

@@ -465,7 +465,7 @@ export default {
       in_progress: "In Progress",
       not_started: "Not Started",
       completed: "Completed",
-      aborted: "Aborted"
+      aborted: "Aborted",
     },
     kpi: {
       winRate: "Win Rate",
@@ -583,6 +583,7 @@ export default {
         activity: "Activity",
         amount: "Amount",
         status: "Status",
+        detail: "Detail",
       },
       all: "All",
       trades: "Trades",
@@ -798,6 +799,6 @@ export default {
     downloadComplete: "Download Complete",
     restartToInstall: "Restart & Install",
     upToDate: "You are up to date",
-    updateError: "Update Failed: {error}"
-  }
+    updateError: "Update Failed: {error}",
+  },
 };

@@ -197,8 +197,8 @@
       />
       <n-data-table
         v-else
-        class="flex-1"
-        flex-height
+        style="min-height: 320px"
+        :row-key="(row: any) => row.id"
         :columns="historyColumns"
         :data="filteredHistory"
         :pagination="{ pageSize: 10 }"
@@ -280,6 +280,8 @@ const historyColumns = computed(() => [
       let typeText = norm.replace(/_/g, " ");
       if (norm === "RECHARGE") {
         typeText = t("wallet.activity.recharge");
+      } else if (norm === "TRADE") {
+        typeText = t("wallet.activity.trades");
       } else if (norm === "TRADE_PNL") {
         typeText = t("wallet.activity.tradePnl");
       }
@@ -312,6 +314,7 @@ const historyColumns = computed(() => [
       );
     },
   },
+  { title: t("wallet.activity.columns.detail"), key: "detail" },
   {
     title: t("wallet.activity.columns.status"),
     key: "status",
@@ -329,20 +332,11 @@ const historyColumns = computed(() => [
   },
 ]);
 
-const filteredHistory = computed(() => {
-  const list = historyData.value;
-  if (historyFilter.value === "all") return list;
-  const isTrade = (x: any) =>
-    String(x?.type || "")
-      .toUpperCase()
-      .startsWith("TRADE");
-  if (historyFilter.value === "trade") return list.filter(isTrade);
-  return list.filter((h) => !isTrade(h));
-});
+const filteredHistory = computed(() => historyData.value);
 
-async function loadHistory() {
+async function loadHistory(category: "all" | "trade" | "other" = "all") {
   if (!user.value) return;
-  const { data, error } = await getWalletLedger(100);
+  const { data, error } = await getWalletLedger(100, undefined, category);
   if (error) {
     message.error(error.message);
     return;
@@ -354,14 +348,13 @@ async function loadHistory() {
       : [];
   historyData.value =
     list.map((item: any) => {
-      const trade = item.change_type === "trade_pnl";
+      const ct = String(item.change_type || "").toLowerCase();
+      const isRecharge = ct === "recharge" || ct === "topup" || ct === "deposit";
+      const isTrade = ct.startsWith("trade");
+      const type = isRecharge ? "RECHARGE" : isTrade ? "TRADE" : (item.change_type ? String(item.change_type).toUpperCase() : "OTHER");
       return {
         id: item.$id,
-        type: trade
-          ? "TRADE_PNL"
-          : item.change_type
-            ? item.change_type.toUpperCase()
-            : "UNKNOWN",
+        type,
         amount: Number(item.amount),
         time: new Date(item.created_at || item.$createdAt).toLocaleString(),
         status: "COMPLETED",
@@ -420,7 +413,7 @@ onMounted(async () => {
     walletBalance.value = Number(balRes.data.balance || 0);
     walletCurrency.value = String(balRes.data.currency || "USD");
   }
-  await loadHistory();
+  await loadHistory(historyFilter.value as any);
 });
 
 watch(user, async (val) => {
@@ -430,7 +423,11 @@ watch(user, async (val) => {
       walletBalance.value = Number(balRes.data.balance || 0);
       walletCurrency.value = String(balRes.data.currency || "USD");
     }
-    await loadHistory();
+    await loadHistory(historyFilter.value as any);
   }
+});
+
+watch(historyFilter, async (val) => {
+  await loadHistory(val as any);
 });
 </script>

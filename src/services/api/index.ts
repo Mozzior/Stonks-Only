@@ -5,4 +5,4 @@ export * from "./membershipApi";
 export * from "./reviewApi";
 export * from "./profileApi";
 export * from "./trainingApi";
-
+export * from "./leaderboardApi";

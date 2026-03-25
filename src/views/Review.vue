@@ -113,11 +113,47 @@
           class="w-full h-full bg-gradient-to-t from-[var(--color-brand-primary)]/5 to-transparent rounded-lg flex items-end relative overflow-hidden"
         >
           <!-- Placeholder for Chart - In a real app, use a charting lib -->
-          <div v-if="performanceCurvePoints" class="absolute inset-0 p-4 pb-0">
-            <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="w-full h-full">
+          <div v-if="curvePathD" class="absolute inset-0 p-4 pb-0">
+            <svg
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+              class="w-full h-full"
+            >
+              <defs>
+                <linearGradient id="curveFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="0%"
+                    :stop-color="'var(--color-brand-primary)'"
+                    stop-opacity="0.24"
+                  />
+                  <stop
+                    offset="100%"
+                    :stop-color="'var(--color-brand-primary)'"
+                    stop-opacity="0"
+                  />
+                </linearGradient>
+              </defs>
               <!-- Base line at 0 PnL -->
-              <line x1="0" :y1="zeroLineY" x2="100" :y2="zeroLineY" stroke="var(--color-border)" stroke-width="1" stroke-dasharray="2,2" vector-effect="non-scaling-stroke" />
-              <polyline :points="performanceCurvePoints" fill="none" stroke="var(--color-brand-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" />
+              <line
+                x1="0"
+                :y1="zeroLineY"
+                x2="100"
+                :y2="zeroLineY"
+                stroke="var(--color-border)"
+                stroke-width="1"
+                stroke-dasharray="2,2"
+                vector-effect="non-scaling-stroke"
+              />
+              <path :d="areaPathD" fill="url(#curveFill)" />
+              <path
+                :d="curvePathD"
+                fill="none"
+                stroke="var(--color-brand-primary)"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                vector-effect="non-scaling-stroke"
+              />
             </svg>
           </div>
           <div
@@ -303,26 +339,72 @@ const chartDataInfo = computed(() => {
   return { pnlList, minPnl, range };
 });
 
-const performanceCurvePoints = computed(() => {
-  const info = chartDataInfo.value;
-  if (!info) return "";
-  const { pnlList, minPnl, range } = info;
-  
-  const xStep = 100 / (pnlList.length - 1 || 1);
-  return pnlList.map((pnl, i) => {
-    const x = i * xStep;
-    const y = 100 - ((pnl - minPnl) / range) * 100;
-    return `${x},${y}`;
-  }).join(" ");
-});
-
+const CHART_PAD = 4;
+const SMOOTH_DEN = 4;
 const zeroLineY = computed(() => {
   const info = chartDataInfo.value;
   if (!info) return 50;
   const { minPnl, range } = info;
-  return 100 - ((0 - minPnl) / range) * 100;
+  const h = 100 - CHART_PAD * 2;
+  return CHART_PAD + h - ((0 - minPnl) / range) * h;
 });
 
+type Pt = { x: number; y: number };
+const linePoints = computed<Pt[]>(() => {
+  const info = chartDataInfo.value;
+  if (!info) return [];
+  const { pnlList, minPnl, range } = info;
+  const w = 100 - CHART_PAD * 2;
+  const h = 100 - CHART_PAD * 2;
+  const xStep = w / (pnlList.length - 1 || 1);
+  return pnlList.map((pnl, i) => {
+    const x = CHART_PAD + i * xStep;
+    const y = CHART_PAD + h - ((pnl - minPnl) / range) * h;
+    const yClamped = Math.min(100 - CHART_PAD, Math.max(CHART_PAD, y));
+    return { x, y: yClamped };
+  });
+});
+
+function smoothPath(points: Pt[]) {
+  if (!points || points.length < 2) return "";
+  let d = `M ${points[0].x},${points[0].y}`;
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = i === 0 ? points[i] : points[i - 1];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = i + 2 < points.length ? points[i + 2] : points[i + 1];
+    let cp1x = p1.x + (p2.x - p0.x) / SMOOTH_DEN;
+    let cp1y = p1.y + (p2.y - p0.y) / SMOOTH_DEN;
+    let cp2x = p2.x - (p3.x - p1.x) / SMOOTH_DEN;
+    let cp2y = p2.y - (p3.y - p1.y) / SMOOTH_DEN;
+    const min = CHART_PAD;
+    const max = 100 - CHART_PAD;
+    cp1x = Math.min(max, Math.max(min, cp1x));
+    cp1y = Math.min(max, Math.max(min, cp1y));
+    cp2x = Math.min(max, Math.max(min, cp2x));
+    cp2y = Math.min(max, Math.max(min, cp2y));
+    const p2x = Math.min(max, Math.max(min, p2.x));
+    const p2y = Math.min(max, Math.max(min, p2.y));
+    d += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2x},${p2y}`;
+  }
+  return d;
+}
+
+const curvePathD = computed(() => {
+  const pts = linePoints.value;
+  if (pts.length < 2) return "";
+  return smoothPath(pts);
+});
+
+const areaPathD = computed(() => {
+  const pts = linePoints.value;
+  if (pts.length < 2) return "";
+  const baseY = zeroLineY.value;
+  let d = `M ${pts[0].x},${baseY} L ${pts[0].x},${pts[0].y}`;
+  d += smoothPath(pts).replace(/^M [^C]+/, "");
+  d += ` L ${pts[pts.length - 1].x},${baseY} L ${pts[0].x},${baseY} Z`;
+  return d;
+});
 const sessionTableData = computed(() => {
   return sessions.value.map((s) => ({
     date: new Date(s.$createdAt).toLocaleDateString(),
