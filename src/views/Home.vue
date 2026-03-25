@@ -404,13 +404,13 @@ const columns = computed(() => [
   {
     title: t("review.columns.action"),
     key: "actions",
-    render(row: any) {
+    render() {
       return h(
         NButton,
         {
           size: "tiny",
           ghost: true,
-          onClick: () => console.log("View session", row.id),
+          onClick: () => router.push("/review"),
         }, // In real app, navigate to details
         { default: () => t("menu.review") },
       );

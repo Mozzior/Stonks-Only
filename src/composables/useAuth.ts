@@ -3,10 +3,7 @@ import type { Models } from "appwrite";
 import { appwrite, ID } from "../utils/appwrite";
 import { fail, ok } from "../utils/backendError";
 import type { UserProfile } from "../types/training";
-import {
-  getOrCreateProfile,
-  refreshProfile as fetchProfile,
-} from "../services/userProfileRepo";
+import { getProfileMe, patchProfileMe } from "../services/api/profileApi";
 
 type AuthUser = Models.User<Models.Preferences>;
 type AuthSession = Models.Session;
@@ -22,14 +19,17 @@ const ensureProfile = async (currentUser: AuthUser | null) => {
     return;
   }
   const fullNameValue = currentUser.name?.trim() ?? "";
-  const result = await getOrCreateProfile(currentUser.$id, {
-    display_name: fullNameValue.length > 0 ? fullNameValue : null,
-  });
+  const payload: Record<string, any> = {};
+  if (fullNameValue.length > 0) {
+    payload.display_name = fullNameValue;
+  }
+  
+  const result = await patchProfileMe(payload);
   if (result.error) {
     profile.value = null;
     return;
   }
-  profile.value = result.data ?? null;
+  profile.value = (result.data as unknown as UserProfile) ?? null;
 };
 
 const syncSession = async () => {
@@ -55,9 +55,9 @@ const refreshProfile = async () => {
     profile.value = null;
     return { data: null, error: null };
   }
-  const result = await fetchProfile(user.value.$id);
+  const result = await getProfileMe();
   if (!result.error) {
-    profile.value = result.data ?? null;
+    profile.value = (result.data as unknown as UserProfile) ?? null;
   }
   return result;
 };

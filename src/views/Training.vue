@@ -2733,20 +2733,6 @@ async function refreshSessionSnapshot() {
           }));
         }
       } catch (e) {}
-    } else if ((data as any).position) {
-      // Legacy fallback
-      const oldPos = Number((data as any).position);
-      if (oldPos !== 0) {
-        tradeStore.positions.value = [
-          {
-            id: `legacy-${Date.now()}`,
-            side: oldPos > 0 ? "LONG" : "SHORT",
-            amount: Math.abs(oldPos),
-            entryPrice: Number((data as any).avg_entry_price || 0),
-            entryTime: Date.now(),
-          },
-        ];
-      }
     }
     await refreshProfile();
   }

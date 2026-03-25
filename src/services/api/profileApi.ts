@@ -53,6 +53,10 @@ export async function patchProfileMe(payload: Record<string, any>) {
         "unique()",
         {
           user_id: userId,
+          training_balance: 10000,
+          currency: "USD",
+          membership_tier: "free",
+          membership_status: "inactive",
           ...payload,
           updated_at: new Date().toISOString(),
         }

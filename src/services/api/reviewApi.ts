@@ -3,7 +3,7 @@ import { appwrite, appwriteConfig, Query } from "../../utils/appwrite";
 import { fail, ok } from "../../utils/backendError";
 
 export async function getReviewKpi(timeRange: "7d" | "30d" | "ytd" | "all", symbol?: string) {
-  void timeRange; // Reserved
+  void timeRange; // Reserved for future filtering
   try {
     const userId = await getUserId();
     if (!userId) return fail({ message: "Not logged in", code: "UNAUTHORIZED" });

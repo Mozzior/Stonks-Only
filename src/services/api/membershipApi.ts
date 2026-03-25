@@ -6,19 +6,6 @@ import type { ApiEnvelope, MembershipUpgradePayload } from "./types";
 const membershipUpgradeFunctionId =
   import.meta.env.VITE_APPWRITE_FN_MEMBERSHIP_UPGRADE_ID || "fn-membership-upgrade";
 
-export async function getMembershipPlans() {
-  try {
-    const response = await appwrite.databases.listDocuments(
-      appwriteConfig.databaseId!,
-      appwriteConfig.membershipPlansCollectionId!,
-      [Query.orderAsc("sort_order")]
-    );
-    return ok(response.documents);
-  } catch (error) {
-    return fail(error);
-  }
-}
-
 export function upgradeMembership(payload: MembershipUpgradePayload) {
   return executeFunction<MembershipUpgradePayload, ApiEnvelope<Record<string, unknown>>>(
     membershipUpgradeFunctionId,
@@ -47,23 +34,6 @@ export async function getMembershipStatus() {
       });
     }
     return ok({ tier: "free", status: "inactive", expiresAt: null });
-  } catch (error) {
-    return fail(error);
-  }
-}
-
-export async function getMembershipAchievements(scope: "summary" | "detail" = "summary") {
-  void scope; // Reserved for future detailed view
-  try {
-    const userId = await getUserId();
-    if (!userId) return fail({ message: "Not logged in", code: "UNAUTHORIZED" });
-
-    const response = await appwrite.databases.listDocuments(
-      appwriteConfig.databaseId!,
-      appwriteConfig.userAchievementsCollectionId!,
-      [Query.equal("user_id", userId)]
-    );
-    return ok(response.documents);
   } catch (error) {
     return fail(error);
   }

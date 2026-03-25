@@ -73,7 +73,6 @@ export default withHandler(async (context, logger) => {
   const db = process.env.VITE_APPWRITE_DATABASE_ID;
   const sessionsCol = "training_session";
   const ordersCol = "training_trade_log";
-  const statsCol = "training_stats";
   if (!db || !sessionsCol || !ordersCol) {
     return fail(500, "CONFIG_MISSING", "Missing database or collection id");
   }
@@ -167,23 +166,7 @@ export default withHandler(async (context, logger) => {
       }
     }
   }
-  if (statsCol) {
-    try {
-      await databases.getDocument(db, statsCol, sessionId);
-      await databases.updateDocument(db, statsCol, sessionId, {
-        session_id: sessionId,
-        ...stats,
-        updated_at: new Date().toISOString(),
-      });
-    } catch (e) {
-      await databases.createDocument(db, statsCol, sessionId, {
-        session_id: sessionId,
-        ...stats,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      });
-    }
-  }
+
   return ok({
     endingBalance: Number(session.cash || 0),
     reason,

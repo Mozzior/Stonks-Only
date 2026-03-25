@@ -43,23 +43,11 @@ const trainingSessionCollectionId = readEnvValue(
 const trainingTradeLogCollectionId = readEnvValue(
   "VITE_APPWRITE_TRAINING_TRADE_LOG_COLLECTION_ID",
 );
-const trainingStatsCollectionId = readEnvValue(
-  "VITE_APPWRITE_TRAINING_STATS_COLLECTION_ID",
-);
 const stockInfoCollectionId = readEnvValue(
   "VITE_APPWRITE_STOCK_INFO_COLLECTION_ID",
 );
 const stockKlineCollectionId = readEnvValue(
   "VITE_APPWRITE_STOCK_KLINE_COLLECTION_ID",
-);
-const membershipPlansCollectionId = readEnvValue(
-  "VITE_APPWRITE_MEMBERSHIP_PLANS_COLLECTION_ID",
-);
-const userAchievementsCollectionId = readEnvValue(
-  "VITE_APPWRITE_USER_ACHIEVEMENTS_COLLECTION_ID",
-);
-const reviewSnapshotsCollectionId = readEnvValue(
-  "VITE_APPWRITE_REVIEW_SNAPSHOTS_COLLECTION_ID",
 );
 
 const appwriteClient = new Client();
@@ -90,12 +78,8 @@ export const appwriteConfig = {
   trainingBalanceLedgerCollectionId,
   trainingSessionCollectionId,
   trainingTradeLogCollectionId,
-  trainingStatsCollectionId,
   stockInfoCollectionId,
   stockKlineCollectionId,
-  membershipPlansCollectionId,
-  userAchievementsCollectionId,
-  reviewSnapshotsCollectionId,
 };
 
 if (import.meta.env.DEV) {

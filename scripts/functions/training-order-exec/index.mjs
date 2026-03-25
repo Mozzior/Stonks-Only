@@ -66,17 +66,6 @@ export default withHandler(async (context, logger) => {
   try {
     if (session.positions) {
       positions = JSON.parse(session.positions);
-    } else {
-      // Legacy fallback
-      const oldPos = Number(session.position || 0);
-      if (oldPos !== 0) {
-        positions.push({
-          id: ID.unique(),
-          side: oldPos > 0 ? "LONG" : "SHORT",
-          amount: Math.abs(oldPos),
-          entryPrice: Number(session.avg_entry_price || 0)
-        });
-      }
     }
   } catch (e) {
     logger.error("Failed to parse positions", e);
@@ -282,27 +271,9 @@ const fee =
     }
   }
   
-  // Calculate legacy position for backward compatibility
-  let legacyPosition = 0;
-  let legacyAvgPrice = 0;
-  if (positions.length > 0) {
-    const longPos = positions.find(p => p.side === "LONG");
-    const shortPos = positions.find(p => p.side === "SHORT");
-    
-    if (longPos) {
-      legacyPosition += longPos.amount;
-      legacyAvgPrice = longPos.entryPrice;
-    }
-    if (shortPos) {
-      legacyPosition -= shortPos.amount;
-      legacyAvgPrice = shortPos.entryPrice;
-    }
-  }
-  
   const updated = await databases.updateDocument(db, sessionsCol, sessionId, {
     cash,
     positions: JSON.stringify(positions),
-    position: legacyPosition,
     market_value: marketValue,
     total_equity: totalEquity,
     updated_at: new Date().toISOString(),
@@ -363,12 +334,6 @@ const fee =
   try {
     if (session.positions) {
       beforePosition.push(...JSON.parse(session.positions));
-    } else if (session.position) {
-      beforePosition.push({
-        side: session.position > 0 ? "LONG" : "SHORT",
-        amount: Math.abs(Number(session.position)),
-        entryPrice: Number(session.avg_entry_price || session.start_price || 0)
-      });
     }
   } catch (e) {}
 

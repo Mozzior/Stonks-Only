@@ -165,24 +165,7 @@ export async function getLatestActiveSession() {
   }
 }
 
-export async function getTrainingStats(sessionId: string) {
-  try {
-    if (!appwriteConfig.trainingStatsCollectionId) {
-      return fail({
-        message: "Stats collection not configured",
-        code: "CONFIG",
-      });
-    }
-    const doc = await appwrite.databases.getDocument(
-      appwriteConfig.databaseId!,
-      appwriteConfig.trainingStatsCollectionId!,
-      sessionId,
-    );
-    return ok(doc);
-  } catch (error) {
-    return fail(error);
-  }
-}
+
 
 export async function saveSessionProgress(
   sessionId: string,
