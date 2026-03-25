@@ -348,8 +348,8 @@ export default {
       marketOrder: "市价单",
       limitOrder: "限价单",
       amountShares: "数量 (股)",
-      buyLong: "买入做多 (B)",
-      sellShort: "卖出做空 (S)",
+      buyLong: "买入 (B)",
+      sellShort: "卖出 (S)",
       closeAll: "全平 (C)",
       position: "持仓",
       openPosition: "当前持仓",
@@ -456,7 +456,7 @@ export default {
       in_progress: "进行中",
       not_started: "未开始",
       completed: "已完成",
-      aborted: "已中止"
+      aborted: "已中止",
     },
     kpi: {
       winRate: "胜率",
@@ -789,6 +789,6 @@ export default {
     downloadComplete: "下载完成",
     restartToInstall: "重启并安装",
     upToDate: "当前已是最新版本",
-    updateError: "更新失败: {error}"
-  }
+    updateError: "更新失败: {error}",
+  },
 };
