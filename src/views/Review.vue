@@ -52,8 +52,8 @@
         class="bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)]"
       >
         <n-statistic
-          :label="t('review.kpi.totalPL')"
-          :value="Math.abs(totalPnl)"
+          :label="t('review.kpi.allTimePL')"
+          :value="totalPnlFixed2"
           :precision="2"
         >
           <template #prefix>
@@ -81,7 +81,26 @@
           :value="avgReturn"
           :precision="2"
         >
-          <template #suffix>%</template>
+          <template #prefix>
+            <span
+              :class="
+                avgReturn >= 0
+                  ? 'text-[var(--color-success)]'
+                  : 'text-[var(--color-error)]'
+              "
+              >{{ avgReturn >= 0 ? "+" : "" }}</span
+            >
+          </template>
+          <template #suffix>
+            <span
+              :class="
+                avgReturn >= 0
+                  ? 'text-[var(--color-success)]'
+                  : 'text-[var(--color-error)]'
+              "
+              >%</span
+            >
+          </template>
         </n-statistic>
         <div class="text-xs text-[var(--color-text-secondary)] mt-2">
           {{ t("review.kpi.perSessionAvg") }}
@@ -302,6 +321,10 @@ const totalPnl = computed(() =>
   sessions.value
     .filter((s) => s.status === "completed")
     .reduce((sum, s) => sum + Number(s.realized_pnl || 0), 0),
+);
+
+const totalPnlFixed2 = computed(() =>
+  Number(Math.abs(totalPnl.value).toFixed(2)),
 );
 
 const avgReturn = computed(() => {

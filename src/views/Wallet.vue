@@ -38,7 +38,7 @@
           </div>
 
           <div
-            class="grid grid-cols-2 md:grid-cols-4 gap-6 pt-6 mt-2 border-t border-[var(--color-border)]/40"
+            class="grid grid-cols-2 md:grid-cols-4 gap-2 pt-6 mt-2 border-t border-[var(--color-border)]/40"
           >
             <div
               class="bg-[var(--color-bg-sidebar)]/30 p-4 rounded-xl border border-[var(--color-border)]/30 transition-colors hover:bg-[var(--color-bg-sidebar)]/50"
@@ -253,11 +253,18 @@ const totalAssets = computed(() =>
   Number(walletBalance.value || profile.value?.training_balance || 0),
 );
 
-const todayPnl = computed(() =>
-  historyData.value
-    .filter((h) => h.type === "TRADE_PNL")
-    .reduce((sum, item) => sum + Number(item.amount || 0), 0),
-);
+const todayPnl = computed(() => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  return historyData.value
+    .filter((h) => {
+      if (h.type !== "TRADE_PNL" && h.type !== "TRADE") return false;
+      const itemDate = new Date(h.rawTime || h.time);
+      return itemDate >= today;
+    })
+    .reduce((sum, item) => sum + Number(item.amount || 0), 0);
+});
 const todayPnlText = computed(
   () => `${todayPnl.value >= 0 ? "+" : ""}${formatCurrency(todayPnl.value)}`,
 );
@@ -310,7 +317,7 @@ const historyColumns = computed(() => [
         {
           class: `font-bold ${isPositive ? "text-[var(--color-success)]" : "text-[var(--color-error)]"}`,
         },
-        `${isPositive ? "+" : ""}${row.amount.toLocaleString()}`,
+        `${isPositive ? "+" : ""}${formatCurrency(row.amount)}`,
       );
     },
   },
@@ -349,20 +356,28 @@ async function loadHistory(category: "all" | "trade" | "other" = "all") {
   historyData.value =
     list.map((item: any) => {
       const ct = String(item.change_type || "").toLowerCase();
-      const isRecharge = ct === "recharge" || ct === "topup" || ct === "deposit";
+      const isRecharge =
+        ct === "recharge" || ct === "topup" || ct === "deposit";
       const isTrade = ct.startsWith("trade");
-      const type = isRecharge ? "RECHARGE" : isTrade ? "TRADE" : (item.change_type ? String(item.change_type).toUpperCase() : "OTHER");
+      const type = isRecharge
+        ? "RECHARGE"
+        : isTrade
+          ? "TRADE"
+          : item.change_type
+            ? String(item.change_type).toUpperCase()
+            : "OTHER";
       return {
         id: item.$id,
         type,
         amount: Number(item.amount),
+        rawTime: item.created_at || item.$createdAt,
         time: new Date(item.created_at || item.$createdAt).toLocaleString(),
         status: "COMPLETED",
         detail:
           item.note ||
           item.change_type ||
           (item.balance_after
-            ? `${t("wallet.activity.balanceAfter")}: ${Number(item.balance_after).toLocaleString()}`
+            ? `${t("wallet.activity.balanceAfter")}: ${formatCurrency(Number(item.balance_after))}`
             : "N/A"),
       };
     }) ?? [];

@@ -76,7 +76,7 @@
       >
         <n-statistic
           :label="t('home.stats.totalPL')"
-          :value="Math.abs(totalPnl)"
+          :value="totalPnlFixed2"
           :precision="2"
         >
           <template #prefix>
@@ -357,6 +357,10 @@ const totalPnl = computed(() =>
   sessions.value
     .filter((s) => s.status === "completed")
     .reduce((sum, s) => sum + Number(s.realized_pnl || 0), 0),
+);
+
+const totalPnlFixed2 = computed(() =>
+  Number(Math.abs(totalPnl.value).toFixed(2)),
 );
 
 const avgReturn = computed(() => {

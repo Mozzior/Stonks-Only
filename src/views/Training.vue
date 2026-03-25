@@ -504,15 +504,26 @@
 
             <n-divider vertical v-if="isTrainingStarted" />
 
-            <n-button
-              v-if="!isTrainingStarted"
-              type="primary"
-              size="small"
-              @click="startTraining"
-              class="animate-pulse font-bold"
-            >
-              {{ t("training.toolbar.startSession") }}
-            </n-button>
+            <template v-if="!isTrainingStarted">
+              <n-button
+                v-if="!isTrainingWindowEnded"
+                type="primary"
+                size="small"
+                @click="startTraining"
+                class="animate-pulse font-bold"
+              >
+                {{ t("training.toolbar.startSession") }}
+              </n-button>
+              <n-button
+                v-else
+                type="primary"
+                size="small"
+                @click="startNewRandomTraining()"
+                class="font-bold"
+              >
+                {{ t("home.actions.newSession") }}
+              </n-button>
+            </template>
             <n-button
               v-else
               type="error"
@@ -1395,6 +1406,7 @@ const initialDataRef = ref<KLineData[]>([]);
 const currentDate = ref<number | null>(null);
 const trainingStartIndex = ref(0);
 const trainingEndIndex = ref(0);
+const trainingShadeOverlayId = ref<string | null>(null);
 const trainingStartOverlayId = ref<string | null>(null);
 const trainingEndOverlayId = ref<string | null>(null);
 const trainingStartTextOverlayId = ref<string | null>(null);
@@ -1481,10 +1493,14 @@ function removeTrainingBoundaryOverlays() {
   if (trainingEndTextOverlayId.value) {
     chartInstance.value.removeOverlay({ id: trainingEndTextOverlayId.value });
   }
+  if (trainingShadeOverlayId.value) {
+    chartInstance.value.removeOverlay({ id: trainingShadeOverlayId.value });
+  }
   trainingStartOverlayId.value = null;
   trainingEndOverlayId.value = null;
   trainingStartTextOverlayId.value = null;
   trainingEndTextOverlayId.value = null;
+  trainingShadeOverlayId.value = null;
 }
 
 function syncTrainingBoundaryOverlays() {
@@ -1495,30 +1511,14 @@ function syncTrainingBoundaryOverlays() {
 
   removeTrainingBoundaryOverlays();
 
-  const startLineId = chartInstance.value.createOverlay({
-    name: "verticalRayLine",
-    points: [{ timestamp: startData.timestamp, value: startData.close }],
+  const shadeId = chartInstance.value.createOverlay({
+    name: "trainingBoundaryShade",
+    points: [
+      { timestamp: startData.timestamp, value: startData.close },
+      { timestamp: endData.timestamp, value: endData.close },
+    ],
   }) as string;
-  const endLineId = chartInstance.value.createOverlay({
-    name: "verticalRayLine",
-    points: [{ timestamp: endData.timestamp, value: endData.close }],
-  }) as string;
-
-  const startTextId = chartInstance.value.createOverlay({
-    name: "text",
-    extendData: { text: t("training.messages.trainingBoundaryStart") },
-    points: [{ timestamp: startData.timestamp, value: startData.high }],
-  }) as string;
-  const endTextId = chartInstance.value.createOverlay({
-    name: "text",
-    extendData: { text: t("training.messages.trainingBoundaryEnd") },
-    points: [{ timestamp: endData.timestamp, value: endData.high }],
-  }) as string;
-
-  trainingStartOverlayId.value = startLineId;
-  trainingEndOverlayId.value = endLineId;
-  trainingStartTextOverlayId.value = startTextId;
-  trainingEndTextOverlayId.value = endTextId;
+  trainingShadeOverlayId.value = shadeId;
 }
 
 // Clears indicators before adding new ones
@@ -1608,6 +1608,7 @@ function updateChartForDate(timestamp: number) {
 }
 
 async function startNewRandomTraining(retries = 20) {
+  autoSettled.value = false;
   activeSessionId.value = null;
   sessionTradeSeq.value = 0;
   if (retries <= 0) {
@@ -1967,6 +1968,71 @@ onMounted(() => {
         ];
       }
       return [];
+    },
+  });
+
+  registerOverlay({
+    name: "trainingBoundaryShade",
+    totalStep: 2,
+    needDefaultPointFigure: true,
+    needDefaultXAxisFigure: true,
+    needDefaultYAxisFigure: true,
+    createPointFigures: ({ coordinates, bounding }: any) => {
+      const { width, height } = bounding;
+      if (coordinates.length < 2) return [];
+      const x1 = coordinates[0].x;
+      const x2 = coordinates[1].x;
+      const startX = Math.min(x1, x2);
+      const endX = Math.max(x1, x2);
+
+      const shadeWidth = 40; // 阴影宽度，40像素
+      const steps = 40; // 40步，每步1像素，实现完美平滑渐变
+      const figures: any[] = [];
+
+      // 使用主题色 (Primary Color: #00D2B4 -> 0, 210, 180) 作为渐变阴影/发光效果
+      const r = 0,
+        g = 210,
+        b = 180;
+      const maxAlpha = isDark.value ? 0.35 : 0.15; // 黑暗模式下发光稍微亮一点
+
+      for (let i = 0; i < steps; i++) {
+        // 线性衰减，让阴影更平滑自然
+        const progress = i / steps;
+        const alpha = maxAlpha * (1 - progress);
+        const sliceW = shadeWidth / steps;
+
+        // 左侧阴影 (向左投射)
+        if (startX - i * sliceW >= 0) {
+          figures.push({
+            type: "rect",
+            attrs: {
+              x: startX - (i + 1) * sliceW,
+              y: 0,
+              width: sliceW,
+              height,
+            },
+            styles: {
+              style: "fill",
+              color: `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(3)})`,
+            },
+            ignoreEvent: true,
+          });
+        }
+
+        // 右侧阴影 (向右投射)
+        if (endX + i * sliceW <= width) {
+          figures.push({
+            type: "rect",
+            attrs: { x: endX + i * sliceW, y: 0, width: sliceW, height },
+            styles: {
+              style: "fill",
+              color: `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(3)})`,
+            },
+            ignoreEvent: true,
+          });
+        }
+      }
+      return figures;
     },
   });
 
@@ -2367,12 +2433,13 @@ function updateChart() {
 
   if (isTrainingWindowEnded.value && !autoSettled.value) {
     autoSettled.value = true;
+    stopPlay();
     (async () => {
       try {
         if (tradeStore.positions.value.length > 0) {
           const posList = [...tradeStore.positions.value];
           for (const p of posList) {
-            await closePosition(p.id, p.amount);
+            await closePosition(p.id, p.amount, true);
           }
         }
         await finalizeSession("completed");
@@ -2966,8 +3033,12 @@ async function handleTrade(side: string) {
   }
 }
 
-async function closePosition(id: string, amount: number) {
-  if (isTrainingWindowEnded.value) {
+async function closePosition(
+  id: string,
+  amount: number,
+  force: boolean = false,
+) {
+  if (isTrainingWindowEnded.value && !force) {
     message.warning(t("training.messages.trainingEndedViewOnly"));
     return;
   }
@@ -3180,37 +3251,97 @@ async function bootstrapSession() {
       isChartLoaded.value = true;
       return;
     }
-  } catch (e) {
+    if (latest) {
+      const tsCode = latest.ts_code || latest.symbol;
+      const displaySymbol = latest.symbol || tsCode;
+      let info = (await getStockInfoByTsCode(tsCode)).data;
+      if (!info) {
+        info = (await getStockInfoBySymbol(displaySymbol)).data;
+      }
+      currentStock.value = {
+        symbol: info?.symbol || displaySymbol,
+        name: info?.name || displaySymbol,
+        ts_code: tsCode,
+      } as any;
+      const codeCandidates = [
+        tsCode,
+        displaySymbol,
+        `${displaySymbol}.SZ`,
+        `${displaySymbol}.SH`,
+      ].filter(Boolean) as string[];
+      const [dailyRes, weeklyRes, monthlyRes] = await Promise.all([
+        listStockKlineByAny(codeCandidates, "daily"),
+        listStockKlineByAny(codeCandidates, "weekly"),
+        listStockKlineByAny(codeCandidates, "monthly"),
+      ]);
+      if (!dailyRes.data || dailyRes.data.length === 0) {
+        isChartLoaded.value = true;
+        return;
+      }
+      const format2 = (data: any[]) =>
+        data.map((k) => ({
+          timestamp: new Date(k.trade_date).getTime(),
+          open: Number(k.open),
+          high: Number(k.high),
+          low: Number(k.low),
+          close: Number(k.close),
+          volume: Number(k.volume),
+          turnover: Number(k.amount),
+        }));
+      dailyData.value = format2(dailyRes.data ?? []);
+      weeklyData.value = format2(weeklyRes.data ?? []);
+      monthlyData.value = format2(monthlyRes.data ?? []);
+      const sDate2 = new Date(
+        latest.train_start_date || latest.start_date,
+      ).getTime();
+      const eDate2 = new Date(
+        latest.train_end_date || latest.end_date,
+      ).getTime();
+      let sIdx2 = dailyData.value.findIndex((d) => d.timestamp >= sDate2);
+      if (sIdx2 < 0) sIdx2 = 0;
+      let eIdx2 = dailyData.value.findIndex((d) => d.timestamp > eDate2);
+      if (eIdx2 < 0) eIdx2 = dailyData.value.length - 1;
+      trainingStartIndex.value = sIdx2;
+      trainingEndIndex.value = Math.max(eIdx2 - 1, sIdx2 + 10);
+      fullData.value = dailyData.value;
+      initialDataRef.value = dailyData.value.slice(
+        0,
+        trainingEndIndex.value + 1,
+      );
+      currentIndex.value = trainingEndIndex.value + 1;
+      const anchorIdx =
+        trainingEndIndex.value >= 0 ? trainingEndIndex.value : 0;
+      currentDate.value = dailyData.value[anchorIdx]?.timestamp ?? null;
+      currentPrice.value = dailyData.value[anchorIdx]?.close ?? 0;
+      if (chartInstance.value) {
+        clearIndicators();
+        chartInstance.value.resetData();
+        setupDataLoader();
+        setupIndicatorsFromState();
+        chartInstance.value.setSymbol({
+          ticker: displaySymbol,
+          pricePrecision: 2,
+          volumePrecision: 0,
+        });
+        currentTimeframe.value = "daily";
+        chartInstance.value.setPeriod({ type: "day", span: 1 });
+        if (currentDate.value) {
+          updateChartForDate(currentDate.value);
+        }
+        currentIndex.value = trainingEndIndex.value + 1;
+        syncTrainingBoundaryOverlays();
+        await ensureChartSized();
+      }
+      activeSessionId.value = null;
+      isChartLoaded.value = true;
+      return;
+    }
+
+    // 如果没有任何会话记录（系统全新），则初始化一个随机股票供用户开始
     await startNewRandomTraining();
-  }
-  await startNewRandomTraining();
-  const sDate = new Date(
-    dailyData.value[trainingStartIndex.value].timestamp,
-  ).toISOString();
-  const eDate = new Date(
-    dailyData.value[trainingEndIndex.value].timestamp,
-  ).toISOString();
-  try {
-    const { data } = await createTrainingSession({
-      tsCode:
-        (currentStock.value as any)?.ts_code ??
-        currentStock.value?.symbol ??
-        "",
-      symbol: currentStock.value?.symbol ?? "",
-      period: "daily",
-      trainRange: {
-        startIndex: trainingStartIndex.value,
-        endIndex: trainingEndIndex.value,
-        startDate: sDate,
-        endDate: eDate,
-      },
-      startDate: sDate,
-      endDate: eDate,
-      startPrice: dailyData.value[trainingStartIndex.value].close,
-    });
-    activeSessionId.value = (data?.sessionId as string) ?? null;
-  } catch {
-    activeSessionId.value = null;
+    isChartLoaded.value = true;
+  } catch (e) {
+    isChartLoaded.value = true;
   }
 }
 
