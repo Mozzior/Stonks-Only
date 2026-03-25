@@ -783,7 +783,7 @@
       </div>
 
       <!-- Right: Order Panel & Positions -->
-      <div class="w-80 flex flex-col min-h-0 gap-4" v-show="!isTrainingStarted">
+      <div class="w-60 flex flex-col min-h-0 gap-4" v-show="!isTrainingStarted">
         <!-- Order Panel -->
         <n-card
           :title="t('training.trade.executeTrade')"

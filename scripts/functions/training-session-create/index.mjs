@@ -66,6 +66,33 @@ export default withHandler(async (context, logger) => {
   const initialBalance = Number(body?.initialBalance ?? userBalance);
   const startPrice = Number(body?.startPrice ?? 0);
   const docId = ID.unique();
+
+  // Check unfinished sessions before creating
+  try {
+    const activeStatuses = [
+      "active",
+      "running",
+      "initialized",
+      "pending",
+      "in_progress",
+      "not_started",
+    ];
+    const existing = await databases.listDocuments(databaseId, sessionsCol, [
+      Query.equal("user_id", userId),
+      Query.equal("status", activeStatuses),
+      Query.limit(1),
+    ]);
+    if (existing.total > 0) {
+      return fail(
+        409,
+        "SESSION_EXISTS",
+        "You have an unfinished training session. Please complete it first.",
+      );
+    }
+  } catch (err) {
+    logger.error("Failed to check unfinished sessions", err);
+  }
+
   const data = {
     user_id: userId,
     status,

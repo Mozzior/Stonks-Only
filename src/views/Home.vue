@@ -162,6 +162,32 @@
 
       <!-- Right Side: Quick Actions & Recommended -->
       <div class="space-y-6">
+        <n-card
+          v-if="unfinishedSessions.length > 0"
+          :bordered="false"
+          class="bg-[var(--color-bg-card)] rounded-xl border border-[var(--color-border)]"
+          title="未完成训练"
+        >
+          <n-list>
+            <n-list-item
+              v-for="u in unfinishedSessions.slice(0, 3)"
+              :key="u.$id"
+            >
+              <div class="flex items-center justify-between w-full">
+                <div class="text-sm text-[var(--color-text-primary)]">
+                  {{
+                    symbolNameMap[String(u.symbol || u.ts_code || "")] ||
+                    String(u.symbol || u.ts_code || "---")
+                  }}
+                  ({{ u.symbol || u.ts_code }})
+                </div>
+                <n-button size="tiny" ghost @click="router.push('/training')"
+                  >继续</n-button
+                >
+              </div>
+            </n-list-item>
+          </n-list>
+        </n-card>
         <!-- Quick Actions -->
         <n-card
           :title="t('home.quickActions')"
@@ -306,11 +332,16 @@ import {
 import { useI18n } from "vue-i18n";
 import { useAuth } from "../composables/useAuth";
 import { listSessions } from "../services/api/trainingApi";
+import {
+  getStockInfoBySymbol,
+  getStockInfoByTsCode,
+} from "../services/marketRepo";
 
 const router = useRouter();
 const { t } = useI18n();
 const { user, profile } = useAuth();
 const sessions = ref<any[]>([]);
+const symbolNameMap = ref<Record<string, string>>({});
 
 const portfolioValue = computed(() =>
   Number(profile.value?.training_balance ?? 0),
@@ -369,17 +400,57 @@ onMounted(async () => {
   const { data } = await listSessions(50); // Get last 50 for stats
   if (data) {
     sessions.value = data.documents;
+    const recent = sessions.value.slice(0, 10);
+    const symbols = Array.from(
+      new Set(
+        recent
+          .flatMap((s) => [
+            String(s.symbol || "").trim(),
+            String(s.ts_code || "").trim(),
+          ])
+          .filter((x) => x && x !== "---"),
+      ),
+    );
+    if (symbols.length > 0) {
+      const fetches = symbols.map(async (sym) => {
+        const bySymbol = await getStockInfoBySymbol(sym);
+        if (bySymbol.data && bySymbol.data.name) {
+          return { sym, name: bySymbol.data.name };
+        }
+        const byTs = await getStockInfoByTsCode(sym);
+        if (byTs.data && byTs.data.name) {
+          return { sym, name: byTs.data.name };
+        }
+        return { sym, name: sym };
+      });
+      const results = await Promise.all(fetches);
+      const map: Record<string, string> = {};
+      results.forEach(({ sym, name }) => {
+        map[sym] = name;
+      });
+      symbolNameMap.value = map;
+    }
   }
 });
 
+const unfinishedSessions = computed(() =>
+  sessions.value.filter(
+    (s) => s.status !== "completed" && s.status !== "aborted",
+  ),
+);
+
 const recentSessions = computed(() => {
-  return sessions.value.slice(0, 5).map((s) => ({
-    date: new Date(s.$createdAt).toLocaleDateString(),
-    market: `${s.symbol} (${s.period})`,
-    duration: "N/A", // Can be calc from start/end time if available
-    pl: Number(s.return_pct || 0).toFixed(2),
-    id: s.$id,
-  }));
+  return sessions.value.slice(0, 10).map((s) => {
+    const symbol = String(s.symbol || "").trim();
+    const name = symbolNameMap.value[symbol];
+    return {
+      date: new Date(s.$createdAt).toLocaleDateString(),
+      market: `${name} (${symbol})`,
+      duration: "N/A", // Can be calc from start/end time if available
+      pl: Number(s.return_pct || 0).toFixed(2),
+      id: s.$id,
+    };
+  });
 });
 
 const columns = computed(() => [
