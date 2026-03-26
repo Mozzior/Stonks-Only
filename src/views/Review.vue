@@ -259,12 +259,17 @@ import {
 import { useAuth } from "../composables/useAuth";
 import { listSessions } from "../services/api/trainingApi";
 import { getReviewKpi, getReviewEquityCurve } from "../services/api/reviewApi";
+import {
+  getStockInfoBySymbol,
+  getStockInfoByTsCode,
+} from "../services/marketRepo";
 
 const { t } = useI18n();
 const { user } = useAuth();
 const sessions = ref<any[]>([]);
 const kpi = ref<{ winRate: number } | null>(null);
 const equityCurve = ref<{ date: string; value: number }[] | null>(null);
+const symbolNameMap = ref<Record<string, string>>({});
 
 const timeRange = ref("30d");
 const timeRangeOptions = computed(() => [
@@ -283,6 +288,35 @@ onMounted(async () => {
   ]);
   if (sessionsRes.data) {
     sessions.value = sessionsRes.data.documents;
+    const symbols = Array.from(
+      new Set(
+        sessions.value
+          .flatMap((s) => [
+            String(s.symbol || "").trim(),
+            String(s.ts_code || "").trim(),
+          ])
+          .filter((x) => x && x !== "---"),
+      ),
+    ).slice(0, 200);
+    if (symbols.length > 0) {
+      const fetches = symbols.map(async (sym) => {
+        const bySymbol = await getStockInfoBySymbol(sym);
+        if (bySymbol.data && bySymbol.data.name) {
+          return { sym, name: bySymbol.data.name };
+        }
+        const byTs = await getStockInfoByTsCode(sym);
+        if (byTs.data && byTs.data.name) {
+          return { sym, name: byTs.data.name };
+        }
+        return { sym, name: sym };
+      });
+      const results = await Promise.all(fetches);
+      const map: Record<string, string> = {};
+      results.forEach(({ sym, name }) => {
+        map[sym] = name;
+      });
+      symbolNameMap.value = map;
+    }
   }
   if (kpiRes.data) {
     kpi.value = { winRate: Number(kpiRes.data.winRate || 0) };
@@ -431,7 +465,10 @@ const areaPathD = computed(() => {
 const sessionTableData = computed(() => {
   return sessions.value.map((s) => ({
     date: new Date(s.$createdAt).toLocaleDateString(),
-    symbol: s.symbol,
+    symbol: String(s.symbol || s.ts_code || "").trim(),
+    market:
+      `${symbolNameMap.value[String(s.symbol || s.ts_code || "").trim()] || String(s.symbol || s.ts_code || "")}` +
+      ` (${String(s.symbol || s.ts_code || "").trim() || "---"})`,
     pnl: Number(s.realized_pnl || 0),
     roi: Number(s.return_pct || 0),
     status: s.status,
@@ -443,12 +480,12 @@ const columns = computed(() => [
   { title: t("review.journal.date"), key: "date", width: 120 },
   {
     title: t("review.journal.symbol"),
-    key: "symbol",
+    key: "market",
     render(row: any) {
       return h(
         "span",
         { class: "font-bold text-[var(--color-text-primary)]" },
-        row.symbol,
+        row.market,
       );
     },
   },
