@@ -1611,6 +1611,7 @@ async function startNewRandomTraining(retries = 20) {
   autoSettled.value = false;
   activeSessionId.value = null;
   sessionTradeSeq.value = 0;
+  tradeStore.init(accountBalance.value);
   if (retries <= 0) {
     message.error(
       t("training.messages.sessionNotInitialized") ||
@@ -2974,11 +2975,6 @@ async function finalizeSession(status: "completed" | "aborted") {
   if (user.value) {
     await refreshProfile();
   }
-
-  // Always clear activeSessionId and trade store even if settle fails
-  // to prevent old data bleeding into new sessions
-  activeSessionId.value = null;
-  tradeStore.init(accountBalance.value);
 }
 
 async function handleTrade(side: string) {
