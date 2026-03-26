@@ -5,12 +5,13 @@ import { fail, ok } from "../../utils/backendError";
 export async function getProfileMe() {
   try {
     const userId = await getUserId();
-    if (!userId) return fail({ message: "Not logged in", code: "UNAUTHORIZED" });
+    if (!userId)
+      return fail({ message: "Not logged in", code: "UNAUTHORIZED" });
 
     const response = await appwrite.databases.listDocuments(
       appwriteConfig.databaseId!,
       appwriteConfig.userProfileCollectionId!,
-      [Query.equal("user_id", userId), Query.limit(1)]
+      [Query.equal("user_id", userId), Query.limit(1)],
     );
 
     if (response.total > 0) {
@@ -25,13 +26,14 @@ export async function getProfileMe() {
 export async function patchProfileMe(payload: Record<string, any>) {
   try {
     const userId = await getUserId();
-    if (!userId) return fail({ message: "Not logged in", code: "UNAUTHORIZED" });
+    if (!userId)
+      return fail({ message: "Not logged in", code: "UNAUTHORIZED" });
 
     // Find profile first
     const listRes = await appwrite.databases.listDocuments(
       appwriteConfig.databaseId!,
       appwriteConfig.userProfileCollectionId!,
-      [Query.equal("user_id", userId), Query.limit(1)]
+      [Query.equal("user_id", userId), Query.limit(1)],
     );
 
     let profile;
@@ -43,14 +45,14 @@ export async function patchProfileMe(payload: Record<string, any>) {
         {
           ...payload,
           updated_at: new Date().toISOString(),
-        }
+        },
       );
     } else {
       // Create if not exists
       profile = await appwrite.databases.createDocument(
         appwriteConfig.databaseId!,
         appwriteConfig.userProfileCollectionId!,
-        "unique()",
+        ID.unique(),
         {
           user_id: userId,
           training_balance: 10000,
@@ -59,7 +61,7 @@ export async function patchProfileMe(payload: Record<string, any>) {
           membership_status: "inactive",
           ...payload,
           updated_at: new Date().toISOString(),
-        }
+        },
       );
     }
     return ok(profile);
@@ -83,17 +85,17 @@ export async function commitAvatar(fileId: string) {
   // Just update the profile with the fileId/url
   try {
     const userId = await getUserId();
-    if (!userId) return fail({ message: "Not logged in", code: "UNAUTHORIZED" });
-    
+    if (!userId)
+      return fail({ message: "Not logged in", code: "UNAUTHORIZED" });
+
     // Construct URL (optional, or just save ID)
-    const avatarUrl = appwrite.storage.getFileView(
-        appwriteConfig.avatarBucketId!,
-        fileId
-    ).toString();
+    const avatarUrl = appwrite.storage
+      .getFileView(appwriteConfig.avatarBucketId!, fileId)
+      .toString();
 
     return patchProfileMe({
-        avatar_file_id: fileId,
-        avatar_url: avatarUrl
+      avatar_file_id: fileId,
+      avatar_url: avatarUrl,
     });
   } catch (error) {
     return fail(error);

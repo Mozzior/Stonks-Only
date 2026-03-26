@@ -21,7 +21,7 @@
             {{ topThree[1]?.user || "—" }}
           </div>
           <div class="text-[var(--color-brand-primary)] font-black text-xl">
-            +{{ topThree[1]?.pl?.toFixed(2) || "0.00" }}%
+            {{ signedPercent(topThree[1]?.pl) }}
           </div>
           <div
             class="text-xs text-[var(--color-text-secondary)] uppercase mt-2"
@@ -55,7 +55,7 @@
             {{ topThree[0]?.user || "—" }}
           </div>
           <div class="text-yellow-500 font-black text-3xl">
-            +{{ topThree[0]?.pl?.toFixed(2) || "0.00" }}%
+            {{ signedPercent(topThree[0]?.pl) }}
           </div>
           <div class="text-xs text-yellow-500/70 uppercase font-bold mt-2">
             {{ t("leaderboard.top3.champion") }}
@@ -80,7 +80,7 @@
             {{ topThree[2]?.user || "—" }}
           </div>
           <div class="text-[var(--color-brand-primary)] font-black text-xl">
-            +{{ topThree[2]?.pl?.toFixed(2) || "0.00" }}%
+            {{ signedPercent(topThree[2]?.pl) }}
           </div>
           <div
             class="text-xs text-[var(--color-text-secondary)] uppercase mt-2"
@@ -262,6 +262,12 @@ const columns = computed(() => [
     },
   },
 ]);
+
+function signedPercent(val?: number | null) {
+  const v = Number(val ?? 0);
+  const sign = v >= 0 ? "+" : "";
+  return `${sign}${v.toFixed(2)}%`;
+}
 
 async function loadLeaders() {
   const res = await getLeaderboard(timeframe.value as any);

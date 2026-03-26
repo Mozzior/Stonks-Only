@@ -8,7 +8,8 @@ export function getDisplayName(profile: UserProfile | null, email?: string | nul
 
 export function getAvatarUrl(profile: UserProfile | null) {
   if (profile?.avatar_url && profile.avatar_url.trim()) return profile.avatar_url;
-  return "https://i.pravatar.cc/150?u=trader";
+  const uid = profile?.user_id || "trader";
+  return `https://i.pravatar.cc/150?u=${encodeURIComponent(uid)}`;
 }
 
 export function normalizeTier(

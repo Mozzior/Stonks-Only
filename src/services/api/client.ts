@@ -14,6 +14,14 @@ export async function getUserId(): Promise<string | null> {
   }
 }
 
+export function resetCachedUserId() {
+  cachedUserId = null;
+}
+
+export function setCachedUserId(id: string | null) {
+  cachedUserId = id;
+}
+
 export async function executeFunction<TPayload, TResult>(
   functionId: string,
   payload?: TPayload,

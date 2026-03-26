@@ -4,6 +4,10 @@ import { appwrite, ID } from "../utils/appwrite";
 import { fail, ok } from "../utils/backendError";
 import type { UserProfile } from "../types/training";
 import { getProfileMe, patchProfileMe } from "../services/api/profileApi";
+import {
+  resetCachedUserId,
+  setCachedUserId,
+} from "../services/api/client";
 
 type AuthUser = Models.User<Models.Preferences>;
 type AuthSession = Models.Session;
@@ -38,11 +42,13 @@ const syncSession = async () => {
     const currentUser = await appwrite.account.get();
     session.value = currentSession;
     user.value = currentUser;
+    setCachedUserId(currentUser.$id);
     await ensureProfile(currentUser);
   } catch {
     session.value = null;
     user.value = null;
     profile.value = null;
+    resetCachedUserId();
   } finally {
     loading.value = false;
   }
@@ -65,6 +71,7 @@ const refreshProfile = async () => {
 export function useAuth() {
   const signIn = async (email: string, password: string) => {
     try {
+      resetCachedUserId();
       const signedSession = await appwrite.account.createEmailPasswordSession(
         email,
         password,
@@ -72,6 +79,7 @@ export function useAuth() {
       const signedUser = await appwrite.account.get();
       session.value = signedSession;
       user.value = signedUser;
+      setCachedUserId(signedUser.$id);
       await ensureProfile(signedUser);
       return ok({ session: signedSession, user: signedUser });
     } catch (error) {
@@ -129,11 +137,13 @@ export function useAuth() {
       if (createdSession) {
         session.value = createdSession;
         user.value = await appwrite.account.get();
+        setCachedUserId(user.value.$id);
         await ensureProfile(user.value);
       } else {
         session.value = null;
         user.value = null;
         profile.value = null;
+        resetCachedUserId();
       }
 
       return ok({
@@ -151,6 +161,7 @@ export function useAuth() {
       user.value = null;
       session.value = null;
       profile.value = null;
+      resetCachedUserId();
       return { error: null };
     } catch (error) {
       return { error: fail(error).error };
