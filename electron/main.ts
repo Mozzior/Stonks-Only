@@ -3,7 +3,6 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import fs from "node:fs";
 import dotenv from "dotenv";
-import { DBManager } from "./database/manager";
 import { autoUpdater } from "electron-updater";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -78,14 +77,6 @@ app.on("activate", () => {
 });
 
 app.whenReady().then(() => {
-  // Initialize Database
-  try {
-    DBManager.init();
-    console.log("Database initialized successfully");
-  } catch (error) {
-    console.error("Failed to initialize database:", error);
-  }
-
   ipcMain.on("env:getSync", (event) => {
     event.returnValue = {
       VITE_APPWRITE_ENDPOINT: process.env.VITE_APPWRITE_ENDPOINT,
@@ -107,19 +98,6 @@ app.whenReady().then(() => {
         process.env.VITE_APPWRITE_STOCK_KLINE_COLLECTION_ID,
     };
   });
-
-  // Register IPC Handlers
-  ipcMain.handle("db:run", (_, sql, params) => DBManager.run(sql, params));
-  ipcMain.handle("db:get", (_, sql, params) => DBManager.get(sql, params));
-  ipcMain.handle("db:all", (_, sql, params) => DBManager.all(sql, params));
-
-  // Storage helpers
-  ipcMain.handle("storage:set", (_, key, value) =>
-    DBManager.setItem(key, value),
-  );
-  ipcMain.handle("storage:get", (_, key) => DBManager.getItem(key));
-  ipcMain.handle("storage:delete", (_, key) => DBManager.deleteItem(key));
-  ipcMain.handle("storage:getAll", () => DBManager.getAllItems());
 
   // Auto Updater Setup
   autoUpdater.autoDownload = false;

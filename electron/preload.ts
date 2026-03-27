@@ -29,22 +29,6 @@ const env = ipcRenderer.sendSync("env:getSync");
 
 contextBridge.exposeInMainWorld("env", env);
 
-contextBridge.exposeInMainWorld("db", {
-  run: (sql: string, params: any[] = []) =>
-    ipcRenderer.invoke("db:run", sql, params),
-  get: (sql: string, params: any[] = []) =>
-    ipcRenderer.invoke("db:get", sql, params),
-  all: (sql: string, params: any[] = []) =>
-    ipcRenderer.invoke("db:all", sql, params),
-  storage: {
-    set: (key: string, value: any) =>
-      ipcRenderer.invoke("storage:set", key, value),
-    get: (key: string) => ipcRenderer.invoke("storage:get", key),
-    delete: (key: string) => ipcRenderer.invoke("storage:delete", key),
-    getAll: () => ipcRenderer.invoke("storage:getAll"),
-  },
-});
-
 contextBridge.exposeInMainWorld("updater", {
   check: () => ipcRenderer.invoke("updater:check"),
   download: () => ipcRenderer.invoke("updater:download"),

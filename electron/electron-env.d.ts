@@ -40,17 +40,6 @@ interface Window {
     VITE_APPWRITE_USER_ACHIEVEMENTS_COLLECTION_ID?: string;
     VITE_APPWRITE_REVIEW_SNAPSHOTS_COLLECTION_ID?: string;
   };
-  db: {
-    run: (sql: string, params?: any[]) => Promise<any>;
-    get: <T = any>(sql: string, params?: any[]) => Promise<T | undefined>;
-    all: <T = any>(sql: string, params?: any[]) => Promise<T[]>;
-    storage: {
-      set: (key: string, value: any) => Promise<any>;
-      get: <T = any>(key: string) => Promise<T | null>;
-      delete: (key: string) => Promise<any>;
-      getAll: () => Promise<Record<string, any>>;
-    };
-  };
   updater: {
     check: () => Promise<void>;
     download: () => Promise<void>;

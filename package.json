@@ -1,7 +1,7 @@
 {
   "name": "stonks-only",
   "private": true,
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Stock training desktop app built with Electron, Vue 3 and Vite.",
   "author": "Stonks Only",
   "type": "module",
@@ -10,14 +10,12 @@
     "build": "vue-tsc && vite build && electron-builder -mw",
     "build:mac": "vue-tsc && vite build && electron-builder -m",
     "build:win": "vue-tsc && vite build && electron-builder -w",
-    "preview": "vite preview",
-    "postinstall": "electron-builder install-app-deps"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@klinecharts/pro": "^0.1.1",
     "@vicons/ionicons5": "^0.13.0",
     "appwrite": "^23.0.0",
-    "better-sqlite3": "^12.6.2",
     "dotenv": "^16.4.5",
     "electron-updater": "^6.8.3",
     "klinecharts": "10.0.0-beta1",
@@ -29,7 +27,6 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.2.1",
-    "@types/better-sqlite3": "^7.6.13",
     "@vitejs/plugin-vue": "^5.0.4",
     "autoprefixer": "^10.4.27",
     "electron": "^30.0.1",
