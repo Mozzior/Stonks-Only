@@ -1,0 +1,13 @@
+{
+  "name": "@stonks-only/server",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "appwrite:deploy": "node ./appwrite/deploy-functions.mjs",
+    "appwrite:functions:install": "pnpm --dir ./appwrite/functions install",
+    "appwrite:up": "docker compose --env-file ./appwrite/.env -f ./appwrite/docker-compose.yml up -d",
+    "appwrite:down": "docker compose --env-file ./appwrite/.env -f ./appwrite/docker-compose.yml down",
+    "appwrite:logs": "docker compose --env-file ./appwrite/.env -f ./appwrite/docker-compose.yml logs -f"
+  }
+}

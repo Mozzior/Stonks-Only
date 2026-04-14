@@ -12,6 +12,12 @@ appwrite
 release
 dist
 dist-ssr
+apps/*/dist
+apps/*/dist-electron
+apps/*/release
+packages/*/dist
+.expo
+apps/*/.expo
 *.local
 .env
 .env.*

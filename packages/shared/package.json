@@ -1,0 +1,21 @@
+{
+  "name": "@stonks-only/shared",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./app-config": "./src/app-config/index.ts",
+    "./appwrite": "./src/appwrite/index.ts",
+    "./i18n": "./src/i18n/index.ts",
+    "./locales": "./src/locales/index.ts",
+    "./locales/en-US": "./src/locales/en-US.ts",
+    "./locales/zh-CN": "./src/locales/zh-CN.ts",
+    "./translator": "./src/translator/index.ts"
+  },
+  "dependencies": {
+    "appwrite": "^23.0.0",
+    "vue-i18n": "9"
+  }
+}
