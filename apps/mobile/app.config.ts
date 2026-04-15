@@ -5,6 +5,19 @@ const MOBILE_APPWRITE_ENV_KEYS = {
   projectId: "EXPO_PUBLIC_APPWRITE_PROJECT_ID",
   databaseId: "EXPO_PUBLIC_APPWRITE_DATABASE_ID",
   platformId: "EXPO_PUBLIC_APPWRITE_PLATFORM_ID",
+  userProfileCollectionId: "EXPO_PUBLIC_APPWRITE_USER_PROFILE_COLLECTION_ID",
+  trainingBalanceLedgerCollectionId:
+    "EXPO_PUBLIC_APPWRITE_TRAINING_BALANCE_LEDGER_COLLECTION_ID",
+  trainingSessionCollectionId:
+    "EXPO_PUBLIC_APPWRITE_TRAINING_SESSION_COLLECTION_ID",
+  trainingTradeLogCollectionId:
+    "EXPO_PUBLIC_APPWRITE_TRAINING_TRADE_LOG_COLLECTION_ID",
+  walletRechargeFunctionId: "EXPO_PUBLIC_APPWRITE_FN_WALLET_RECHARGE_ID",
+  membershipUpgradeFunctionId: "EXPO_PUBLIC_APPWRITE_FN_MEMBERSHIP_UPGRADE_ID",
+  trainingSessionCreateFunctionId:
+    "EXPO_PUBLIC_APPWRITE_FN_TRAINING_SESSION_CREATE_ID",
+  trainingOrderExecFunctionId: "EXPO_PUBLIC_APPWRITE_FN_TRAINING_ORDER_EXEC_ID",
+  trainingSettlementFunctionId: "EXPO_PUBLIC_APPWRITE_FN_TRAINING_SETTLEMENT_ID",
 } as const;
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
@@ -43,5 +56,23 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     appwritePlatformId:
       process.env[MOBILE_APPWRITE_ENV_KEYS.platformId] ||
       "cc.cavia.app.stp.mobile",
+    appwriteUserProfileCollectionId:
+      process.env[MOBILE_APPWRITE_ENV_KEYS.userProfileCollectionId],
+    appwriteTrainingBalanceLedgerCollectionId:
+      process.env[MOBILE_APPWRITE_ENV_KEYS.trainingBalanceLedgerCollectionId],
+    appwriteTrainingSessionCollectionId:
+      process.env[MOBILE_APPWRITE_ENV_KEYS.trainingSessionCollectionId],
+    appwriteTrainingTradeLogCollectionId:
+      process.env[MOBILE_APPWRITE_ENV_KEYS.trainingTradeLogCollectionId],
+    appwriteWalletRechargeFunctionId:
+      process.env[MOBILE_APPWRITE_ENV_KEYS.walletRechargeFunctionId],
+    appwriteMembershipUpgradeFunctionId:
+      process.env[MOBILE_APPWRITE_ENV_KEYS.membershipUpgradeFunctionId],
+    appwriteTrainingSessionCreateFunctionId:
+      process.env[MOBILE_APPWRITE_ENV_KEYS.trainingSessionCreateFunctionId],
+    appwriteTrainingOrderExecFunctionId:
+      process.env[MOBILE_APPWRITE_ENV_KEYS.trainingOrderExecFunctionId],
+    appwriteTrainingSettlementFunctionId:
+      process.env[MOBILE_APPWRITE_ENV_KEYS.trainingSettlementFunctionId],
   },
 });

@@ -18,6 +18,19 @@ export const MOBILE_APPWRITE_ENV_KEYS = {
   projectId: "EXPO_PUBLIC_APPWRITE_PROJECT_ID",
   databaseId: "EXPO_PUBLIC_APPWRITE_DATABASE_ID",
   platformId: "EXPO_PUBLIC_APPWRITE_PLATFORM_ID",
+  userProfileCollectionId: "EXPO_PUBLIC_APPWRITE_USER_PROFILE_COLLECTION_ID",
+  trainingBalanceLedgerCollectionId:
+    "EXPO_PUBLIC_APPWRITE_TRAINING_BALANCE_LEDGER_COLLECTION_ID",
+  trainingSessionCollectionId:
+    "EXPO_PUBLIC_APPWRITE_TRAINING_SESSION_COLLECTION_ID",
+  trainingTradeLogCollectionId:
+    "EXPO_PUBLIC_APPWRITE_TRAINING_TRADE_LOG_COLLECTION_ID",
+  walletRechargeFunctionId: "EXPO_PUBLIC_APPWRITE_FN_WALLET_RECHARGE_ID",
+  membershipUpgradeFunctionId: "EXPO_PUBLIC_APPWRITE_FN_MEMBERSHIP_UPGRADE_ID",
+  trainingSessionCreateFunctionId:
+    "EXPO_PUBLIC_APPWRITE_FN_TRAINING_SESSION_CREATE_ID",
+  trainingOrderExecFunctionId: "EXPO_PUBLIC_APPWRITE_FN_TRAINING_ORDER_EXEC_ID",
+  trainingSettlementFunctionId: "EXPO_PUBLIC_APPWRITE_FN_TRAINING_SETTLEMENT_ID",
 } as const;
 
 export type WebAppwriteEnvKey =
@@ -44,6 +57,15 @@ export type MobileAppwriteConfig = {
   projectId?: string;
   databaseId?: string;
   platformId?: string;
+  userProfileCollectionId?: string;
+  trainingBalanceLedgerCollectionId?: string;
+  trainingSessionCollectionId?: string;
+  trainingTradeLogCollectionId?: string;
+  walletRechargeFunctionId?: string;
+  membershipUpgradeFunctionId?: string;
+  trainingSessionCreateFunctionId?: string;
+  trainingOrderExecFunctionId?: string;
+  trainingSettlementFunctionId?: string;
 };
 
 export function normalizeConfigValue(value?: string | null) {
@@ -99,5 +121,32 @@ export function buildMobileAppwriteConfig(
     projectId: normalizeConfigValue(env[MOBILE_APPWRITE_ENV_KEYS.projectId]),
     databaseId: normalizeConfigValue(env[MOBILE_APPWRITE_ENV_KEYS.databaseId]),
     platformId: normalizeConfigValue(env[MOBILE_APPWRITE_ENV_KEYS.platformId]),
+    userProfileCollectionId: normalizeConfigValue(
+      env[MOBILE_APPWRITE_ENV_KEYS.userProfileCollectionId],
+    ),
+    trainingBalanceLedgerCollectionId: normalizeConfigValue(
+      env[MOBILE_APPWRITE_ENV_KEYS.trainingBalanceLedgerCollectionId],
+    ),
+    trainingSessionCollectionId: normalizeConfigValue(
+      env[MOBILE_APPWRITE_ENV_KEYS.trainingSessionCollectionId],
+    ),
+    trainingTradeLogCollectionId: normalizeConfigValue(
+      env[MOBILE_APPWRITE_ENV_KEYS.trainingTradeLogCollectionId],
+    ),
+    walletRechargeFunctionId: normalizeConfigValue(
+      env[MOBILE_APPWRITE_ENV_KEYS.walletRechargeFunctionId],
+    ),
+    membershipUpgradeFunctionId: normalizeConfigValue(
+      env[MOBILE_APPWRITE_ENV_KEYS.membershipUpgradeFunctionId],
+    ),
+    trainingSessionCreateFunctionId: normalizeConfigValue(
+      env[MOBILE_APPWRITE_ENV_KEYS.trainingSessionCreateFunctionId],
+    ),
+    trainingOrderExecFunctionId: normalizeConfigValue(
+      env[MOBILE_APPWRITE_ENV_KEYS.trainingOrderExecFunctionId],
+    ),
+    trainingSettlementFunctionId: normalizeConfigValue(
+      env[MOBILE_APPWRITE_ENV_KEYS.trainingSettlementFunctionId],
+    ),
   } satisfies MobileAppwriteConfig;
 }

@@ -13,7 +13,6 @@ type LoginScreenProps = {
   hasConfig: boolean;
   message: string;
   onLogin: (email: string, password: string) => Promise<void>;
-  onEnterDemo: () => void;
   t: (key: string, fallback?: string) => string;
 };
 
@@ -21,12 +20,12 @@ export function LoginScreen({
   hasConfig,
   message,
   onLogin,
-  onEnterDemo,
   t,
 }: LoginScreenProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const canSubmit = email.trim().length > 0 && password.trim().length > 0;
 
   const handleSubmit = async () => {
     setSubmitting(true);
@@ -51,7 +50,7 @@ export function LoginScreen({
           </Text>
           <View style={styles.badge}>
             <Text style={styles.badgeText}>
-              {hasConfig ? "已检测到 Appwrite 配置" : "未配置云端，当前可直接体验演示模式"}
+              {hasConfig ? "已检测到 Appwrite 配置" : "缺少云端配置，无法读取移动端数据"}
             </Text>
           </View>
         </View>
@@ -80,9 +79,12 @@ export function LoginScreen({
           />
 
           <Pressable
-            style={[styles.primaryButton, submitting && styles.disabledButton]}
+            style={[
+              styles.primaryButton,
+              (submitting || !canSubmit) && styles.disabledButton,
+            ]}
             onPress={handleSubmit}
-            disabled={submitting}
+            disabled={submitting || !canSubmit}
           >
             {submitting ? (
               <ActivityIndicator color="#041018" />
@@ -92,12 +94,6 @@ export function LoginScreen({
               </Text>
             )}
           </Pressable>
-
-          {!hasConfig ? (
-            <Pressable style={styles.secondaryButton} onPress={onEnterDemo}>
-              <Text style={styles.secondaryButtonText}>直接进入演示模式</Text>
-            </Pressable>
-          ) : null}
 
           <Text style={styles.message}>{message}</Text>
         </View>
@@ -201,21 +197,6 @@ const styles = StyleSheet.create({
     color: "#041018",
     fontSize: 16,
     fontWeight: "700",
-  },
-  secondaryButton: {
-    height: 52,
-    borderRadius: 16,
-    marginTop: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(148, 163, 184, 0.08)",
-    borderWidth: 1,
-    borderColor: "rgba(148, 163, 184, 0.16)",
-  },
-  secondaryButtonText: {
-    color: "#dbe7f6",
-    fontSize: 15,
-    fontWeight: "600",
   },
   message: {
     marginTop: 14,

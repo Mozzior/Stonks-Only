@@ -1,16 +1,21 @@
 import {
+  ActivityIndicator,
   Pressable,
+  RefreshControl,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import type { WalletSummary } from "../types/mobile";
 
 type ProfileScreenProps = {
   hasConfig: boolean;
   localeLabel: string;
   profileText: string;
+  unreadAlerts: number;
+  wallet: WalletSummary;
   refreshing: boolean;
   onRefresh: () => Promise<void>;
   onLogout: () => Promise<void>;
@@ -21,6 +26,8 @@ export function ProfileScreen({
   hasConfig,
   localeLabel,
   profileText,
+  unreadAlerts,
+  wallet,
   refreshing,
   onRefresh,
   onLogout,
@@ -28,7 +35,12 @@ export function ProfileScreen({
 }: ProfileScreenProps) {
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={() => void onRefresh()} />
+        }
+      >
         <Text style={styles.title}>{t("menu.profile", "我的")}</Text>
         <Text style={styles.subtitle}>桌面端与移动端共用账号、语言和后端配置。</Text>
 
@@ -37,7 +49,7 @@ export function ProfileScreen({
           <Text style={styles.cardText}>{profileText}</Text>
           <View style={styles.inlineBadge}>
             <Text style={styles.inlineBadgeText}>
-              {hasConfig ? "Synced" : "Local Demo"}
+              {hasConfig ? "Synced" : "Config Missing"}
             </Text>
           </View>
         </View>
@@ -47,15 +59,38 @@ export function ProfileScreen({
           <Text style={styles.cardText}>{localeLabel}</Text>
         </View>
 
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>账户资产</Text>
+          <View style={styles.statRow}>
+            <Text style={styles.cardText}>现金</Text>
+            <Text style={styles.statValue}>${wallet.cash.toFixed(2)}</Text>
+          </View>
+          <View style={styles.statRow}>
+            <Text style={styles.cardText}>持仓市值</Text>
+            <Text style={styles.statValue}>${wallet.equity.toFixed(2)}</Text>
+          </View>
+          <View style={styles.statRow}>
+            <Text style={styles.cardText}>累计盈亏</Text>
+            <Text style={[styles.statValue, wallet.totalPnl >= 0 ? styles.positive : styles.negative]}>
+              {wallet.totalPnl >= 0 ? "+" : ""}${wallet.totalPnl.toFixed(2)}
+            </Text>
+          </View>
+          <View style={styles.inlineBadge}>
+            <Text style={styles.inlineBadgeText}>未读提醒 {unreadAlerts} 条</Text>
+          </View>
+        </View>
+
         <View style={styles.actionRow}>
           <Pressable
             style={[styles.secondaryButton, refreshing && styles.disabledButton]}
             onPress={onRefresh}
             disabled={refreshing}
           >
-            <Text style={styles.secondaryButtonText}>
-              {refreshing ? "刷新中..." : "刷新会话"}
-            </Text>
+            {refreshing ? (
+              <ActivityIndicator color="#dbe7f6" />
+            ) : (
+              <Text style={styles.secondaryButtonText}>刷新会话</Text>
+            )}
           </Pressable>
 
           <Pressable style={styles.secondaryButton} onPress={onLogout}>
@@ -124,6 +159,25 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
     marginTop: 16,
+  },
+  statRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(148, 163, 184, 0.12)",
+  },
+  statValue: {
+    color: "#f8fbff",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  positive: {
+    color: "#34d399",
+  },
+  negative: {
+    color: "#fb7185",
   },
   secondaryButton: {
     flex: 1,
